@@ -41,9 +41,9 @@ O Smart-Hive suporta integração simples com sensores IoT para monitoramento em
 
 ## 📤 Enviando Dados dos Sensores
 
-### Endpoint: `POST /api/iot/dados/`
+### Endpoint: `POST /api/iot/colmeia/dados/`
 
-**URL:** `http://localhost:8000/api/iot/dados/`
+**URL:** `http://localhost:8000/api/iot/colmeia/dados/`
 
 **Headers:**
 ```
@@ -154,7 +154,7 @@ Content-Type: application/json
 
 ## 📊 Consultando Histórico de Leituras
 
-### Endpoint: `GET /api/iot/historico/{colmeia_identificador}/`
+### Endpoint: `GET /api/iot/colmeia/historico/{colmeia_identificador}/`
 
 **Parâmetros de Query:**
 - `limit`: Número máximo de leituras (padrão: 100)
@@ -162,7 +162,7 @@ Content-Type: application/json
 
 **Exemplo:**
 ```bash
-GET /api/iot/historico/CLM-001/?limit=50&offset=0
+GET /api/iot/colmeia/historico/CLM-001/?limit=50&offset=0
 ```
 
 **Resposta:**
@@ -198,7 +198,7 @@ GET /api/iot/historico/CLM-001/?limit=50&offset=0
 
 const char* ssid = "SEU_WIFI";
 const char* password = "SUA_SENHA";
-const char* serverUrl = "http://seu-servidor:8000/api/iot/dados/";
+const char* serverUrl = "http://seu-servidor:8000/api/iot/colmeia/dados/";
 const char* colmeiaId = "CLM-001";  // Identificador da colmeia
 
 void setup() {
@@ -263,7 +263,7 @@ import json
 import time
 from datetime import datetime
 
-SERVER_URL = "http://seu-servidor:8000/api/iot/dados/"
+SERVER_URL = "http://seu-servidor:8000/api/iot/colmeia/dados/"
 COLMEIA_ID = "CLM-001"  # Identificador da colmeia
 DEVICE_ID = "RaspberryPi-001"
 
@@ -326,7 +326,7 @@ if __name__ == "__main__":
 ```javascript
 const axios = require('axios');
 
-const SERVER_URL = 'http://seu-servidor:8000/api/iot/dados/';
+const SERVER_URL = 'http://seu-servidor:8000/api/iot/colmeia/dados/';
 const COLMEIA_ID = 'CLM-001';  // Identificador da colmeia
 const DEVICE_ID = 'NodeMCU-001';
 
@@ -379,7 +379,7 @@ setInterval(enviarDados, 60000);
 ### cURL (Teste Rápido)
 
 ```bash
-curl -X POST http://localhost:8000/api/iot/dados/ \
+curl -X POST http://localhost:8000/api/iot/colmeia/dados/ \
   -H "Content-Type: application/json" \
   -d '{
     "colmeia_identificador": "CLM-001",
@@ -441,7 +441,7 @@ dados = {
 
 # Enviar para o servidor
 response = requests.post(
-    "http://localhost:8000/api/iot/dados/",
+    "http://localhost:8000/api/iot/colmeia/dados/",
     json=dados
 )
 

@@ -8,7 +8,7 @@
 
 **URL:** 
 ```
-http://localhost:8000/api/iot/dados/
+http://localhost:8000/api/iot/colmeia/dados/
 ```
 
 **Headers:**
@@ -152,7 +152,7 @@ Content-Type: application/json
 
 ### 2. Configurar Método e URL
 - Método: Selecione **POST** no dropdown
-- URL: Digite `http://localhost:8000/api/iot/dados/`
+- URL: Digite `http://localhost:8000/api/iot/colmeia/dados/`
 
 ### 3. Configurar Headers
 - Clique na aba **Headers**
