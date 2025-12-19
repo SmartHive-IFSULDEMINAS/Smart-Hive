@@ -33,6 +33,11 @@ import {
     Refresh as RefreshIcon,
     CalendarToday as CalendarIcon,
     Assessment as AssessmentIcon,
+    Sensors as SensorsIcon,
+    Thermostat as ThermostatIcon,
+    VolumeUp as VolumeUpIcon,
+    LightMode as LightModeIcon,
+    AccessTime as AccessTimeIcon,
 } from '@mui/icons-material';
 import {
     AreaChart,
@@ -365,6 +370,151 @@ export default function Dashboard() {
                     />
                 </Grid>
             </Grid>
+
+            {/* Seção de Sensores IoT */}
+            {data?.colmeias_iot && data.colmeias_iot.length > 0 && (
+                <Fade in={true} timeout={1800}>
+                    <Card
+                        sx={{
+                            mb: 4,
+                            background: `linear-gradient(145deg, ${theme.palette.background.paper} 0%, ${alpha('#2196F3', 0.02)} 100%)`,
+                            border: `1px solid ${alpha('#2196F3', 0.1)}`,
+                            borderRadius: 3,
+                        }}
+                    >
+                        <CardContent sx={{ p: 3 }}>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 3 }}>
+                                <SensorsIcon sx={{ color: '#2196F3', fontSize: 28 }} />
+                                <Typography variant="h6" sx={{ fontWeight: 700, flex: 1 }}>
+                                    Monitoramento IoT em Tempo Real
+                                </Typography>
+                                <Chip
+                                    label={`${data?.total_colmeias_iot || 0} colmeias com sensores`}
+                                    size="small"
+                                    sx={{
+                                        backgroundColor: alpha('#2196F3', 0.1),
+                                        color: '#2196F3',
+                                        fontWeight: 600,
+                                    }}
+                                />
+                            </Box>
+                            <Grid container spacing={2}>
+                                {data.colmeias_iot.map((colmeia) => (
+                                    <Grid item xs={12} sm={6} md={4} key={colmeia.id}>
+                                        <Paper
+                                            sx={{
+                                                p: 2,
+                                                background: `linear-gradient(135deg, ${alpha('#2196F3', 0.05)} 0%, ${alpha('#2196F3', 0.02)} 100%)`,
+                                                border: `2px solid ${alpha('#2196F3', 0.2)}`,
+                                                borderRadius: 2,
+                                                transition: 'all 0.3s',
+                                                '&:hover': {
+                                                    transform: 'translateY(-2px)',
+                                                    boxShadow: `0 8px 24px ${alpha('#2196F3', 0.2)}`,
+                                                    borderColor: alpha('#2196F3', 0.4),
+                                                },
+                                            }}
+                                        >
+                                            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                                                <Box>
+                                                    <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
+                                                        {colmeia.identificador}
+                                                    </Typography>
+                                                    <Typography variant="caption" color="text.secondary">
+                                                        {colmeia.apiario_nome}
+                                                    </Typography>
+                                                </Box>
+                                                <SensorsIcon sx={{ color: '#2196F3', fontSize: 24 }} />
+                                            </Box>
+                                            
+                                            {(colmeia.temperatura_atual || colmeia.nivel_ruido || colmeia.luminosidade) ? (
+                                                <Grid container spacing={1.5}>
+                                                    {colmeia.temperatura_atual && (
+                                                        <Grid item xs={4}>
+                                                            <Box sx={{ textAlign: 'center' }}>
+                                                                <ThermostatIcon 
+                                                                    sx={{ 
+                                                                        color: colmeia.temperatura_atual > 35 
+                                                                            ? '#F44336' 
+                                                                            : colmeia.temperatura_atual < 20 
+                                                                            ? '#2196F3'
+                                                                            : '#4CAF50',
+                                                                        fontSize: 20,
+                                                                        mb: 0.5
+                                                                    }} 
+                                                                />
+                                                                <Typography variant="caption" color="text.secondary" display="block">
+                                                                    Temp.
+                                                                </Typography>
+                                                                <Typography 
+                                                                    variant="body2" 
+                                                                    sx={{ 
+                                                                        fontWeight: 700,
+                                                                        color: colmeia.temperatura_atual > 35 
+                                                                            ? '#F44336' 
+                                                                            : colmeia.temperatura_atual < 20 
+                                                                            ? '#2196F3'
+                                                                            : '#4CAF50',
+                                                                    }}
+                                                                >
+                                                                    {parseFloat(colmeia.temperatura_atual).toFixed(1)}°C
+                                                                </Typography>
+                                                            </Box>
+                                                        </Grid>
+                                                    )}
+                                                    {colmeia.nivel_ruido && (
+                                                        <Grid item xs={4}>
+                                                            <Box sx={{ textAlign: 'center' }}>
+                                                                <VolumeUpIcon sx={{ color: '#FF9800', fontSize: 20, mb: 0.5 }} />
+                                                                <Typography variant="caption" color="text.secondary" display="block">
+                                                                    Ruído
+                                                                </Typography>
+                                                                <Typography variant="body2" sx={{ fontWeight: 700, color: '#FF9800' }}>
+                                                                    {parseFloat(colmeia.nivel_ruido).toFixed(1)} dB
+                                                                </Typography>
+                                                            </Box>
+                                                        </Grid>
+                                                    )}
+                                                    {colmeia.luminosidade && (
+                                                        <Grid item xs={4}>
+                                                            <Box sx={{ textAlign: 'center' }}>
+                                                                <LightModeIcon sx={{ color: '#FFC107', fontSize: 20, mb: 0.5 }} />
+                                                                <Typography variant="caption" color="text.secondary" display="block">
+                                                                    Luz
+                                                                </Typography>
+                                                                <Typography variant="body2" sx={{ fontWeight: 700, color: '#FFC107' }}>
+                                                                    {parseFloat(colmeia.luminosidade).toFixed(0)}
+                                                                </Typography>
+                                                            </Box>
+                                                        </Grid>
+                                                    )}
+                                                </Grid>
+                                            ) : (
+                                                <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'center', py: 1 }}>
+                                                    Aguardando primeira leitura...
+                                                </Typography>
+                                            )}
+                                            
+                                            {colmeia.data_ultima_leitura_sensor && (
+                                                <Box sx={{ mt: 1.5, pt: 1.5, borderTop: `1px solid ${alpha('#000', 0.1)}` }}>
+                                                    <Typography 
+                                                        variant="caption" 
+                                                        color="text.secondary"
+                                                        sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}
+                                                    >
+                                                        <AccessTimeIcon sx={{ fontSize: 14 }} />
+                                                        {new Date(colmeia.data_ultima_leitura_sensor).toLocaleString('pt-BR')}
+                                                    </Typography>
+                                                </Box>
+                                            )}
+                                        </Paper>
+                                    </Grid>
+                                ))}
+                            </Grid>
+                        </CardContent>
+                    </Card>
+                </Fade>
+            )}
 
             {/* Gráficos */}
             <Grid container spacing={3} sx={{ mb: 4 }}>

@@ -77,6 +77,7 @@ export const getColmeiaInspecoes = (id) => api.get(`/colmeias/${id}/inspecoes/`)
 export const getColmeiaProducoes = (id) => api.get(`/colmeias/${id}/producoes/`);
 export const getColmeiaTratamentos = (id) => api.get(`/colmeias/${id}/tratamentos/`);
 export const getColmeiaHistorico = (id) => api.get(`/colmeias/${id}/historico/`);
+export const getColmeiaLeiturasSensor = (id, params) => api.get(`/colmeias/${id}/leituras_sensor/`, { params });
 
 // Inspeções
 export const getInspecoes = (params) => api.get('/inspecoes/', { params });

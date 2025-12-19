@@ -19,6 +19,7 @@ from .views import (
     DashboardProdutividadeView,
 )
 from .auth_views import register, login, me, update_profile, UsuarioViewSet
+from .iot_views import receber_dados_iot, historico_sensores
 
 router = DefaultRouter()
 router.register(r'especies', EspecieAbelhaViewSet, basename='especies')
@@ -47,4 +48,7 @@ urlpatterns = [
     path('dashboard/financeiro/', DashboardFinanceiroView.as_view(), name='dashboard_financeiro'),
     path('dashboard/saude/', DashboardSaudeView.as_view(), name='dashboard_saude'),
     path('dashboard/produtividade/', DashboardProdutividadeView.as_view(), name='dashboard_produtividade'),
+    # IoT endpoints
+    path('iot/dados/', receber_dados_iot, name='receber_dados_iot'),
+    path('iot/historico/<str:colmeia_identificador>/', historico_sensores, name='historico_sensores'),
 ]

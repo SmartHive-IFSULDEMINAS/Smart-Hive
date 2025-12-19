@@ -10,7 +10,7 @@ from django.contrib.auth import get_user_model
 
 from .models import (
     EspecieAbelha, Apiario, Colmeia, Inspecao, ProducaoMel, Tratamento,
-    Custo, Receita, Fornecedor, Equipamento, Notificacao
+    Custo, Receita, Fornecedor, Equipamento, Notificacao, LeituraSensor
 )
 from .serializers import (
     EspecieAbelhaSerializer,
@@ -24,7 +24,8 @@ from .serializers import (
     ReceitaSerializer, ReceitaListSerializer,
     FornecedorSerializer,
     EquipamentoSerializer,
-    NotificacaoSerializer
+    NotificacaoSerializer,
+    LeituraSensorListSerializer
 )
 
 User = get_user_model()
@@ -176,6 +177,21 @@ class ColmeiaViewSet(viewsets.ModelViewSet):
             }
         }
         return Response(historico)
+    
+    
+    @action(detail=True, methods=['get'])
+    def leituras_sensor(self, request, pk=None):
+        """Lista leituras de sensores da colmeia"""
+        colmeia = self.get_object()
+        limit = int(request.query_params.get('limit', 50))
+        offset = int(request.query_params.get('offset', 0))
+        
+        leituras = colmeia.leituras_sensor.all()[offset:offset+limit]
+        
+        return Response({
+            'total': colmeia.leituras_sensor.count(),
+            'leituras': LeituraSensorListSerializer(leituras, many=True).data
+        })
 
 
 class InspecaoViewSet(viewsets.ModelViewSet):
@@ -416,6 +432,20 @@ class DashboardView(APIView):
         stats['colmeias_por_apiario'] = list(
             Colmeia.objects.values('apiario__nome').annotate(total=Count('id')).order_by('-total')[:5]
         )
+        
+        # Colmeias com sensores IoT ativos
+        colmeias_iot = Colmeia.objects.filter(
+            sensor_iot_ativo=True
+        ).select_related('apiario', 'especie').order_by('-data_ultima_leitura_sensor')[:10]
+        
+        stats['colmeias_iot'] = ColmeiaListSerializer(colmeias_iot, many=True).data
+        
+        # Estatísticas de sensores
+        stats['total_colmeias_iot'] = Colmeia.objects.filter(sensor_iot_ativo=True).count()
+        stats['colmeias_iot_com_dados'] = Colmeia.objects.filter(
+            sensor_iot_ativo=True,
+            data_ultima_leitura_sensor__isnull=False
+        ).count()
         
         return Response(stats)
 

@@ -3,7 +3,7 @@ from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from .models import (
     Usuario, EspecieAbelha, Apiario, Colmeia, Inspecao, 
     ProducaoMel, Tratamento, Custo, Receita, Fornecedor, 
-    Equipamento, Notificacao
+    Equipamento, Notificacao, LeituraSensor
 )
 
 
@@ -34,12 +34,50 @@ class ApiarioAdmin(admin.ModelAdmin):
 
 @admin.register(Colmeia)
 class ColmeiaAdmin(admin.ModelAdmin):
-    list_display = ['identificador', 'nome', 'apiario', 'especie', 'status', 'tipo_caixa', 'quantidade_abelhas_estimada', 'data_instalacao']
-    list_filter = ['status', 'tipo_caixa', 'apiario', 'especie']
-    search_fields = ['identificador', 'nome', 'apiario__nome']
+    list_display = [
+        'identificador', 'nome', 'apiario', 'especie', 'status', 'tipo_caixa', 
+        'quantidade_abelhas_estimada', 'sensor_iot_ativo', 'temperatura_atual',
+        'data_instalacao'
+    ]
+    list_filter = ['status', 'tipo_caixa', 'apiario', 'especie', 'sensor_iot_ativo']
+    search_fields = ['identificador', 'nome', 'apiario__nome', 'token_iot']
     ordering = ['apiario', 'identificador']
     date_hierarchy = 'data_instalacao'
     raw_id_fields = ['apiario', 'especie']
+    readonly_fields = ['token_iot', 'data_ultima_leitura_sensor']
+    fieldsets = (
+        ('Informações Básicas', {
+            'fields': ('apiario', 'especie', 'identificador', 'nome', 'tipo_caixa', 'status')
+        }),
+        ('Características', {
+            'fields': ('quantidade_abelhas_estimada', 'numero_quadros', 'peso_estimado_kg', 
+                      'idade_rainha_meses', 'data_ultima_troca_rainha', 'data_instalacao')
+        }),
+        ('Sensores IoT', {
+            'fields': ('sensor_iot_ativo', 'token_iot', 'temperatura_atual', 'nivel_ruido', 
+                      'luminosidade', 'data_ultima_leitura_sensor'),
+            'classes': ('collapse',)
+        }),
+        ('Outros', {
+            'fields': ('observacoes', 'foto', 'data_ultima_inspecao')
+        }),
+    )
+    
+    def save_model(self, request, obj, form, change):
+        if not obj.token_iot and obj.sensor_iot_ativo:
+            obj.gerar_token_iot()
+        super().save_model(request, obj, form, change)
+
+
+@admin.register(LeituraSensor)
+class LeituraSensorAdmin(admin.ModelAdmin):
+    list_display = ['colmeia', 'temperatura', 'nivel_ruido', 'luminosidade', 'timestamp', 'dispositivo_id']
+    list_filter = ['timestamp', 'colmeia', 'colmeia__apiario']
+    search_fields = ['colmeia__identificador', 'dispositivo_id']
+    ordering = ['-timestamp']
+    date_hierarchy = 'timestamp'
+    raw_id_fields = ['colmeia']
+    readonly_fields = ['timestamp']
 
 
 @admin.register(Inspecao)

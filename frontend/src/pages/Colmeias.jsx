@@ -37,6 +37,11 @@ import {
     Hive as HiveIcon,
     Search as SearchIcon,
     Visibility as ViewIcon,
+    Sensors as SensorsIcon,
+    Thermostat as ThermostatIcon,
+    VolumeUp as VolumeUpIcon,
+    LightMode as LightModeIcon,
+    AccessTime as AccessTimeIcon,
 } from '@mui/icons-material';
 import {
     getColmeias,
@@ -311,6 +316,7 @@ export default function Colmeias() {
                                 <TableCell>Espécie</TableCell>
                                 <TableCell>Status</TableCell>
                                 <TableCell align="right">Abelhas Est.</TableCell>
+                                <TableCell>Sensores IoT</TableCell>
                                 <TableCell>Última Inspeção</TableCell>
                                 <TableCell align="center">Ações</TableCell>
                             </TableRow>
@@ -332,6 +338,68 @@ export default function Colmeias() {
                                         <TableCell>{getStatusChip(colmeia.status)}</TableCell>
                                         <TableCell align="right">
                                             {colmeia.quantidade_abelhas_estimada?.toLocaleString('pt-BR')}
+                                        </TableCell>
+                                        <TableCell>
+                                            {colmeia.sensor_iot_ativo ? (
+                                                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
+                                                    {colmeia.temperatura_atual && (
+                                                        <Chip
+                                                            icon={<ThermostatIcon />}
+                                                            label={`${parseFloat(colmeia.temperatura_atual).toFixed(1)}°C`}
+                                                            size="small"
+                                                            sx={{
+                                                                height: 24,
+                                                                fontSize: '0.7rem',
+                                                                backgroundColor: colmeia.temperatura_atual > 35 
+                                                                    ? alpha('#F44336', 0.2) 
+                                                                    : colmeia.temperatura_atual < 20 
+                                                                    ? alpha('#2196F3', 0.2)
+                                                                    : alpha('#4CAF50', 0.2),
+                                                                color: colmeia.temperatura_atual > 35 
+                                                                    ? '#F44336' 
+                                                                    : colmeia.temperatura_atual < 20 
+                                                                    ? '#2196F3'
+                                                                    : '#4CAF50',
+                                                            }}
+                                                        />
+                                                    )}
+                                                    {colmeia.nivel_ruido && (
+                                                        <Chip
+                                                            icon={<VolumeUpIcon />}
+                                                            label={`${parseFloat(colmeia.nivel_ruido).toFixed(1)} dB`}
+                                                            size="small"
+                                                            sx={{
+                                                                height: 24,
+                                                                fontSize: '0.7rem',
+                                                                backgroundColor: alpha('#FF9800', 0.2),
+                                                                color: '#FF9800',
+                                                            }}
+                                                        />
+                                                    )}
+                                                    {colmeia.luminosidade && (
+                                                        <Chip
+                                                            icon={<LightModeIcon />}
+                                                            label={`${parseFloat(colmeia.luminosidade).toFixed(0)} lux`}
+                                                            size="small"
+                                                            sx={{
+                                                                height: 24,
+                                                                fontSize: '0.7rem',
+                                                                backgroundColor: alpha('#FFC107', 0.2),
+                                                                color: '#FFC107',
+                                                            }}
+                                                        />
+                                                    )}
+                                                    {colmeia.data_ultima_leitura_sensor && (
+                                                        <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5 }}>
+                                                            {new Date(colmeia.data_ultima_leitura_sensor).toLocaleString('pt-BR')}
+                                                        </Typography>
+                                                    )}
+                                                </Box>
+                                            ) : (
+                                                <Typography variant="body2" color="text.secondary">
+                                                    Sem sensor
+                                                </Typography>
+                                            )}
                                         </TableCell>
                                         <TableCell>
                                             {colmeia.data_ultima_inspecao
@@ -631,6 +699,135 @@ export default function Colmeias() {
                                         : 'Nunca inspecionada'}
                                 </Typography>
                             </Grid>
+                            
+                            {/* Seção de Sensores IoT */}
+                            {detailDialog.colmeia.sensor_iot_ativo && (
+                                <>
+                                    <Grid item xs={12}>
+                                        <Box
+                                            sx={{
+                                                mt: 2,
+                                                pt: 2,
+                                                borderTop: `2px solid ${alpha(theme.palette.primary.main, 0.2)}`,
+                                            }}
+                                        >
+                                            <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                                                <SensorsIcon sx={{ color: theme.palette.primary.main, mr: 1 }} />
+                                                <Typography variant="h6" sx={{ fontWeight: 700 }}>
+                                                    Sensores IoT
+                                                </Typography>
+                                                {detailDialog.colmeia.data_ultima_leitura_sensor && (
+                                                    <Chip
+                                                        icon={<AccessTimeIcon />}
+                                                        label={`Última leitura: ${new Date(detailDialog.colmeia.data_ultima_leitura_sensor).toLocaleString('pt-BR')}`}
+                                                        size="small"
+                                                        sx={{ ml: 2 }}
+                                                    />
+                                                )}
+                                            </Box>
+                                            <Grid container spacing={2}>
+                                                {detailDialog.colmeia.temperatura_atual && (
+                                                    <Grid item xs={12} sm={4}>
+                                                        <Paper
+                                                            sx={{
+                                                                p: 2,
+                                                                background: `linear-gradient(135deg, ${alpha('#F44336', 0.1)} 0%, ${alpha('#F44336', 0.05)} 100%)`,
+                                                                border: `2px solid ${alpha('#F44336', 0.3)}`,
+                                                                borderRadius: 2,
+                                                            }}
+                                                        >
+                                                            <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                                                                <ThermostatIcon sx={{ color: '#F44336', mr: 1 }} />
+                                                                <Typography variant="body2" color="text.secondary">
+                                                                    Temperatura
+                                                                </Typography>
+                                                            </Box>
+                                                            <Typography variant="h4" sx={{ fontWeight: 700, color: '#F44336' }}>
+                                                                {parseFloat(detailDialog.colmeia.temperatura_atual).toFixed(1)}°C
+                                                            </Typography>
+                                                            <Typography variant="caption" color="text.secondary">
+                                                                {detailDialog.colmeia.temperatura_atual > 35 
+                                                                    ? '⚠️ Alta' 
+                                                                    : detailDialog.colmeia.temperatura_atual < 20 
+                                                                    ? '⚠️ Baixa'
+                                                                    : '✓ Normal'}
+                                                            </Typography>
+                                                        </Paper>
+                                                    </Grid>
+                                                )}
+                                                {detailDialog.colmeia.nivel_ruido && (
+                                                    <Grid item xs={12} sm={4}>
+                                                        <Paper
+                                                            sx={{
+                                                                p: 2,
+                                                                background: `linear-gradient(135deg, ${alpha('#FF9800', 0.1)} 0%, ${alpha('#FF9800', 0.05)} 100%)`,
+                                                                border: `2px solid ${alpha('#FF9800', 0.3)}`,
+                                                                borderRadius: 2,
+                                                            }}
+                                                        >
+                                                            <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                                                                <VolumeUpIcon sx={{ color: '#FF9800', mr: 1 }} />
+                                                                <Typography variant="body2" color="text.secondary">
+                                                                    Nível de Ruído
+                                                                </Typography>
+                                                            </Box>
+                                                            <Typography variant="h4" sx={{ fontWeight: 700, color: '#FF9800' }}>
+                                                                {parseFloat(detailDialog.colmeia.nivel_ruido).toFixed(1)} dB
+                                                            </Typography>
+                                                            <Typography variant="caption" color="text.secondary">
+                                                                {detailDialog.colmeia.nivel_ruido > 60 
+                                                                    ? '⚠️ Alto' 
+                                                                    : detailDialog.colmeia.nivel_ruido < 30 
+                                                                    ? '⚠️ Baixo'
+                                                                    : '✓ Normal'}
+                                                            </Typography>
+                                                        </Paper>
+                                                    </Grid>
+                                                )}
+                                                {detailDialog.colmeia.luminosidade && (
+                                                    <Grid item xs={12} sm={4}>
+                                                        <Paper
+                                                            sx={{
+                                                                p: 2,
+                                                                background: `linear-gradient(135deg, ${alpha('#FFC107', 0.1)} 0%, ${alpha('#FFC107', 0.05)} 100%)`,
+                                                                border: `2px solid ${alpha('#FFC107', 0.3)}`,
+                                                                borderRadius: 2,
+                                                            }}
+                                                        >
+                                                            <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                                                                <LightModeIcon sx={{ color: '#FFC107', mr: 1 }} />
+                                                                <Typography variant="body2" color="text.secondary">
+                                                                    Luminosidade
+                                                                </Typography>
+                                                            </Box>
+                                                            <Typography variant="h4" sx={{ fontWeight: 700, color: '#FFC107' }}>
+                                                                {parseFloat(detailDialog.colmeia.luminosidade).toFixed(0)} lux
+                                                            </Typography>
+                                                            <Typography variant="caption" color="text.secondary">
+                                                                {detailDialog.colmeia.luminosidade > 1000 
+                                                                    ? '☀️ Muito claro' 
+                                                                    : detailDialog.colmeia.luminosidade < 100 
+                                                                    ? '🌙 Escuro'
+                                                                    : '✓ Normal'}
+                                                            </Typography>
+                                                        </Paper>
+                                                    </Grid>
+                                                )}
+                                                {!detailDialog.colmeia.temperatura_atual && 
+                                                 !detailDialog.colmeia.nivel_ruido && 
+                                                 !detailDialog.colmeia.luminosidade && (
+                                                    <Grid item xs={12}>
+                                                        <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'center', py: 2 }}>
+                                                            Nenhuma leitura de sensor disponível ainda
+                                                        </Typography>
+                                                    </Grid>
+                                                )}
+                                            </Grid>
+                                        </Box>
+                                    </Grid>
+                                </>
+                            )}
+                            
                             {detailDialog.colmeia.observacoes && (
                                 <Grid item xs={12}>
                                     <Typography variant="body2" color="text.secondary">Observações</Typography>

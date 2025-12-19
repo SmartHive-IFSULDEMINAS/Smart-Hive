@@ -2,7 +2,7 @@ from rest_framework import serializers
 from django.contrib.auth import get_user_model
 from .models import (
     EspecieAbelha, Apiario, Colmeia, Inspecao, ProducaoMel, Tratamento,
-    Custo, Receita, Fornecedor, Equipamento, Notificacao
+    Custo, Receita, Fornecedor, Equipamento, Notificacao, LeituraSensor
 )
 
 User = get_user_model()
@@ -68,8 +68,12 @@ class ColmeiaSerializer(serializers.ModelSerializer):
             'data_instalacao', 'idade_rainha_meses', 'data_ultima_troca_rainha',
             'numero_quadros', 'peso_estimado_kg', 'observacoes', 'foto',
             'data_ultima_inspecao', 'producao_total',
+            # Campos IoT
+            'sensor_iot_ativo', 'temperatura_atual', 'nivel_ruido', 'luminosidade',
+            'data_ultima_leitura_sensor', 'token_iot',
             'created_at', 'updated_at'
         ]
+        read_only_fields = ['token_iot', 'data_ultima_leitura_sensor']
 
 
 class ColmeiaListSerializer(serializers.ModelSerializer):
@@ -83,7 +87,10 @@ class ColmeiaListSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'identificador', 'nome', 'apiario', 'apiario_nome',
             'especie_nome', 'status', 'status_display',
-            'quantidade_abelhas_estimada', 'data_ultima_inspecao'
+            'quantidade_abelhas_estimada', 'data_ultima_inspecao',
+            # Campos IoT
+            'sensor_iot_ativo', 'temperatura_atual', 'nivel_ruido', 
+            'luminosidade', 'data_ultima_leitura_sensor'
         ]
 
 
@@ -320,3 +327,30 @@ class NotificacaoSerializer(serializers.ModelSerializer):
             'prioridade', 'prioridade_display', 'usuario', 'lida', 'data_leitura',
             'colmeia', 'colmeia_identificador', 'apiario', 'apiario_nome', 'created_at'
         ]
+
+
+class LeituraSensorSerializer(serializers.ModelSerializer):
+    colmeia_identificador = serializers.CharField(source='colmeia.identificador', read_only=True)
+    apiario_nome = serializers.CharField(source='colmeia.apiario.nome', read_only=True)
+    
+    class Meta:
+        model = LeituraSensor
+        fields = [
+            'id', 'colmeia', 'colmeia_identificador', 'apiario_nome',
+            'temperatura', 'nivel_ruido', 'luminosidade',
+            'timestamp', 'dispositivo_id', 'bateria_nivel', 'sinal_rssi'
+        ]
+        read_only_fields = ['timestamp']
+
+
+class LeituraSensorListSerializer(serializers.ModelSerializer):
+    """Serializer simplificado para listagens"""
+    colmeia_identificador = serializers.CharField(source='colmeia.identificador', read_only=True)
+    
+    class Meta:
+        model = LeituraSensor
+        fields = [
+            'id', 'colmeia_identificador', 'temperatura', 'nivel_ruido', 
+            'luminosidade', 'timestamp', 'dispositivo_id'
+        ]
+

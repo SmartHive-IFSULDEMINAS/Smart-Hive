@@ -243,6 +243,52 @@ class Colmeia(models.Model):
     observacoes = models.TextField(blank=True, verbose_name='Observações')
     foto = models.ImageField(upload_to='colmeias/', blank=True, null=True, verbose_name='Foto')
     data_ultima_inspecao = models.DateField(null=True, blank=True, verbose_name='Data Última Inspeção')
+    
+    # Campos de Sensores IoT
+    temperatura_atual = models.DecimalField(
+        max_digits=5,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name='Temperatura Atual (°C)',
+        help_text='Última leitura de temperatura do sensor IoT'
+    )
+    nivel_ruido = models.DecimalField(
+        max_digits=6,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name='Nível de Ruído (dB)',
+        help_text='Última leitura de ruído do sensor IoT'
+    )
+    luminosidade = models.DecimalField(
+        max_digits=6,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name='Luminosidade (lux)',
+        help_text='Última leitura de luminosidade do sensor IoT'
+    )
+    data_ultima_leitura_sensor = models.DateTimeField(
+        null=True,
+        blank=True,
+        verbose_name='Data Última Leitura do Sensor',
+        help_text='Timestamp da última atualização dos dados do sensor'
+    )
+    sensor_iot_ativo = models.BooleanField(
+        default=False,
+        verbose_name='Sensor IoT Ativo',
+        help_text='Indica se a colmeia possui sensor IoT conectado'
+    )
+    token_iot = models.CharField(
+        max_length=64,
+        blank=True,
+        unique=True,
+        null=True,
+        verbose_name='Token IoT',
+        help_text='Token único para autenticação do dispositivo IoT'
+    )
+    
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     
@@ -258,6 +304,14 @@ class Colmeia(models.Model):
     def producao_total(self):
         total = self.producoes.aggregate(total=models.Sum('quantidade_kg'))['total']
         return total or 0
+    
+    def gerar_token_iot(self):
+        """Gera um token único para autenticação IoT"""
+        import secrets
+        if not self.token_iot:
+            self.token_iot = secrets.token_urlsafe(32)
+            self.save(update_fields=['token_iot'])
+        return self.token_iot
 
 
 class Inspecao(models.Model):
@@ -794,3 +848,71 @@ class Notificacao(models.Model):
     
     def __str__(self):
         return f"{self.titulo} - {self.usuario.username}"
+
+
+class LeituraSensor(models.Model):
+    """Modelo para histórico de leituras dos sensores IoT"""
+    
+    colmeia = models.ForeignKey(
+        Colmeia,
+        on_delete=models.CASCADE,
+        related_name='leituras_sensor',
+        verbose_name='Colmeia'
+    )
+    temperatura = models.DecimalField(
+        max_digits=5,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name='Temperatura (°C)'
+    )
+    nivel_ruido = models.DecimalField(
+        max_digits=6,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name='Nível de Ruído (dB)'
+    )
+    luminosidade = models.DecimalField(
+        max_digits=6,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name='Luminosidade (lux)'
+    )
+    timestamp = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name='Timestamp',
+        db_index=True
+    )
+    dispositivo_id = models.CharField(
+        max_length=100,
+        blank=True,
+        verbose_name='ID do Dispositivo',
+        help_text='Identificador do dispositivo IoT que enviou a leitura'
+    )
+    bateria_nivel = models.IntegerField(
+        null=True,
+        blank=True,
+        validators=[MinValueValidator(0), MaxValueValidator(100)],
+        verbose_name='Nível de Bateria (%)',
+        help_text='Nível de bateria do dispositivo IoT'
+    )
+    sinal_rssi = models.IntegerField(
+        null=True,
+        blank=True,
+        verbose_name='Sinal RSSI (dBm)',
+        help_text='Força do sinal Wi-Fi/Bluetooth'
+    )
+    
+    class Meta:
+        verbose_name = 'Leitura de Sensor'
+        verbose_name_plural = 'Leituras de Sensores'
+        ordering = ['-timestamp']
+        indexes = [
+            models.Index(fields=['-timestamp', 'colmeia']),
+            models.Index(fields=['colmeia', '-timestamp']),
+        ]
+    
+    def __str__(self):
+        return f"Leitura {self.colmeia.identificador} - {self.timestamp.strftime('%d/%m/%Y %H:%M')}"
