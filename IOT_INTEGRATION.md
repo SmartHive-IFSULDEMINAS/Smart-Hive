@@ -12,6 +12,9 @@ O Smart-Hive suporta integração simples com sensores IoT para monitoramento em
 - **temperatura_atual**: Temperatura atual em °C
 - **nivel_ruido**: Nível de ruído em dB
 - **luminosidade**: Luminosidade em lux
+- **umidade**: Umidade relativa em %
+- **pressao**: Pressão atmosférica em hPa
+- **peso**: Peso da colmeia em kg
 - **data_ultima_leitura_sensor**: Timestamp da última leitura
 - **sensor_iot_ativo**: Indica se a colmeia possui sensor IoT ativo (ativado automaticamente ao receber dados)
 
@@ -19,10 +22,20 @@ O Smart-Hive suporta integração simples com sensores IoT para monitoramento em
 - **temperatura**: Temperatura em °C
 - **nivel_ruido**: Nível de ruído em dB
 - **luminosidade**: Luminosidade em lux
+- **umidade**: Umidade relativa em %
+- **pressao**: Pressão atmosférica em hPa
+- **peso**: Peso da colmeia em kg
 - **timestamp**: Data e hora da leitura
 - **dispositivo_id**: ID do dispositivo IoT (opcional)
 - **bateria_nivel**: Nível de bateria em % (opcional)
 - **sinal_rssi**: Força do sinal em dBm (opcional)
+
+### Modelo Apiario
+- **temperatura_atual**: Temperatura atual do apiário em °C
+- **latitude**: Latitude GPS (coordenada)
+- **longitude**: Longitude GPS (coordenada)
+- **data_ultima_leitura_sensor**: Timestamp da última leitura
+- **sensor_iot_ativo**: Indica se o apiário possui sensor IoT ativo
 
 ---
 
@@ -44,6 +57,9 @@ Content-Type: application/json
     "temperatura": 32.5,
     "nivel_ruido": 45.2,
     "luminosidade": 850.0,
+    "umidade": 65.5,
+    "pressao": 1013.25,
+    "peso": 45.8,
     "dispositivo_id": "ESP32-001",
     "bateria_nivel": 85,
     "sinal_rssi": -65
@@ -55,11 +71,14 @@ Content-Type: application/json
 - `temperatura` (opcional): Temperatura em °C
 - `nivel_ruido` (opcional): Nível de ruído em dB
 - `luminosidade` (opcional): Luminosidade em lux
+- `umidade` (opcional): Umidade relativa em %
+- `pressao` (opcional): Pressão atmosférica em hPa
+- `peso` (opcional): Peso da colmeia em kg
 - `dispositivo_id` (opcional): ID do dispositivo
 - `bateria_nivel` (opcional): Nível de bateria (0-100)
 - `sinal_rssi` (opcional): Força do sinal em dBm
 
-**Nota:** Pelo menos um dos campos de sensor (temperatura, nivel_ruido ou luminosidade) deve ser enviado.
+**Nota:** Pelo menos um dos campos de sensor deve ser enviado.
 
 **Resposta de Sucesso (200):**
 ```json
@@ -85,6 +104,49 @@ Content-Type: application/json
 {
     "success": false,
     "error": "Colmeia com identificador \"CLM-999\" não encontrada"
+}
+```
+
+---
+
+## 📤 Enviando Dados dos Sensores do Apiário
+
+### Endpoint: `POST /api/iot/apiario/dados/`
+
+**URL:** `http://localhost:8000/api/iot/apiario/dados/`
+
+**Headers:**
+```
+Content-Type: application/json
+```
+
+**Body (JSON):**
+```json
+{
+    "apiario_id": 1,
+    "temperatura": 28.5,
+    "latitude": -23.5505,
+    "longitude": -46.6333
+}
+```
+
+**Campos:**
+- `apiario_id` (obrigatório se não usar apiario_nome): ID do apiário
+- `apiario_nome` (obrigatório se não usar apiario_id): Nome do apiário
+- `temperatura` (opcional): Temperatura do apiário em °C
+- `latitude` (opcional): Latitude GPS
+- `longitude` (opcional): Longitude GPS
+
+**Nota:** Pelo menos um dos campos (temperatura, latitude ou longitude) deve ser enviado.
+
+**Resposta de Sucesso (200):**
+```json
+{
+    "success": true,
+    "message": "Dados do apiário recebidos e salvos com sucesso",
+    "apiario": "Apiário Principal",
+    "apiario_id": 1,
+    "timestamp": "2024-01-15T10:30:00Z"
 }
 ```
 
