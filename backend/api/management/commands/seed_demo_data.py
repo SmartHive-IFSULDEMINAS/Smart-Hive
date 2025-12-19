@@ -5,7 +5,13 @@ import random
 from datetime import date, timedelta, datetime
 from decimal import Decimal
 from django.core.management.base import BaseCommand
-from api.models import EspecieAbelha, Apiario, Colmeia, Inspecao, ProducaoMel, Tratamento
+from django.contrib.auth import get_user_model
+from api.models import (
+    EspecieAbelha, Apiario, Colmeia, Inspecao, ProducaoMel, Tratamento,
+    Custo, Receita, Fornecedor, Equipamento, Notificacao
+)
+
+User = get_user_model()
 
 
 class Command(BaseCommand):
@@ -16,12 +22,49 @@ class Command(BaseCommand):
         
         # Limpar dados existentes (opcional)
         self.stdout.write('Limpando dados existentes...')
+        Notificacao.objects.all().delete()
+        Equipamento.objects.all().delete()
+        Receita.objects.all().delete()
+        Custo.objects.all().delete()
+        Fornecedor.objects.all().delete()
         Tratamento.objects.all().delete()
         ProducaoMel.objects.all().delete()
         Inspecao.objects.all().delete()
         Colmeia.objects.all().delete()
         Apiario.objects.all().delete()
         EspecieAbelha.objects.all().delete()
+        
+        # Criar usuários de exemplo
+        self.stdout.write('Criando usuários...')
+        dono = User.objects.create_user(
+            username='dono',
+            email='dono@smarthive.com',
+            password='admin123',
+            role='dono',
+            first_name='João',
+            last_name='Silva',
+            telefone='(11) 99999-0001',
+            is_staff=True
+        )
+        gestor = User.objects.create_user(
+            username='gestor',
+            email='gestor@smarthive.com',
+            password='admin123',
+            role='gestor',
+            first_name='Maria',
+            last_name='Santos',
+            telefone='(11) 99999-0002'
+        )
+        apicultor = User.objects.create_user(
+            username='apicultor',
+            email='apicultor@smarthive.com',
+            password='admin123',
+            role='apicultor',
+            first_name='Pedro',
+            last_name='Oliveira',
+            telefone='(11) 99999-0003'
+        )
+        self.stdout.write(f'  [OK] 3 usuários criados')
         
         # Criar Especies de Abelhas
         self.stdout.write('Criando especies de abelhas...')
@@ -92,10 +135,12 @@ class Command(BaseCommand):
                 latitude=Decimal('-23.5505'),
                 longitude=Decimal('-46.6333'),
                 descricao='Apiario principal da fazenda, proximo ao pomar de laranjeiras.',
-                responsavel='Joao Silva',
+                responsavel=gestor,
+                responsavel_nome='Maria Santos',
                 telefone_contato='(11) 99999-1234',
                 data_criacao=date(2020, 3, 15),
                 ativo=True,
+                proprietario=dono,
                 observacoes='Acesso pela estrada principal, porteira verde.'
             ),
             Apiario.objects.create(
@@ -104,10 +149,12 @@ class Command(BaseCommand):
                 latitude=Decimal('-23.5600'),
                 longitude=Decimal('-46.6400'),
                 descricao='Apiario em area de florada silvestre, excelente para mel multifloral.',
-                responsavel='Maria Santos',
+                responsavel=apicultor,
+                responsavel_nome='Pedro Oliveira',
                 telefone_contato='(11) 99999-5678',
                 data_criacao=date(2021, 6, 20),
                 ativo=True,
+                proprietario=dono,
                 observacoes='Area com sombra natural. Levar agua extra.'
             ),
             Apiario.objects.create(
@@ -116,10 +163,12 @@ class Command(BaseCommand):
                 latitude=Decimal('-23.5300'),
                 longitude=Decimal('-46.6100'),
                 descricao='Proximo a plantacao de eucaliptos. Mel monofloral.',
-                responsavel='Pedro Oliveira',
+                responsavel=apicultor,
+                responsavel_nome='Pedro Oliveira',
                 telefone_contato='(11) 99999-9012',
                 data_criacao=date(2022, 1, 10),
                 ativo=True,
+                proprietario=dono,
                 observacoes='Melhor producao entre julho e setembro.'
             ),
             Apiario.objects.create(
@@ -128,10 +177,12 @@ class Command(BaseCommand):
                 latitude=Decimal('-23.5700'),
                 longitude=Decimal('-46.6500'),
                 descricao='Area de mata nativa com abelhas sem ferrao.',
-                responsavel='Ana Costa',
+                responsavel=gestor,
+                responsavel_nome='Maria Santos',
                 telefone_contato='(11) 99999-3456',
                 data_criacao=date(2023, 4, 5),
                 ativo=True,
+                proprietario=dono,
                 observacoes='Apenas meliponineos. Area sensivel.'
             ),
             Apiario.objects.create(
@@ -140,10 +191,12 @@ class Command(BaseCommand):
                 latitude=Decimal('-23.5400'),
                 longitude=Decimal('-46.6200'),
                 descricao='Apiario para testes e reproducao de rainhas.',
-                responsavel='Dr. Carlos Mendes',
+                responsavel=gestor,
+                responsavel_nome='Maria Santos',
                 telefone_contato='(11) 99999-7890',
                 data_criacao=date(2019, 8, 1),
                 ativo=False,
+                proprietario=dono,
                 observacoes='Temporariamente inativo para manutencao.'
             ),
         ]
@@ -275,17 +328,171 @@ class Command(BaseCommand):
                 tratamentos_criados += 1
         
         self.stdout.write(f'  [OK] {tratamentos_criados} tratamentos criados')
+        
+        # Criar Fornecedores
+        self.stdout.write('Criando fornecedores...')
+        fornecedores = [
+            Fornecedor.objects.create(
+                nome='Apicultura Brasil Ltda',
+                tipo_fornecedor='equipamento',
+                cnpj='12.345.678/0001-90',
+                telefone='(11) 3333-1111',
+                email='contato@apicultbrasil.com.br',
+                endereco='Rua das Abelhas, 123 - São Paulo/SP',
+                contato='Carlos Mendes',
+                ativo=True
+            ),
+            Fornecedor.objects.create(
+                nome='Mel & Cia',
+                tipo_fornecedor='medicamento',
+                cnpj='98.765.432/0001-10',
+                telefone='(11) 3333-2222',
+                email='vendas@melcia.com.br',
+                endereco='Av. Apicultura, 456 - Campinas/SP',
+                contato='Ana Paula',
+                ativo=True
+            ),
+            Fornecedor.objects.create(
+                nome='Equipamentos Apícolas Silva',
+                tipo_fornecedor='equipamento',
+                telefone='(11) 3333-3333',
+                email='silva@equipapi.com.br',
+                endereco='Rodovia dos Apiários, Km 5 - Piracicaba/SP',
+                contato='José Silva',
+                ativo=True
+            ),
+        ]
+        self.stdout.write(f'  [OK] {len(fornecedores)} fornecedores criados')
+        
+        # Criar Equipamentos
+        self.stdout.write('Criando equipamentos...')
+        equipamentos = []
+        tipos_equip = ['fumegador', 'extrator', 'vestimenta', 'ferramenta', 'caixa']
+        status_equip = ['disponivel', 'disponivel', 'em_uso', 'manutencao']
+        marcas = ['Apisul', 'Mondragon', 'Ferrari', 'Mann Lake']
+        
+        for i, apiario in enumerate(apiarios[:3]):
+            for j in range(random.randint(3, 6)):
+                equip = Equipamento.objects.create(
+                    nome=f'Equipamento {i*5+j+1}',
+                    tipo_equipamento=random.choice(tipos_equip),
+                    marca=random.choice(marcas),
+                    modelo=f'Modelo {random.randint(100, 999)}',
+                    data_compra=date.today() - timedelta(days=random.randint(30, 730)),
+                    valor_compra=Decimal(str(round(random.uniform(50.0, 500.0), 2))),
+                    fornecedor=random.choice(fornecedores),
+                    status=random.choice(status_equip),
+                    apiario=apiario if random.random() > 0.3 else None,
+                    observacoes='Equipamento em bom estado.'
+                )
+                equipamentos.append(equip)
+        self.stdout.write(f'  [OK] {len(equipamentos)} equipamentos criados')
+        
+        # Criar Custos
+        self.stdout.write('Criando custos...')
+        tipos_custo = ['equipamento', 'medicamento', 'alimentacao', 'manutencao', 'transporte']
+        custos_criados = 0
+        for i in range(30):
+            apiario_custo = random.choice(apiarios[:4]) if random.random() > 0.3 else None
+            colmeia_custo = random.choice([c for c in colmeias if c.apiario == apiario_custo]) if apiario_custo and random.random() > 0.5 else None
+            
+            Custo.objects.create(
+                descricao=f'Custo {tipos_custo[random.randint(0, len(tipos_custo)-1)]} - {i+1}',
+                tipo_custo=random.choice(tipos_custo),
+                valor=Decimal(str(round(random.uniform(20.0, 300.0), 2))),
+                data=date.today() - timedelta(days=random.randint(1, 180)),
+                apiario=apiario_custo,
+                colmeia=colmeia_custo,
+                fornecedor=random.choice(fornecedores).nome if random.random() > 0.5 else '',
+                nota_fiscal=f'NF-{random.randint(1000, 9999)}' if random.random() > 0.3 else '',
+                created_by=random.choice([dono, gestor, apicultor]),
+                observacoes='Custo operacional normal.'
+            )
+            custos_criados += 1
+        self.stdout.write(f'  [OK] {custos_criados} custos criados')
+        
+        # Criar Receitas
+        self.stdout.write('Criando receitas...')
+        tipos_receita = ['venda_mel', 'venda_propolis', 'venda_cera', 'servico_polinizacao']
+        clientes = ['Mercado Central', 'Loja do Mel Premium', 'Distribuidora ABC', 'Cliente Final']
+        receitas_criadas = 0
+        
+        for producao in ProducaoMel.objects.all()[:20]:
+            if random.random() > 0.4:  # 60% das produções geram receita
+                preco_kg = Decimal(str(round(random.uniform(25.0, 80.0), 2)))
+                quantidade = producao.quantidade_kg
+                valor_total = preco_kg * quantidade
+                
+                Receita.objects.create(
+                    descricao=f'Venda de {producao.get_tipo_mel_display()}',
+                    tipo_receita='venda_mel',
+                    valor=valor_total,
+                    data=producao.data_colheita + timedelta(days=random.randint(1, 30)),
+                    cliente=random.choice(clientes),
+                    quantidade_kg=quantidade,
+                    preco_unitario=preco_kg,
+                    producao=producao,
+                    created_by=random.choice([dono, gestor]),
+                    observacoes='Venda realizada com sucesso.'
+                )
+                receitas_criadas += 1
+        
+        # Receitas adicionais
+        for i in range(10):
+            Receita.objects.create(
+                descricao=f'Receita adicional {i+1}',
+                tipo_receita=random.choice(tipos_receita),
+                valor=Decimal(str(round(random.uniform(100.0, 2000.0), 2))),
+                data=date.today() - timedelta(days=random.randint(1, 90)),
+                cliente=random.choice(clientes),
+                created_by=random.choice([dono, gestor]),
+                observacoes='Receita registrada.'
+            )
+            receitas_criadas += 1
+        self.stdout.write(f'  [OK] {receitas_criadas} receitas criadas')
+        
+        # Criar Notificações
+        self.stdout.write('Criando notificacoes...')
+        usuarios_notif = [dono, gestor, apicultor]
+        tipos_notif = ['inspecao', 'tratamento', 'producao', 'alerta_saude', 'manutencao']
+        prioridades = ['baixa', 'media', 'media', 'alta']
+        
+        notificacoes_criadas = 0
+        for usuario in usuarios_notif:
+            for i in range(random.randint(3, 8)):
+                colmeia_notif = random.choice(colmeias) if random.random() > 0.3 else None
+                apiario_notif = colmeia_notif.apiario if colmeia_notif else random.choice(apiarios[:4])
+                
+                Notificacao.objects.create(
+                    titulo=f'Notificação {tipos_notif[random.randint(0, len(tipos_notif)-1)]} - {i+1}',
+                    mensagem='Ação necessária para esta colmeia/apiário.',
+                    tipo=random.choice(tipos_notif),
+                    prioridade=random.choice(prioridades),
+                    usuario=usuario,
+                    lida=random.random() > 0.4,
+                    colmeia=colmeia_notif,
+                    apiario=apiario_notif
+                )
+                notificacoes_criadas += 1
+        self.stdout.write(f'  [OK] {notificacoes_criadas} notificacoes criadas')
 
         # Resumo
         self.stdout.write('')
         self.stdout.write(self.style.SUCCESS('=' * 50))
         self.stdout.write(self.style.SUCCESS('Dados de demonstracao criados com sucesso!'))
         self.stdout.write(self.style.SUCCESS('=' * 50))
+        self.stdout.write(f'  Usuarios: 3 (dono/admin123, gestor/admin123, apicultor/admin123)')
         self.stdout.write(f'  Apiarios: {len(apiarios)}')
         self.stdout.write(f'  Especies: {len(especies)}')
         self.stdout.write(f'  Colmeias: {len(colmeias)}')
         self.stdout.write(f'  Inspecoes: {inspecoes_criadas}')
         self.stdout.write(f'  Producoes: {producoes_criadas}')
         self.stdout.write(f'  Tratamentos: {tratamentos_criados}')
+        self.stdout.write(f'  Fornecedores: {len(fornecedores)}')
+        self.stdout.write(f'  Equipamentos: {len(equipamentos)}')
+        self.stdout.write(f'  Custos: {custos_criados}')
+        self.stdout.write(f'  Receitas: {receitas_criadas}')
+        self.stdout.write(f'  Notificacoes: {notificacoes_criadas}')
         self.stdout.write('')
         self.stdout.write(self.style.WARNING('Para acessar: http://localhost:5173'))
+        self.stdout.write(self.style.WARNING('Usuários de teste: dono/admin123, gestor/admin123, apicultor/admin123'))

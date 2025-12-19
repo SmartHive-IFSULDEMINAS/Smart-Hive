@@ -1,5 +1,68 @@
 from django.db import models
 from django.core.validators import MinValueValidator, MaxValueValidator
+from django.contrib.auth.models import AbstractUser
+from django.utils.translation import gettext_lazy as _
+
+
+class Usuario(AbstractUser):
+    """Modelo de usuário customizado com roles"""
+    
+    ROLE_CHOICES = [
+        ('dono', 'Dono/Proprietário'),
+        ('gestor', 'Gestor'),
+        ('apicultor', 'Apicultor'),
+    ]
+    
+    role = models.CharField(
+        max_length=20,
+        choices=ROLE_CHOICES,
+        default='apicultor',
+        verbose_name='Papel/Função'
+    )
+    telefone = models.CharField(max_length=20, blank=True, verbose_name='Telefone')
+    cpf = models.CharField(max_length=14, blank=True, verbose_name='CPF')
+    data_nascimento = models.DateField(null=True, blank=True, verbose_name='Data de Nascimento')
+    endereco = models.TextField(blank=True, verbose_name='Endereço')
+    foto = models.ImageField(upload_to='usuarios/', blank=True, null=True, verbose_name='Foto')
+    ativo = models.BooleanField(default=True, verbose_name='Ativo')
+    data_cadastro = models.DateTimeField(auto_now_add=True, verbose_name='Data de Cadastro')
+    ultimo_acesso = models.DateTimeField(null=True, blank=True, verbose_name='Último Acesso')
+    
+    class Meta:
+        verbose_name = 'Usuário'
+        verbose_name_plural = 'Usuários'
+        ordering = ['username']
+    
+    def __str__(self):
+        return f"{self.username} ({self.get_role_display()})"
+    
+    @property
+    def is_dono(self):
+        return self.role == 'dono'
+    
+    @property
+    def is_gestor(self):
+        return self.role == 'gestor'
+    
+    @property
+    def is_apicultor(self):
+        return self.role == 'apicultor'
+    
+    def can_manage_users(self):
+        """Pode gerenciar usuários"""
+        return self.role in ['dono', 'gestor']
+    
+    def can_manage_apiarios(self):
+        """Pode criar/editar/deletar apiários"""
+        return self.role in ['dono', 'gestor']
+    
+    def can_view_reports(self):
+        """Pode visualizar relatórios financeiros"""
+        return self.role in ['dono', 'gestor']
+    
+    def can_edit_all(self):
+        """Pode editar qualquer registro"""
+        return self.role == 'dono'
 
 
 class EspecieAbelha(models.Model):
@@ -63,12 +126,28 @@ class Apiario(models.Model):
         verbose_name='Longitude'
     )
     descricao = models.TextField(blank=True, verbose_name='Descrição')
-    responsavel = models.CharField(max_length=100, blank=True, verbose_name='Responsável')
+    responsavel = models.ForeignKey(
+        Usuario,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='apiarios_responsavel',
+        verbose_name='Responsável'
+    )
+    responsavel_nome = models.CharField(max_length=100, blank=True, verbose_name='Nome do Responsável (Legado)')
     telefone_contato = models.CharField(max_length=20, blank=True, verbose_name='Telefone de Contato')
     data_criacao = models.DateField(verbose_name='Data de Criação')
     ativo = models.BooleanField(default=True, verbose_name='Ativo')
     foto = models.ImageField(upload_to='apiarios/', blank=True, null=True, verbose_name='Foto')
     observacoes = models.TextField(blank=True, verbose_name='Observações')
+    proprietario = models.ForeignKey(
+        Usuario,
+        on_delete=models.CASCADE,
+        related_name='apiarios_proprietario',
+        verbose_name='Proprietário',
+        null=True,
+        blank=True
+    )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     
@@ -409,3 +488,309 @@ class Tratamento(models.Model):
         if self.data_fim:
             return (self.data_fim - self.data_inicio).days
         return None
+
+
+class Custo(models.Model):
+    """Modelo para registro de custos"""
+    
+    TIPO_CUSTO_CHOICES = [
+        ('equipamento', 'Equipamento'),
+        ('medicamento', 'Medicamento'),
+        ('alimentacao', 'Alimentação'),
+        ('manutencao', 'Manutenção'),
+        ('transporte', 'Transporte'),
+        ('energia', 'Energia'),
+        ('agua', 'Água'),
+        ('outro', 'Outro'),
+    ]
+    
+    descricao = models.CharField(max_length=200, verbose_name='Descrição')
+    tipo_custo = models.CharField(
+        max_length=30,
+        choices=TIPO_CUSTO_CHOICES,
+        verbose_name='Tipo de Custo'
+    )
+    valor = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        validators=[MinValueValidator(0)],
+        verbose_name='Valor (R$)'
+    )
+    data = models.DateField(verbose_name='Data')
+    apiario = models.ForeignKey(
+        Apiario,
+        on_delete=models.CASCADE,
+        related_name='custos',
+        null=True,
+        blank=True,
+        verbose_name='Apiário'
+    )
+    colmeia = models.ForeignKey(
+        Colmeia,
+        on_delete=models.CASCADE,
+        related_name='custos',
+        null=True,
+        blank=True,
+        verbose_name='Colmeia'
+    )
+    fornecedor = models.CharField(max_length=200, blank=True, verbose_name='Fornecedor')
+    nota_fiscal = models.CharField(max_length=100, blank=True, verbose_name='Nota Fiscal')
+    observacoes = models.TextField(blank=True, verbose_name='Observações')
+    created_by = models.ForeignKey(
+        Usuario,
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name='custos_criados',
+        verbose_name='Criado por'
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        verbose_name = 'Custo'
+        verbose_name_plural = 'Custos'
+        ordering = ['-data']
+    
+    def __str__(self):
+        return f"{self.descricao} - R$ {self.valor} - {self.data.strftime('%d/%m/%Y')}"
+
+
+class Receita(models.Model):
+    """Modelo para registro de receitas"""
+    
+    TIPO_RECEITA_CHOICES = [
+        ('venda_mel', 'Venda de Mel'),
+        ('venda_propolis', 'Venda de Própolis'),
+        ('venda_cera', 'Venda de Cera'),
+        ('venda_abelhas', 'Venda de Abelhas'),
+        ('servico_polinizacao', 'Serviço de Polinização'),
+        ('outro', 'Outro'),
+    ]
+    
+    descricao = models.CharField(max_length=200, verbose_name='Descrição')
+    tipo_receita = models.CharField(
+        max_length=30,
+        choices=TIPO_RECEITA_CHOICES,
+        verbose_name='Tipo de Receita'
+    )
+    valor = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        validators=[MinValueValidator(0)],
+        verbose_name='Valor (R$)'
+    )
+    data = models.DateField(verbose_name='Data')
+    cliente = models.CharField(max_length=200, blank=True, verbose_name='Cliente')
+    quantidade_kg = models.DecimalField(
+        max_digits=8,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        validators=[MinValueValidator(0)],
+        verbose_name='Quantidade (kg)'
+    )
+    preco_unitario = models.DecimalField(
+        max_digits=8,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        validators=[MinValueValidator(0)],
+        verbose_name='Preço Unitário (R$/kg)'
+    )
+    producao = models.ForeignKey(
+        ProducaoMel,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='receitas',
+        verbose_name='Produção Relacionada'
+    )
+    observacoes = models.TextField(blank=True, verbose_name='Observações')
+    created_by = models.ForeignKey(
+        Usuario,
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name='receitas_criadas',
+        verbose_name='Criado por'
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        verbose_name = 'Receita'
+        verbose_name_plural = 'Receitas'
+        ordering = ['-data']
+    
+    def __str__(self):
+        return f"{self.descricao} - R$ {self.valor} - {self.data.strftime('%d/%m/%Y')}"
+
+
+class Fornecedor(models.Model):
+    """Modelo para fornecedores"""
+    
+    nome = models.CharField(max_length=200, verbose_name='Nome')
+    tipo_fornecedor = models.CharField(
+        max_length=50,
+        choices=[
+            ('equipamento', 'Equipamentos'),
+            ('medicamento', 'Medicamentos'),
+            ('alimentacao', 'Alimentação'),
+            ('outro', 'Outro'),
+        ],
+        verbose_name='Tipo'
+    )
+    cnpj = models.CharField(max_length=18, blank=True, verbose_name='CNPJ')
+    telefone = models.CharField(max_length=20, blank=True, verbose_name='Telefone')
+    email = models.EmailField(blank=True, verbose_name='E-mail')
+    endereco = models.TextField(blank=True, verbose_name='Endereço')
+    contato = models.CharField(max_length=100, blank=True, verbose_name='Pessoa de Contato')
+    observacoes = models.TextField(blank=True, verbose_name='Observações')
+    ativo = models.BooleanField(default=True, verbose_name='Ativo')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        verbose_name = 'Fornecedor'
+        verbose_name_plural = 'Fornecedores'
+        ordering = ['nome']
+    
+    def __str__(self):
+        return self.nome
+
+
+class Equipamento(models.Model):
+    """Modelo para equipamentos"""
+    
+    STATUS_CHOICES = [
+        ('disponivel', 'Disponível'),
+        ('em_uso', 'Em Uso'),
+        ('manutencao', 'Em Manutenção'),
+        ('danificado', 'Danificado'),
+        ('descartado', 'Descartado'),
+    ]
+    
+    nome = models.CharField(max_length=200, verbose_name='Nome/Descrição')
+    tipo_equipamento = models.CharField(
+        max_length=50,
+        choices=[
+            ('fumegador', 'Fumegador'),
+            ('extrator', 'Extrator de Mel'),
+            ('vestimenta', 'Vestimenta'),
+            ('ferramenta', 'Ferramenta'),
+            ('caixa', 'Caixa/Colmeia'),
+            ('outro', 'Outro'),
+        ],
+        verbose_name='Tipo'
+    )
+    marca = models.CharField(max_length=100, blank=True, verbose_name='Marca')
+    modelo = models.CharField(max_length=100, blank=True, verbose_name='Modelo')
+    numero_serie = models.CharField(max_length=100, blank=True, verbose_name='Número de Série')
+    data_compra = models.DateField(null=True, blank=True, verbose_name='Data de Compra')
+    valor_compra = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        validators=[MinValueValidator(0)],
+        verbose_name='Valor de Compra (R$)'
+    )
+    fornecedor = models.ForeignKey(
+        Fornecedor,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='equipamentos',
+        verbose_name='Fornecedor'
+    )
+    status = models.CharField(
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default='disponivel',
+        verbose_name='Status'
+    )
+    apiario = models.ForeignKey(
+        Apiario,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='equipamentos',
+        verbose_name='Apiário'
+    )
+    observacoes = models.TextField(blank=True, verbose_name='Observações')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        verbose_name = 'Equipamento'
+        verbose_name_plural = 'Equipamentos'
+        ordering = ['nome']
+    
+    def __str__(self):
+        return f"{self.nome} - {self.get_status_display()}"
+
+
+class Notificacao(models.Model):
+    """Modelo para notificações e alertas"""
+    
+    TIPO_CHOICES = [
+        ('inspecao', 'Inspeção Agendada'),
+        ('tratamento', 'Tratamento Necessário'),
+        ('producao', 'Colheita Disponível'),
+        ('alerta_saude', 'Alerta de Saúde'),
+        ('manutencao', 'Manutenção Necessária'),
+        ('outro', 'Outro'),
+    ]
+    
+    PRIORIDADE_CHOICES = [
+        ('baixa', 'Baixa'),
+        ('media', 'Média'),
+        ('alta', 'Alta'),
+        ('critica', 'Crítica'),
+    ]
+    
+    titulo = models.CharField(max_length=200, verbose_name='Título')
+    mensagem = models.TextField(verbose_name='Mensagem')
+    tipo = models.CharField(
+        max_length=20,
+        choices=TIPO_CHOICES,
+        verbose_name='Tipo'
+    )
+    prioridade = models.CharField(
+        max_length=20,
+        choices=PRIORIDADE_CHOICES,
+        default='media',
+        verbose_name='Prioridade'
+    )
+    usuario = models.ForeignKey(
+        Usuario,
+        on_delete=models.CASCADE,
+        related_name='notificacoes',
+        verbose_name='Usuário'
+    )
+    lida = models.BooleanField(default=False, verbose_name='Lida')
+    data_leitura = models.DateTimeField(null=True, blank=True, verbose_name='Data de Leitura')
+    colmeia = models.ForeignKey(
+        Colmeia,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name='notificacoes',
+        verbose_name='Colmeia'
+    )
+    apiario = models.ForeignKey(
+        Apiario,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name='notificacoes',
+        verbose_name='Apiário'
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        verbose_name = 'Notificação'
+        verbose_name_plural = 'Notificações'
+        ordering = ['-created_at']
+    
+    def __str__(self):
+        return f"{self.titulo} - {self.usuario.username}"

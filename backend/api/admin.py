@@ -1,5 +1,10 @@
 from django.contrib import admin
-from .models import EspecieAbelha, Apiario, Colmeia, Inspecao, ProducaoMel, Tratamento
+from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
+from .models import (
+    Usuario, EspecieAbelha, Apiario, Colmeia, Inspecao, 
+    ProducaoMel, Tratamento, Custo, Receita, Fornecedor, 
+    Equipamento, Notificacao
+)
 
 
 @admin.register(EspecieAbelha)
@@ -65,3 +70,63 @@ class TratamentoAdmin(admin.ModelAdmin):
     ordering = ['-data_inicio']
     date_hierarchy = 'data_inicio'
     raw_id_fields = ['colmeia']
+
+
+@admin.register(Usuario)
+class UsuarioAdmin(BaseUserAdmin):
+    list_display = ['username', 'email', 'role', 'ativo', 'is_staff', 'data_cadastro']
+    list_filter = ['role', 'ativo', 'is_staff', 'is_superuser']
+    fieldsets = BaseUserAdmin.fieldsets + (
+        ('Informações Adicionais', {
+            'fields': ('role', 'telefone', 'cpf', 'data_nascimento', 'endereco', 'foto', 'ativo', 'ultimo_acesso')
+        }),
+    )
+    add_fieldsets = BaseUserAdmin.add_fieldsets + (
+        ('Informações Adicionais', {
+            'fields': ('role', 'telefone', 'email', 'first_name', 'last_name')
+        }),
+    )
+
+
+@admin.register(Custo)
+class CustoAdmin(admin.ModelAdmin):
+    list_display = ['descricao', 'tipo_custo', 'valor', 'data', 'apiario', 'colmeia', 'created_by']
+    list_filter = ['tipo_custo', 'data']
+    search_fields = ['descricao', 'fornecedor']
+    ordering = ['-data']
+    date_hierarchy = 'data'
+    raw_id_fields = ['apiario', 'colmeia', 'created_by']
+
+
+@admin.register(Receita)
+class ReceitaAdmin(admin.ModelAdmin):
+    list_display = ['descricao', 'tipo_receita', 'valor', 'data', 'cliente', 'created_by']
+    list_filter = ['tipo_receita', 'data']
+    search_fields = ['descricao', 'cliente']
+    ordering = ['-data']
+    date_hierarchy = 'data'
+    raw_id_fields = ['producao', 'created_by']
+
+
+@admin.register(Fornecedor)
+class FornecedorAdmin(admin.ModelAdmin):
+    list_display = ['nome', 'tipo_fornecedor', 'telefone', 'email', 'ativo']
+    list_filter = ['tipo_fornecedor', 'ativo']
+    search_fields = ['nome', 'cnpj', 'email']
+
+
+@admin.register(Equipamento)
+class EquipamentoAdmin(admin.ModelAdmin):
+    list_display = ['nome', 'tipo_equipamento', 'marca', 'status', 'apiario', 'data_compra']
+    list_filter = ['tipo_equipamento', 'status', 'data_compra']
+    search_fields = ['nome', 'marca', 'modelo', 'numero_serie']
+    raw_id_fields = ['fornecedor', 'apiario']
+
+
+@admin.register(Notificacao)
+class NotificacaoAdmin(admin.ModelAdmin):
+    list_display = ['titulo', 'tipo', 'prioridade', 'usuario', 'lida', 'created_at']
+    list_filter = ['tipo', 'prioridade', 'lida', 'created_at']
+    search_fields = ['titulo', 'mensagem', 'usuario__username']
+    ordering = ['-created_at']
+    raw_id_fields = ['usuario', 'colmeia', 'apiario']

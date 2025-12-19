@@ -1,5 +1,11 @@
 from rest_framework import serializers
-from .models import EspecieAbelha, Apiario, Colmeia, Inspecao, ProducaoMel, Tratamento
+from django.contrib.auth import get_user_model
+from .models import (
+    EspecieAbelha, Apiario, Colmeia, Inspecao, ProducaoMel, Tratamento,
+    Custo, Receita, Fornecedor, Equipamento, Notificacao
+)
+
+User = get_user_model()
 
 
 class EspecieAbelhaSerializer(serializers.ModelSerializer):
@@ -203,3 +209,114 @@ class DashboardStatsSerializer(serializers.Serializer):
     colmeias_com_problemas = serializers.IntegerField()
     proximas_inspecoes = InspecaoListSerializer(many=True)
     ultimas_producoes = ProducaoMelListSerializer(many=True)
+
+
+# User Serializers
+class UsuarioSerializer(serializers.ModelSerializer):
+    role_display = serializers.CharField(source='get_role_display', read_only=True)
+    
+    class Meta:
+        model = User
+        fields = [
+            'id', 'username', 'email', 'first_name', 'last_name',
+            'role', 'role_display', 'telefone', 'cpf', 'data_nascimento',
+            'endereco', 'foto', 'ativo', 'is_staff', 'is_superuser',
+            'data_cadastro', 'ultimo_acesso'
+        ]
+        read_only_fields = ['id', 'data_cadastro', 'ultimo_acesso']
+
+
+class UsuarioListSerializer(serializers.ModelSerializer):
+    role_display = serializers.CharField(source='get_role_display', read_only=True)
+    
+    class Meta:
+        model = User
+        fields = ['id', 'username', 'email', 'first_name', 'last_name', 'role', 'role_display', 'ativo']
+
+
+# New Model Serializers
+class CustoSerializer(serializers.ModelSerializer):
+    tipo_custo_display = serializers.CharField(source='get_tipo_custo_display', read_only=True)
+    apiario_nome = serializers.CharField(source='apiario.nome', read_only=True, allow_null=True)
+    colmeia_identificador = serializers.CharField(source='colmeia.identificador', read_only=True, allow_null=True)
+    created_by_username = serializers.CharField(source='created_by.username', read_only=True, allow_null=True)
+    
+    class Meta:
+        model = Custo
+        fields = [
+            'id', 'descricao', 'tipo_custo', 'tipo_custo_display', 'valor', 'data',
+            'apiario', 'apiario_nome', 'colmeia', 'colmeia_identificador',
+            'fornecedor', 'nota_fiscal', 'observacoes', 'created_by', 'created_by_username',
+            'created_at', 'updated_at'
+        ]
+
+
+class CustoListSerializer(serializers.ModelSerializer):
+    tipo_custo_display = serializers.CharField(source='get_tipo_custo_display', read_only=True)
+    
+    class Meta:
+        model = Custo
+        fields = ['id', 'descricao', 'tipo_custo', 'tipo_custo_display', 'valor', 'data', 'apiario', 'colmeia']
+
+
+class ReceitaSerializer(serializers.ModelSerializer):
+    tipo_receita_display = serializers.CharField(source='get_tipo_receita_display', read_only=True)
+    created_by_username = serializers.CharField(source='created_by.username', read_only=True, allow_null=True)
+    
+    class Meta:
+        model = Receita
+        fields = [
+            'id', 'descricao', 'tipo_receita', 'tipo_receita_display', 'valor', 'data',
+            'cliente', 'quantidade_kg', 'preco_unitario', 'producao', 'observacoes',
+            'created_by', 'created_by_username', 'created_at', 'updated_at'
+        ]
+
+
+class ReceitaListSerializer(serializers.ModelSerializer):
+    tipo_receita_display = serializers.CharField(source='get_tipo_receita_display', read_only=True)
+    
+    class Meta:
+        model = Receita
+        fields = ['id', 'descricao', 'tipo_receita', 'tipo_receita_display', 'valor', 'data', 'cliente']
+
+
+class FornecedorSerializer(serializers.ModelSerializer):
+    tipo_fornecedor_display = serializers.CharField(source='get_tipo_fornecedor_display', read_only=True)
+    
+    class Meta:
+        model = Fornecedor
+        fields = [
+            'id', 'nome', 'tipo_fornecedor', 'tipo_fornecedor_display',
+            'cnpj', 'telefone', 'email', 'endereco', 'contato', 'observacoes',
+            'ativo', 'created_at', 'updated_at'
+        ]
+
+
+class EquipamentoSerializer(serializers.ModelSerializer):
+    tipo_equipamento_display = serializers.CharField(source='get_tipo_equipamento_display', read_only=True)
+    status_display = serializers.CharField(source='get_status_display', read_only=True)
+    apiario_nome = serializers.CharField(source='apiario.nome', read_only=True, allow_null=True)
+    
+    class Meta:
+        model = Equipamento
+        fields = [
+            'id', 'nome', 'tipo_equipamento', 'tipo_equipamento_display',
+            'marca', 'modelo', 'numero_serie', 'data_compra', 'valor_compra',
+            'fornecedor', 'status', 'status_display', 'apiario', 'apiario_nome',
+            'observacoes', 'created_at', 'updated_at'
+        ]
+
+
+class NotificacaoSerializer(serializers.ModelSerializer):
+    tipo_display = serializers.CharField(source='get_tipo_display', read_only=True)
+    prioridade_display = serializers.CharField(source='get_prioridade_display', read_only=True)
+    colmeia_identificador = serializers.CharField(source='colmeia.identificador', read_only=True, allow_null=True)
+    apiario_nome = serializers.CharField(source='apiario.nome', read_only=True, allow_null=True)
+    
+    class Meta:
+        model = Notificacao
+        fields = [
+            'id', 'titulo', 'mensagem', 'tipo', 'tipo_display',
+            'prioridade', 'prioridade_display', 'usuario', 'lida', 'data_leitura',
+            'colmeia', 'colmeia_identificador', 'apiario', 'apiario_nome', 'created_at'
+        ]

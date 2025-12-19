@@ -2,11 +2,16 @@ from rest_framework import viewsets, status, filters
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from django.db.models import Sum, Count, Q
+from rest_framework.permissions import IsAuthenticated
+from django.db.models import Sum, Count, Q, Avg, Max, Min
 from django.utils import timezone
 from datetime import timedelta
+from django.contrib.auth import get_user_model
 
-from .models import EspecieAbelha, Apiario, Colmeia, Inspecao, ProducaoMel, Tratamento
+from .models import (
+    EspecieAbelha, Apiario, Colmeia, Inspecao, ProducaoMel, Tratamento,
+    Custo, Receita, Fornecedor, Equipamento, Notificacao
+)
 from .serializers import (
     EspecieAbelhaSerializer,
     ApiarioSerializer, ApiarioListSerializer,
@@ -14,14 +19,22 @@ from .serializers import (
     InspecaoSerializer, InspecaoListSerializer,
     ProducaoMelSerializer, ProducaoMelListSerializer,
     TratamentoSerializer, TratamentoListSerializer,
-    DashboardStatsSerializer
+    DashboardStatsSerializer,
+    CustoSerializer, CustoListSerializer,
+    ReceitaSerializer, ReceitaListSerializer,
+    FornecedorSerializer,
+    EquipamentoSerializer,
+    NotificacaoSerializer
 )
+
+User = get_user_model()
 
 
 class EspecieAbelhaViewSet(viewsets.ModelViewSet):
     """ViewSet para espécies de abelhas"""
     queryset = EspecieAbelha.objects.all()
     serializer_class = EspecieAbelhaSerializer
+    permission_classes = [IsAuthenticated]
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
     search_fields = ['nome', 'nome_cientifico']
     ordering_fields = ['nome', 'nivel_agressividade', 'producao_media_anual_kg']
@@ -31,6 +44,7 @@ class EspecieAbelhaViewSet(viewsets.ModelViewSet):
 class ApiarioViewSet(viewsets.ModelViewSet):
     """ViewSet para apiários"""
     queryset = Apiario.objects.all()
+    permission_classes = [IsAuthenticated]
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
     search_fields = ['nome', 'localizacao', 'responsavel']
     ordering_fields = ['nome', 'data_criacao', 'ativo']
@@ -92,6 +106,7 @@ class ApiarioViewSet(viewsets.ModelViewSet):
 class ColmeiaViewSet(viewsets.ModelViewSet):
     """ViewSet para colmeias"""
     queryset = Colmeia.objects.select_related('apiario', 'especie').all()
+    permission_classes = [IsAuthenticated]
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
     search_fields = ['identificador', 'nome', 'apiario__nome']
     ordering_fields = ['identificador', 'status', 'data_instalacao', 'quantidade_abelhas_estimada']
@@ -166,6 +181,7 @@ class ColmeiaViewSet(viewsets.ModelViewSet):
 class InspecaoViewSet(viewsets.ModelViewSet):
     """ViewSet para inspeções"""
     queryset = Inspecao.objects.select_related('colmeia', 'colmeia__apiario').all()
+    permission_classes = [IsAuthenticated]
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
     search_fields = ['colmeia__identificador', 'inspetor', 'observacoes']
     ordering_fields = ['data', 'condicao_geral']
@@ -203,6 +219,7 @@ class InspecaoViewSet(viewsets.ModelViewSet):
 class ProducaoMelViewSet(viewsets.ModelViewSet):
     """ViewSet para produções de mel"""
     queryset = ProducaoMel.objects.select_related('colmeia', 'colmeia__apiario').all()
+    permission_classes = [IsAuthenticated]
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
     search_fields = ['colmeia__identificador']
     ordering_fields = ['data_colheita', 'quantidade_kg', 'qualidade']
@@ -275,6 +292,7 @@ class ProducaoMelViewSet(viewsets.ModelViewSet):
 class TratamentoViewSet(viewsets.ModelViewSet):
     """ViewSet para tratamentos"""
     queryset = Tratamento.objects.select_related('colmeia', 'colmeia__apiario').all()
+    permission_classes = [IsAuthenticated]
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
     search_fields = ['colmeia__identificador', 'medicamento', 'motivo']
     ordering_fields = ['data_inicio', 'status', 'tipo_tratamento']
@@ -320,6 +338,7 @@ class TratamentoViewSet(viewsets.ModelViewSet):
 
 class DashboardView(APIView):
     """View para dashboard com estatísticas gerais"""
+    permission_classes = [IsAuthenticated]
     
     def get(self, request):
         hoje = timezone.now().date()
@@ -397,5 +416,397 @@ class DashboardView(APIView):
         stats['colmeias_por_apiario'] = list(
             Colmeia.objects.values('apiario__nome').annotate(total=Count('id')).order_by('-total')[:5]
         )
+        
+        return Response(stats)
+
+
+# New ViewSets
+class CustoViewSet(viewsets.ModelViewSet):
+    """ViewSet para custos"""
+    queryset = Custo.objects.all()
+    permission_classes = [IsAuthenticated]
+    filter_backends = [filters.SearchFilter, filters.OrderingFilter]
+    search_fields = ['descricao', 'fornecedor']
+    ordering_fields = ['data', 'valor']
+    ordering = ['-data']
+    
+    def get_serializer_class(self):
+        if self.action == 'list':
+            return CustoListSerializer
+        return CustoSerializer
+    
+    def perform_create(self, serializer):
+        serializer.save(created_by=self.request.user)
+    
+    def get_queryset(self):
+        queryset = Custo.objects.all()
+        apiario_id = self.request.query_params.get('apiario', None)
+        colmeia_id = self.request.query_params.get('colmeia', None)
+        tipo = self.request.query_params.get('tipo', None)
+        data_inicio = self.request.query_params.get('data_inicio', None)
+        data_fim = self.request.query_params.get('data_fim', None)
+        
+        if apiario_id:
+            queryset = queryset.filter(apiario_id=apiario_id)
+        if colmeia_id:
+            queryset = queryset.filter(colmeia_id=colmeia_id)
+        if tipo:
+            queryset = queryset.filter(tipo_custo=tipo)
+        if data_inicio:
+            queryset = queryset.filter(data__gte=data_inicio)
+        if data_fim:
+            queryset = queryset.filter(data__lte=data_fim)
+        
+        return queryset
+
+
+class ReceitaViewSet(viewsets.ModelViewSet):
+    """ViewSet para receitas"""
+    queryset = Receita.objects.all()
+    permission_classes = [IsAuthenticated]
+    filter_backends = [filters.SearchFilter, filters.OrderingFilter]
+    search_fields = ['descricao', 'cliente']
+    ordering_fields = ['data', 'valor']
+    ordering = ['-data']
+    
+    def get_serializer_class(self):
+        if self.action == 'list':
+            return ReceitaListSerializer
+        return ReceitaSerializer
+    
+    def perform_create(self, serializer):
+        serializer.save(created_by=self.request.user)
+    
+    def get_queryset(self):
+        queryset = Receita.objects.all()
+        tipo = self.request.query_params.get('tipo', None)
+        data_inicio = self.request.query_params.get('data_inicio', None)
+        data_fim = self.request.query_params.get('data_fim', None)
+        
+        if tipo:
+            queryset = queryset.filter(tipo_receita=tipo)
+        if data_inicio:
+            queryset = queryset.filter(data__gte=data_inicio)
+        if data_fim:
+            queryset = queryset.filter(data__lte=data_fim)
+        
+        return queryset
+
+
+class FornecedorViewSet(viewsets.ModelViewSet):
+    """ViewSet para fornecedores"""
+    queryset = Fornecedor.objects.all()
+    permission_classes = [IsAuthenticated]
+    serializer_class = FornecedorSerializer
+    filter_backends = [filters.SearchFilter, filters.OrderingFilter]
+    search_fields = ['nome', 'cnpj', 'email']
+    ordering_fields = ['nome', 'tipo_fornecedor']
+    ordering = ['nome']
+    
+    def get_queryset(self):
+        queryset = Fornecedor.objects.all()
+        ativo = self.request.query_params.get('ativo', None)
+        tipo = self.request.query_params.get('tipo', None)
+        
+        if ativo is not None:
+            queryset = queryset.filter(ativo=ativo.lower() == 'true')
+        if tipo:
+            queryset = queryset.filter(tipo_fornecedor=tipo)
+        
+        return queryset
+
+
+class EquipamentoViewSet(viewsets.ModelViewSet):
+    """ViewSet para equipamentos"""
+    queryset = Equipamento.objects.all()
+    permission_classes = [IsAuthenticated]
+    serializer_class = EquipamentoSerializer
+    filter_backends = [filters.SearchFilter, filters.OrderingFilter]
+    search_fields = ['nome', 'marca', 'modelo', 'numero_serie']
+    ordering_fields = ['nome', 'status', 'data_compra']
+    ordering = ['nome']
+    
+    def get_queryset(self):
+        queryset = Equipamento.objects.all()
+        apiario_id = self.request.query_params.get('apiario', None)
+        status_param = self.request.query_params.get('status', None)
+        tipo = self.request.query_params.get('tipo', None)
+        
+        if apiario_id:
+            queryset = queryset.filter(apiario_id=apiario_id)
+        if status_param:
+            queryset = queryset.filter(status=status_param)
+        if tipo:
+            queryset = queryset.filter(tipo_equipamento=tipo)
+        
+        return queryset
+
+
+class NotificacaoViewSet(viewsets.ModelViewSet):
+    """ViewSet para notificações"""
+    permission_classes = [IsAuthenticated]
+    serializer_class = NotificacaoSerializer
+    filter_backends = [filters.SearchFilter, filters.OrderingFilter]
+    search_fields = ['titulo', 'mensagem']
+    ordering_fields = ['created_at', 'prioridade']
+    ordering = ['-created_at']
+    
+    def get_queryset(self):
+        # Usuário só vê suas próprias notificações
+        return Notificacao.objects.filter(usuario=self.request.user)
+    
+    @action(detail=True, methods=['post'])
+    def marcar_lida(self, request, pk=None):
+        """Marca notificação como lida"""
+        notificacao = self.get_object()
+        notificacao.lida = True
+        notificacao.data_leitura = timezone.now()
+        notificacao.save()
+        return Response({'status': 'marcada como lida'})
+    
+    @action(detail=False, methods=['get'])
+    def nao_lidas(self, request):
+        """Retorna notificações não lidas"""
+        notificacoes = self.get_queryset().filter(lida=False)
+        serializer = self.get_serializer(notificacoes, many=True)
+        return Response(serializer.data)
+
+
+# New Dashboard Views
+class DashboardFinanceiroView(APIView):
+    """Dashboard financeiro com custos, receitas e lucro"""
+    permission_classes = [IsAuthenticated]
+    
+    def get(self, request):
+        user = request.user
+        if not user.can_view_reports():
+            return Response(
+                {'error': 'Você não tem permissão para visualizar relatórios financeiros'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        hoje = timezone.now().date()
+        inicio_mes = hoje.replace(day=1)
+        inicio_ano = hoje.replace(month=1, day=1)
+        
+        # Custos
+        custos_total = Custo.objects.aggregate(total=Sum('valor'))['total'] or 0
+        custos_mes = Custo.objects.filter(data__gte=inicio_mes).aggregate(total=Sum('valor'))['total'] or 0
+        custos_ano = Custo.objects.filter(data__gte=inicio_ano).aggregate(total=Sum('valor'))['total'] or 0
+        
+        # Receitas
+        receitas_total = Receita.objects.aggregate(total=Sum('valor'))['total'] or 0
+        receitas_mes = Receita.objects.filter(data__gte=inicio_mes).aggregate(total=Sum('valor'))['total'] or 0
+        receitas_ano = Receita.objects.filter(data__gte=inicio_ano).aggregate(total=Sum('valor'))['total'] or 0
+        
+        # Lucro
+        lucro_total = receitas_total - custos_total
+        lucro_mes = receitas_mes - custos_mes
+        lucro_ano = receitas_ano - custos_ano
+        
+        # Custos por tipo
+        custos_por_tipo = list(
+            Custo.objects.values('tipo_custo').annotate(
+                total=Sum('valor'),
+                quantidade=Count('id')
+            ).order_by('-total')
+        )
+        
+        # Receitas por tipo
+        receitas_por_tipo = list(
+            Receita.objects.values('tipo_receita').annotate(
+                total=Sum('valor'),
+                quantidade=Count('id')
+            ).order_by('-total')
+        )
+        
+        # Evolução mensal (últimos 12 meses)
+        evolucao_mensal = []
+        for i in range(11, -1, -1):
+            mes_atual = hoje.replace(day=1) - timedelta(days=i*30)
+            mes_inicio = mes_atual.replace(day=1)
+            if mes_atual.month == 12:
+                mes_fim = mes_atual.replace(year=mes_atual.year+1, month=1, day=1)
+            else:
+                mes_fim = mes_atual.replace(month=mes_atual.month+1, day=1)
+            
+            custos_mes = Custo.objects.filter(
+                data__gte=mes_inicio,
+                data__lt=mes_fim
+            ).aggregate(total=Sum('valor'))['total'] or 0
+            
+            receitas_mes = Receita.objects.filter(
+                data__gte=mes_inicio,
+                data__lt=mes_fim
+            ).aggregate(total=Sum('valor'))['total'] or 0
+            
+            evolucao_mensal.append({
+                'mes': mes_inicio.strftime('%b/%Y'),
+                'custos': float(custos_mes),
+                'receitas': float(receitas_mes),
+                'lucro': float(receitas_mes - custos_mes)
+            })
+        
+        stats = {
+            'resumo': {
+                'custos_total': float(custos_total),
+                'custos_mes': float(custos_mes),
+                'custos_ano': float(custos_ano),
+                'receitas_total': float(receitas_total),
+                'receitas_mes': float(receitas_mes),
+                'receitas_ano': float(receitas_ano),
+                'lucro_total': float(lucro_total),
+                'lucro_mes': float(lucro_mes),
+                'lucro_ano': float(lucro_ano),
+            },
+            'custos_por_tipo': custos_por_tipo,
+            'receitas_por_tipo': receitas_por_tipo,
+            'evolucao_mensal': evolucao_mensal,
+        }
+        
+        return Response(stats)
+
+
+class DashboardSaudeView(APIView):
+    """Dashboard de saúde das colmeias"""
+    permission_classes = [IsAuthenticated]
+    
+    def get(self, request):
+        hoje = timezone.now().date()
+        ultimos_30_dias = hoje - timedelta(days=30)
+        
+        # Estatísticas gerais
+        total_colmeias = Colmeia.objects.count()
+        colmeias_quarentena = Colmeia.objects.filter(status='quarentena').count()
+        colmeias_mortas = Colmeia.objects.filter(status='morta').count()
+        
+        # Inspeções recentes
+        inspecoes_recentes = Inspecao.objects.filter(data__date__gte=ultimos_30_dias)
+        inspecoes_com_pragas = inspecoes_recentes.filter(presenca_pragas=True).count()
+        inspecoes_com_doencas = inspecoes_recentes.filter(presenca_doencas=True).count()
+        
+        # Condição geral das colmeias
+        condicoes = inspecoes_recentes.values('condicao_geral').annotate(
+            total=Count('id')
+        )
+        
+        # Tratamentos
+        tratamentos_ativos = Tratamento.objects.filter(status='em_andamento').count()
+        tratamentos_mes = Tratamento.objects.filter(
+            data_inicio__gte=hoje.replace(day=1)
+        ).count()
+        
+        # Tipos de pragas mais comuns
+        pragas = {}
+        for inspecao in inspecoes_recentes.filter(presenca_pragas=True):
+            if inspecao.tipo_pragas:
+                for praga in inspecao.tipo_pragas.split(','):
+                    praga = praga.strip()
+                    if praga:
+                        pragas[praga] = pragas.get(praga, 0) + 1
+        
+        # Tipos de doenças mais comuns
+        doencas = {}
+        for inspecao in inspecoes_recentes.filter(presenca_doencas=True):
+            if inspecao.tipo_doencas:
+                for doenca in inspecao.tipo_doencas.split(','):
+                    doenca = doenca.strip()
+                    if doenca:
+                        doencas[doenca] = doencas.get(doenca, 0) + 1
+        
+        # Colmeias que precisam de atenção
+        colmeias_atencao = Colmeia.objects.filter(
+            Q(status='quarentena') |
+            Q(inspecoes__presenca_pragas=True) |
+            Q(inspecoes__presenca_doencas=True) |
+            Q(inspecoes__condicao_geral__in=['ruim', 'critica'])
+        ).distinct()[:10]
+        
+        stats = {
+            'resumo': {
+                'total_colmeias': total_colmeias,
+                'colmeias_quarentena': colmeias_quarentena,
+                'colmeias_mortas': colmeias_mortas,
+                'inspecoes_com_pragas': inspecoes_com_pragas,
+                'inspecoes_com_doencas': inspecoes_com_doencas,
+                'tratamentos_ativos': tratamentos_ativos,
+                'tratamentos_mes': tratamentos_mes,
+            },
+            'condicoes_gerais': list(condicoes),
+            'pragas_mais_comuns': sorted(pragas.items(), key=lambda x: x[1], reverse=True)[:5],
+            'doencas_mais_comuns': sorted(doencas.items(), key=lambda x: x[1], reverse=True)[:5],
+            'colmeias_atencao': ColmeiaListSerializer(colmeias_atencao, many=True).data,
+        }
+        
+        return Response(stats)
+
+
+class DashboardProdutividadeView(APIView):
+    """Dashboard de produtividade comparando apiários e colmeias"""
+    permission_classes = [IsAuthenticated]
+    
+    def get(self, request):
+        hoje = timezone.now().date()
+        inicio_ano = hoje.replace(month=1, day=1)
+        
+        # Produção por apiário
+        producao_por_apiario = list(
+            ProducaoMel.objects.filter(data_colheita__gte=inicio_ano)
+            .values('colmeia__apiario__nome')
+            .annotate(
+                total_kg=Sum('quantidade_kg'),
+                quantidade=Count('id'),
+                media_kg=Avg('quantidade_kg')
+            )
+            .order_by('-total_kg')
+        )
+        
+        # Produção por colmeia (top 10)
+        producao_por_colmeia = list(
+            ProducaoMel.objects.filter(data_colheita__gte=inicio_ano)
+            .values('colmeia__identificador', 'colmeia__apiario__nome')
+            .annotate(
+                total_kg=Sum('quantidade_kg'),
+                quantidade=Count('id'),
+                media_kg=Avg('quantidade_kg')
+            )
+            .order_by('-total_kg')[:10]
+        )
+        
+        # Produção por espécie
+        producao_por_especie = list(
+            ProducaoMel.objects.filter(data_colheita__gte=inicio_ano)
+            .values('colmeia__especie__nome')
+            .annotate(
+                total_kg=Sum('quantidade_kg'),
+                quantidade=Count('id'),
+                media_kg=Avg('quantidade_kg')
+            )
+            .order_by('-total_kg')
+        )
+        
+        # Média de produção por colmeia por apiário
+        apiarios_com_media = []
+        for apiario in Apiario.objects.filter(ativo=True):
+            colmeias = apiario.colmeias.filter(status='ativa')
+            if colmeias.exists():
+                producao_total = ProducaoMel.objects.filter(
+                    colmeia__apiario=apiario,
+                    data_colheita__gte=inicio_ano
+                ).aggregate(total=Sum('quantidade_kg'))['total'] or 0
+                
+                apiarios_com_media.append({
+                    'apiario': apiario.nome,
+                    'total_colmeias': colmeias.count(),
+                    'producao_total_kg': float(producao_total),
+                    'media_por_colmeia_kg': float(producao_total / colmeias.count()) if colmeias.count() > 0 else 0
+                })
+        
+        stats = {
+            'producao_por_apiario': producao_por_apiario,
+            'producao_por_colmeia': producao_por_colmeia,
+            'producao_por_especie': producao_por_especie,
+            'media_por_apiario': apiarios_com_media,
+        }
         
         return Response(stats)
