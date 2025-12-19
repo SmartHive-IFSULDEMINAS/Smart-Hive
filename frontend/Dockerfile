@@ -3,6 +3,9 @@ FROM node:18-alpine AS builder
 
 WORKDIR /app
 
+# Configurar memória do Node para VPS com pouca RAM
+ENV NODE_OPTIONS="--max-old-space-size=512"
+
 # Copiar package files
 COPY package*.json ./
 
@@ -12,7 +15,7 @@ RUN npm ci
 # Copiar código fonte
 COPY . .
 
-# Build da aplicação
+# Build da aplicação com limite de memória
 RUN npm run build
 
 # Estágio 2: Produção com Nginx
