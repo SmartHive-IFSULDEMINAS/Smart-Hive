@@ -104,13 +104,13 @@ const StatCard = ({ title, value, subtitle, icon, color, trend, delay = 0 }) => 
                         background: `radial-gradient(circle, ${alpha(color, 0.1)} 0%, transparent 70%)`,
                     }}
                 />
-                
+
                 <CardContent sx={{ position: 'relative', zIndex: 1, p: 3 }}>
                     <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
                         <Box sx={{ flex: 1 }}>
-                            <Typography 
-                                variant="overline" 
-                                sx={{ 
+                            <Typography
+                                variant="overline"
+                                sx={{
                                     color: alpha(color, 0.8),
                                     fontWeight: 600,
                                     letterSpacing: 1.2,
@@ -120,11 +120,11 @@ const StatCard = ({ title, value, subtitle, icon, color, trend, delay = 0 }) => 
                             >
                                 {title}
                             </Typography>
-                            <Typography 
-                                variant="h3" 
-                                component="div" 
-                                sx={{ 
-                                    fontWeight: 800, 
+                            <Typography
+                                variant="h3"
+                                component="div"
+                                sx={{
+                                    fontWeight: 800,
                                     color: color,
                                     mt: 0.5,
                                     mb: 1,
@@ -139,9 +139,9 @@ const StatCard = ({ title, value, subtitle, icon, color, trend, delay = 0 }) => 
                             {subtitle && (
                                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mt: 1 }}>
                                     {trend && <TrendingIcon sx={{ fontSize: 16, color: alpha(color, 0.7) }} />}
-                                    <Typography 
-                                        variant="body2" 
-                                        sx={{ 
+                                    <Typography
+                                        variant="body2"
+                                        sx={{
                                             color: theme.palette.text.secondary,
                                             fontWeight: 500,
                                         }}
@@ -206,21 +206,21 @@ export default function Dashboard() {
 
     if (loading) {
         return (
-            <Box 
-                sx={{ 
-                    display: 'flex', 
+            <Box
+                sx={{
+                    display: 'flex',
                     flexDirection: 'column',
-                    justifyContent: 'center', 
-                    alignItems: 'center', 
+                    justifyContent: 'center',
+                    alignItems: 'center',
                     minHeight: 400,
                     gap: 2,
                 }}
             >
-                <CircularProgress 
-                    size={60} 
-                    sx={{ 
+                <CircularProgress
+                    size={60}
+                    sx={{
                         color: theme.palette.primary.main,
-                    }} 
+                    }}
                 />
                 <Typography variant="body1" color="text.secondary">
                     Carregando dados do apiário...
@@ -231,9 +231,9 @@ export default function Dashboard() {
 
     if (error) {
         return (
-            <Alert 
-                severity="error" 
-                sx={{ 
+            <Alert
+                severity="error"
+                sx={{
                     mb: 2,
                     borderRadius: 2,
                 }}
@@ -261,10 +261,10 @@ export default function Dashboard() {
     return (
         <Box sx={{ position: 'relative' }}>
             {/* Header com título e ações */}
-            <Box 
-                sx={{ 
-                    display: 'flex', 
-                    justifyContent: 'space-between', 
+            <Box
+                sx={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
                     alignItems: 'center',
                     mb: 4,
                     flexWrap: 'wrap',
@@ -272,9 +272,9 @@ export default function Dashboard() {
                 }}
             >
                 <Box>
-                    <Typography 
-                        variant="h3" 
-                        sx={{ 
+                    <Typography
+                        variant="h3"
+                        sx={{
                             fontWeight: 800,
                             mb: 0.5,
                             background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.secondary.main} 100%)`,
@@ -285,21 +285,21 @@ export default function Dashboard() {
                     >
                         Visão Geral do Apiário
                     </Typography>
-                    <Typography 
-                        variant="body1" 
+                    <Typography
+                        variant="body1"
                         color="text.secondary"
-                        sx={{ 
+                        sx={{
                             display: 'flex',
                             alignItems: 'center',
                             gap: 1,
                         }}
                     >
                         <CalendarIcon sx={{ fontSize: 18 }} />
-                        {new Date().toLocaleDateString('pt-BR', { 
-                            weekday: 'long', 
-                            year: 'numeric', 
-                            month: 'long', 
-                            day: 'numeric' 
+                        {new Date().toLocaleDateString('pt-BR', {
+                            weekday: 'long',
+                            year: 'numeric',
+                            month: 'long',
+                            day: 'numeric'
                         })}
                     </Typography>
                 </Box>
@@ -314,14 +314,14 @@ export default function Dashboard() {
                             },
                         }}
                     >
-                        <RefreshIcon 
-                            sx={{ 
+                        <RefreshIcon
+                            sx={{
                                 animation: refreshing ? 'spin 1s linear infinite' : 'none',
                                 '@keyframes spin': {
                                     '0%': { transform: 'rotate(0deg)' },
                                     '100%': { transform: 'rotate(360deg)' },
                                 },
-                            }} 
+                            }}
                         />
                     </IconButton>
                 </Tooltip>
@@ -429,35 +429,35 @@ export default function Dashboard() {
                                                 </Box>
                                                 <SensorsIcon sx={{ color: '#2196F3', fontSize: 24 }} />
                                             </Box>
-                                            
+
                                             {(colmeia.temperatura_atual || colmeia.nivel_ruido || colmeia.luminosidade) ? (
                                                 <Grid container spacing={1.5}>
                                                     {colmeia.temperatura_atual && (
                                                         <Grid item xs={4}>
                                                             <Box sx={{ textAlign: 'center' }}>
-                                                                <ThermostatIcon 
-                                                                    sx={{ 
-                                                                        color: colmeia.temperatura_atual > 35 
-                                                                            ? '#F44336' 
-                                                                            : colmeia.temperatura_atual < 20 
-                                                                            ? '#2196F3'
-                                                                            : '#4CAF50',
+                                                                <ThermostatIcon
+                                                                    sx={{
+                                                                        color: colmeia.temperatura_atual > 35
+                                                                            ? '#F44336'
+                                                                            : colmeia.temperatura_atual < 20
+                                                                                ? '#2196F3'
+                                                                                : '#4CAF50',
                                                                         fontSize: 20,
                                                                         mb: 0.5
-                                                                    }} 
+                                                                    }}
                                                                 />
                                                                 <Typography variant="caption" color="text.secondary" display="block">
                                                                     Temp.
                                                                 </Typography>
-                                                                <Typography 
-                                                                    variant="body2" 
-                                                                    sx={{ 
+                                                                <Typography
+                                                                    variant="body2"
+                                                                    sx={{
                                                                         fontWeight: 700,
-                                                                        color: colmeia.temperatura_atual > 35 
-                                                                            ? '#F44336' 
-                                                                            : colmeia.temperatura_atual < 20 
-                                                                            ? '#2196F3'
-                                                                            : '#4CAF50',
+                                                                        color: colmeia.temperatura_atual > 35
+                                                                            ? '#F44336'
+                                                                            : colmeia.temperatura_atual < 20
+                                                                                ? '#2196F3'
+                                                                                : '#4CAF50',
                                                                     }}
                                                                 >
                                                                     {parseFloat(colmeia.temperatura_atual).toFixed(1)}°C
@@ -536,11 +536,11 @@ export default function Dashboard() {
                                                     Aguardando primeira leitura...
                                                 </Typography>
                                             )}
-                                            
+
                                             {colmeia.data_ultima_leitura_sensor && (
                                                 <Box sx={{ mt: 1.5, pt: 1.5, borderTop: `1px solid ${alpha('#000', 0.1)}` }}>
-                                                    <Typography 
-                                                        variant="caption" 
+                                                    <Typography
+                                                        variant="caption"
                                                         color="text.secondary"
                                                         sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}
                                                     >
@@ -560,7 +560,7 @@ export default function Dashboard() {
 
             {/* Gráficos */}
             <Grid container spacing={3} sx={{ mb: 4 }}>
-                <Grid item xs={12} md={8}>
+                <Grid item xs={12} lg={7}>
                     <Fade in={true} timeout={800}>
                         <Card
                             sx={{
@@ -576,16 +576,16 @@ export default function Dashboard() {
                                     <Typography variant="h6" sx={{ fontWeight: 700, flex: 1 }}>
                                         Evolução da Produção
                                     </Typography>
-                                    <Chip 
-                                        label="12 meses" 
-                                        size="small" 
-                                        sx={{ 
+                                    <Chip
+                                        label="12 meses"
+                                        size="small"
+                                        sx={{
                                             backgroundColor: alpha(theme.palette.primary.main, 0.1),
                                             color: theme.palette.primary.main,
                                         }}
                                     />
                                 </Box>
-                                <Box sx={{ height: 320 }}>
+                                <Box sx={{ height: 450 }}>
                                     <ResponsiveContainer width="100%" height="100%">
                                         <AreaChart data={data?.producao_por_mes || []}>
                                             <defs>
@@ -595,8 +595,8 @@ export default function Dashboard() {
                                                     <stop offset="95%" stopColor={theme.palette.primary.main} stopOpacity={0} />
                                                 </linearGradient>
                                             </defs>
-                                            <CartesianGrid 
-                                                strokeDasharray="3 3" 
+                                            <CartesianGrid
+                                                strokeDasharray="3 3"
                                                 stroke={alpha(theme.palette.text.secondary, 0.1)}
                                                 vertical={false}
                                             />
@@ -637,7 +637,7 @@ export default function Dashboard() {
                     </Fade>
                 </Grid>
 
-                <Grid item xs={12} md={4}>
+                <Grid item xs={12} lg={5}>
                     <Fade in={true} timeout={1000}>
                         <Card
                             sx={{
@@ -654,7 +654,7 @@ export default function Dashboard() {
                                         Status das Colmeias
                                     </Typography>
                                 </Box>
-                                <Box sx={{ height: 280, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                                <Box sx={{ height: 400, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
                                     {statusData.length > 0 ? (
                                         <ResponsiveContainer width="100%" height="100%">
                                             <PieChart>
@@ -662,8 +662,8 @@ export default function Dashboard() {
                                                     data={statusData}
                                                     cx="50%"
                                                     cy="50%"
-                                                    innerRadius={70}
-                                                    outerRadius={100}
+                                                    innerRadius={90}
+                                                    outerRadius={130}
                                                     paddingAngle={3}
                                                     dataKey="value"
                                                 >
@@ -671,7 +671,7 @@ export default function Dashboard() {
                                                         <Cell key={`cell-${index}`} fill={entry.color} />
                                                     ))}
                                                 </Pie>
-                                                <RechartsTooltip 
+                                                <RechartsTooltip
                                                     formatter={(value) => [value, 'Colmeias']}
                                                     contentStyle={{
                                                         borderRadius: 8,
@@ -679,7 +679,7 @@ export default function Dashboard() {
                                                         boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
                                                     }}
                                                 />
-                                                <Legend 
+                                                <Legend
                                                     formatter={(value, entry) => (
                                                         <span style={{ color: entry.color, fontWeight: 600 }}>
                                                             {value}
@@ -728,7 +728,7 @@ export default function Dashboard() {
                                             </TableHead>
                                             <TableBody>
                                                 {data.proximas_inspecoes.map((insp, index) => (
-                                                    <TableRow 
+                                                    <TableRow
                                                         key={insp.id}
                                                         sx={{
                                                             '&:hover': {
@@ -752,16 +752,16 @@ export default function Dashboard() {
                                                                 size="small"
                                                                 sx={{
                                                                     fontWeight: 600,
-                                                                    backgroundColor: 
+                                                                    backgroundColor:
                                                                         insp.condicao_geral === 'excelente' ? alpha('#4CAF50', 0.2) :
-                                                                        insp.condicao_geral === 'boa' ? alpha('#4CAF50', 0.15) :
-                                                                        insp.condicao_geral === 'regular' ? alpha('#F4A100', 0.2) :
-                                                                        alpha('#F44336', 0.2),
+                                                                            insp.condicao_geral === 'boa' ? alpha('#4CAF50', 0.15) :
+                                                                                insp.condicao_geral === 'regular' ? alpha('#F4A100', 0.2) :
+                                                                                    alpha('#F44336', 0.2),
                                                                     color:
                                                                         insp.condicao_geral === 'excelente' ? '#4CAF50' :
-                                                                        insp.condicao_geral === 'boa' ? '#4CAF50' :
-                                                                        insp.condicao_geral === 'regular' ? '#F4A100' :
-                                                                        '#F44336',
+                                                                            insp.condicao_geral === 'boa' ? '#4CAF50' :
+                                                                                insp.condicao_geral === 'regular' ? '#F4A100' :
+                                                                                    '#F44336',
                                                                 }}
                                                             />
                                                         </TableCell>
@@ -810,7 +810,7 @@ export default function Dashboard() {
                                             </TableHead>
                                             <TableBody>
                                                 {data.ultimas_producoes.map((prod) => (
-                                                    <TableRow 
+                                                    <TableRow
                                                         key={prod.id}
                                                         sx={{
                                                             '&:hover': {
@@ -877,14 +877,14 @@ export default function Dashboard() {
                                     {data?.colmeias_por_apiario?.length > 0 ? (
                                         <ResponsiveContainer width="100%" height="100%">
                                             <BarChart data={data.colmeias_por_apiario} layout="vertical">
-                                                <CartesianGrid 
-                                                    strokeDasharray="3 3" 
+                                                <CartesianGrid
+                                                    strokeDasharray="3 3"
                                                     stroke={alpha(theme.palette.text.secondary, 0.1)}
                                                     horizontal={true}
                                                     vertical={false}
                                                 />
-                                                <XAxis 
-                                                    type="number" 
+                                                <XAxis
+                                                    type="number"
                                                     tick={{ fontSize: 11, fill: theme.palette.text.secondary }}
                                                     stroke={alpha(theme.palette.text.secondary, 0.3)}
                                                 />
