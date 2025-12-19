@@ -1,0 +1,67 @@
+version: '3.8'
+
+services:
+  # Backend Django
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: smarthive-backend
+    restart: unless-stopped
+    volumes:
+      - ./backend/db.sqlite3:/app/db.sqlite3
+      - static_volume:/app/staticfiles
+      - media_volume:/app/media
+    environment:
+      - DJANGO_SETTINGS_MODULE=smarthive.settings
+      - DJANGO_ALLOWED_HOSTS=*
+      - DJANGO_DEBUG=False
+      - DJANGO_SECRET_KEY=change-this-to-a-random-secret-key-in-production
+    networks:
+      - smarthive-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/dashboard/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Frontend React
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: smarthive-frontend
+    restart: unless-stopped
+    networks:
+      - smarthive-network
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:80"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Nginx Reverse Proxy
+  nginx:
+    image: nginx:alpine
+    container_name: smarthive-nginx
+    restart: unless-stopped
+    ports:
+      - "8080:80"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/conf.d:/etc/nginx/conf.d:ro
+      - static_volume:/static:ro
+      - media_volume:/media:ro
+    depends_on:
+      - backend
+      - frontend
+    networks:
+      - smarthive-network
+
+volumes:
+  static_volume:
+  media_volume:
+
+networks:
+  smarthive-network:
+    driver: bridge
