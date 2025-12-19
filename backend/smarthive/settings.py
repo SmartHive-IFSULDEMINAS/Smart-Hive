@@ -52,6 +52,14 @@ MIDDLEWARE = [
 # CORS settings - Allow all origins in development
 CORS_ALLOW_ALL_ORIGINS = True
 
+# CSRF Trusted Origins (para produção)
+CSRF_TRUSTED_ORIGINS = [
+    'http://localhost:8080',
+    'http://127.0.0.1:8080',
+    'http://191.252.100.161:8080',
+    'http://vps58279.publiccloud.com.br:8080',
+]
+
 ROOT_URLCONF = 'smarthive.urls'
 
 TEMPLATES = [
