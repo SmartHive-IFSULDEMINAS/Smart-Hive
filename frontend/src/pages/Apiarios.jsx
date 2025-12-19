@@ -33,6 +33,10 @@ import {
     Phone as PhoneIcon,
     Person as PersonIcon,
     Search as SearchIcon,
+    Thermostat as ThermostatIcon,
+    LocationOn as LocationOnIcon,
+    Sensors as SensorsIcon,
+    AccessTime as AccessTimeIcon,
 } from '@mui/icons-material';
 import { getApiarios, createApiario, updateApiario, deleteApiario } from '../services/api';
 
@@ -248,7 +252,7 @@ export default function Apiarios() {
                                     />
                                 </Box>
 
-                                <Box sx={{ display: 'flex', gap: 3, mt: 2 }}>
+                                <Box sx={{ display: 'flex', gap: 3, mt: 2, flexWrap: 'wrap' }}>
                                     <Box sx={{ display: 'flex', alignItems: 'center' }}>
                                         <HiveIcon sx={{ fontSize: 20, color: theme.palette.primary.main, mr: 0.5 }} />
                                         <Typography variant="body2">
@@ -261,6 +265,54 @@ export default function Apiarios() {
                                         </Typography>
                                     </Box>
                                 </Box>
+
+                                {/* Sensores IoT do Apiário */}
+                                {apiario.sensor_iot_ativo && (
+                                    <Box sx={{ mt: 2, pt: 2, borderTop: `1px solid ${alpha('#000', 0.1)}` }}>
+                                        <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                                            <SensorsIcon sx={{ fontSize: 16, color: '#2196F3', mr: 0.5 }} />
+                                            <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600 }}>
+                                                Sensores IoT
+                                            </Typography>
+                                        </Box>
+                                        {apiario.temperatura_atual && (
+                                            <Chip
+                                                icon={<ThermostatIcon />}
+                                                label={`${parseFloat(apiario.temperatura_atual).toFixed(1)}°C`}
+                                                size="small"
+                                                sx={{
+                                                    height: 24,
+                                                    fontSize: '0.7rem',
+                                                    backgroundColor: alpha('#F44336', 0.2),
+                                                    color: '#F44336',
+                                                    mr: 0.5,
+                                                    mb: 0.5,
+                                                }}
+                                            />
+                                        )}
+                                        {apiario.latitude && apiario.longitude && (
+                                            <Chip
+                                                icon={<LocationOnIcon />}
+                                                label={`${parseFloat(apiario.latitude).toFixed(4)}, ${parseFloat(apiario.longitude).toFixed(4)}`}
+                                                size="small"
+                                                sx={{
+                                                    height: 24,
+                                                    fontSize: '0.7rem',
+                                                    backgroundColor: alpha('#4CAF50', 0.2),
+                                                    color: '#4CAF50',
+                                                    mr: 0.5,
+                                                    mb: 0.5,
+                                                }}
+                                            />
+                                        )}
+                                        {apiario.data_ultima_leitura_sensor && (
+                                            <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.5 }}>
+                                                <AccessTimeIcon sx={{ fontSize: 12, verticalAlign: 'middle', mr: 0.5 }} />
+                                                {new Date(apiario.data_ultima_leitura_sensor).toLocaleString('pt-BR')}
+                                            </Typography>
+                                        )}
+                                    </Box>
+                                )}
 
                                 {apiario.responsavel && (
                                     <Box sx={{ display: 'flex', alignItems: 'center', mt: 2 }}>

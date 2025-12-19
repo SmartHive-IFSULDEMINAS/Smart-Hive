@@ -42,6 +42,9 @@ import {
     VolumeUp as VolumeUpIcon,
     LightMode as LightModeIcon,
     AccessTime as AccessTimeIcon,
+    WaterDrop as WaterDropIcon,
+    Compress as CompressIcon,
+    Scale as ScaleIcon,
 } from '@mui/icons-material';
 import {
     getColmeias,
@@ -386,6 +389,45 @@ export default function Colmeias() {
                                                                 fontSize: '0.7rem',
                                                                 backgroundColor: alpha('#FFC107', 0.2),
                                                                 color: '#FFC107',
+                                                            }}
+                                                        />
+                                                    )}
+                                                    {colmeia.umidade && (
+                                                        <Chip
+                                                            icon={<WaterDropIcon />}
+                                                            label={`${parseFloat(colmeia.umidade).toFixed(1)}%`}
+                                                            size="small"
+                                                            sx={{
+                                                                height: 24,
+                                                                fontSize: '0.7rem',
+                                                                backgroundColor: alpha('#2196F3', 0.2),
+                                                                color: '#2196F3',
+                                                            }}
+                                                        />
+                                                    )}
+                                                    {colmeia.pressao && (
+                                                        <Chip
+                                                            icon={<CompressIcon />}
+                                                            label={`${parseFloat(colmeia.pressao).toFixed(1)} hPa`}
+                                                            size="small"
+                                                            sx={{
+                                                                height: 24,
+                                                                fontSize: '0.7rem',
+                                                                backgroundColor: alpha('#9C27B0', 0.2),
+                                                                color: '#9C27B0',
+                                                            }}
+                                                        />
+                                                    )}
+                                                    {colmeia.peso && (
+                                                        <Chip
+                                                            icon={<ScaleIcon />}
+                                                            label={`${parseFloat(colmeia.peso).toFixed(1)} kg`}
+                                                            size="small"
+                                                            sx={{
+                                                                height: 24,
+                                                                fontSize: '0.7rem',
+                                                                backgroundColor: alpha('#607D8B', 0.2),
+                                                                color: '#607D8B',
                                                             }}
                                                         />
                                                     )}
@@ -813,9 +855,91 @@ export default function Colmeias() {
                                                         </Paper>
                                                     </Grid>
                                                 )}
+                                                {detailDialog.colmeia.umidade && (
+                                                    <Grid item xs={12} sm={4}>
+                                                        <Paper
+                                                            sx={{
+                                                                p: 2,
+                                                                background: `linear-gradient(135deg, ${alpha('#2196F3', 0.1)} 0%, ${alpha('#2196F3', 0.05)} 100%)`,
+                                                                border: `2px solid ${alpha('#2196F3', 0.3)}`,
+                                                                borderRadius: 2,
+                                                            }}
+                                                        >
+                                                            <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                                                                <WaterDropIcon sx={{ color: '#2196F3', mr: 1 }} />
+                                                                <Typography variant="body2" color="text.secondary">
+                                                                    Umidade
+                                                                </Typography>
+                                                            </Box>
+                                                            <Typography variant="h4" sx={{ fontWeight: 700, color: '#2196F3' }}>
+                                                                {parseFloat(detailDialog.colmeia.umidade).toFixed(1)}%
+                                                            </Typography>
+                                                            <Typography variant="caption" color="text.secondary">
+                                                                {detailDialog.colmeia.umidade > 80 
+                                                                    ? '⚠️ Alta' 
+                                                                    : detailDialog.colmeia.umidade < 30 
+                                                                    ? '⚠️ Baixa'
+                                                                    : '✓ Normal'}
+                                                            </Typography>
+                                                        </Paper>
+                                                    </Grid>
+                                                )}
+                                                {detailDialog.colmeia.pressao && (
+                                                    <Grid item xs={12} sm={4}>
+                                                        <Paper
+                                                            sx={{
+                                                                p: 2,
+                                                                background: `linear-gradient(135deg, ${alpha('#9C27B0', 0.1)} 0%, ${alpha('#9C27B0', 0.05)} 100%)`,
+                                                                border: `2px solid ${alpha('#9C27B0', 0.3)}`,
+                                                                borderRadius: 2,
+                                                            }}
+                                                        >
+                                                            <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                                                                <CompressIcon sx={{ color: '#9C27B0', mr: 1 }} />
+                                                                <Typography variant="body2" color="text.secondary">
+                                                                    Pressão
+                                                                </Typography>
+                                                            </Box>
+                                                            <Typography variant="h4" sx={{ fontWeight: 700, color: '#9C27B0' }}>
+                                                                {parseFloat(detailDialog.colmeia.pressao).toFixed(1)} hPa
+                                                            </Typography>
+                                                            <Typography variant="caption" color="text.secondary">
+                                                                Pressão atmosférica
+                                                            </Typography>
+                                                        </Paper>
+                                                    </Grid>
+                                                )}
+                                                {detailDialog.colmeia.peso && (
+                                                    <Grid item xs={12} sm={4}>
+                                                        <Paper
+                                                            sx={{
+                                                                p: 2,
+                                                                background: `linear-gradient(135deg, ${alpha('#607D8B', 0.1)} 0%, ${alpha('#607D8B', 0.05)} 100%)`,
+                                                                border: `2px solid ${alpha('#607D8B', 0.3)}`,
+                                                                borderRadius: 2,
+                                                            }}
+                                                        >
+                                                            <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                                                                <ScaleIcon sx={{ color: '#607D8B', mr: 1 }} />
+                                                                <Typography variant="body2" color="text.secondary">
+                                                                    Peso
+                                                                </Typography>
+                                                            </Box>
+                                                            <Typography variant="h4" sx={{ fontWeight: 700, color: '#607D8B' }}>
+                                                                {parseFloat(detailDialog.colmeia.peso).toFixed(1)} kg
+                                                            </Typography>
+                                                            <Typography variant="caption" color="text.secondary">
+                                                                Peso atual da colmeia
+                                                            </Typography>
+                                                        </Paper>
+                                                    </Grid>
+                                                )}
                                                 {!detailDialog.colmeia.temperatura_atual && 
                                                  !detailDialog.colmeia.nivel_ruido && 
-                                                 !detailDialog.colmeia.luminosidade && (
+                                                 !detailDialog.colmeia.luminosidade &&
+                                                 !detailDialog.colmeia.umidade &&
+                                                 !detailDialog.colmeia.pressao &&
+                                                 !detailDialog.colmeia.peso && (
                                                     <Grid item xs={12}>
                                                         <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'center', py: 2 }}>
                                                             Nenhuma leitura de sensor disponível ainda

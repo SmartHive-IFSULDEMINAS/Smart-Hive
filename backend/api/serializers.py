@@ -35,6 +35,8 @@ class ApiarioSerializer(serializers.ModelSerializer):
             'descricao', 'responsavel', 'telefone_contato',
             'data_criacao', 'ativo', 'foto', 'observacoes',
             'total_colmeias', 'colmeias_ativas',
+            # Campos IoT
+            'sensor_iot_ativo', 'temperatura_atual', 'data_ultima_leitura_sensor',
             'created_at', 'updated_at'
         ]
 
@@ -47,8 +49,10 @@ class ApiarioListSerializer(serializers.ModelSerializer):
     class Meta:
         model = Apiario
         fields = [
-            'id', 'nome', 'localizacao', 'ativo',
-            'total_colmeias', 'colmeias_ativas'
+            'id', 'nome', 'localizacao', 'latitude', 'longitude',
+            'ativo', 'total_colmeias', 'colmeias_ativas',
+            # Campos IoT
+            'sensor_iot_ativo', 'temperatura_atual', 'data_ultima_leitura_sensor'
         ]
 
 
@@ -70,6 +74,7 @@ class ColmeiaSerializer(serializers.ModelSerializer):
             'data_ultima_inspecao', 'producao_total',
             # Campos IoT
             'sensor_iot_ativo', 'temperatura_atual', 'nivel_ruido', 'luminosidade',
+            'umidade', 'pressao', 'peso',
             'data_ultima_leitura_sensor', 'token_iot',
             'created_at', 'updated_at'
         ]
@@ -90,7 +95,8 @@ class ColmeiaListSerializer(serializers.ModelSerializer):
             'quantidade_abelhas_estimada', 'data_ultima_inspecao',
             # Campos IoT
             'sensor_iot_ativo', 'temperatura_atual', 'nivel_ruido', 
-            'luminosidade', 'data_ultima_leitura_sensor'
+            'luminosidade', 'umidade', 'pressao', 'peso',
+            'data_ultima_leitura_sensor'
         ]
 
 
@@ -338,6 +344,7 @@ class LeituraSensorSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'colmeia', 'colmeia_identificador', 'apiario_nome',
             'temperatura', 'nivel_ruido', 'luminosidade',
+            'umidade', 'pressao', 'peso',
             'timestamp', 'dispositivo_id', 'bateria_nivel', 'sinal_rssi'
         ]
         read_only_fields = ['timestamp']
@@ -351,6 +358,7 @@ class LeituraSensorListSerializer(serializers.ModelSerializer):
         model = LeituraSensor
         fields = [
             'id', 'colmeia_identificador', 'temperatura', 'nivel_ruido', 
-            'luminosidade', 'timestamp', 'dispositivo_id'
+            'luminosidade', 'umidade', 'pressao', 'peso',
+            'timestamp', 'dispositivo_id'
         ]
 

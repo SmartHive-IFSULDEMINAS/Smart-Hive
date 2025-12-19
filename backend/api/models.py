@@ -148,6 +148,26 @@ class Apiario(models.Model):
         null=True,
         blank=True
     )
+    # Campos de Sensores IoT do Apiário
+    temperatura_atual = models.DecimalField(
+        max_digits=5,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name='Temperatura Atual (°C)',
+        help_text='Última leitura de temperatura do sensor IoT do apiário'
+    )
+    data_ultima_leitura_sensor = models.DateTimeField(
+        null=True,
+        blank=True,
+        verbose_name='Data Última Leitura do Sensor',
+        help_text='Timestamp da última atualização dos dados do sensor do apiário'
+    )
+    sensor_iot_ativo = models.BooleanField(
+        default=False,
+        verbose_name='Sensor IoT Ativo',
+        help_text='Indica se o apiário possui sensor IoT conectado'
+    )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     
@@ -268,6 +288,30 @@ class Colmeia(models.Model):
         blank=True,
         verbose_name='Luminosidade (lux)',
         help_text='Última leitura de luminosidade do sensor IoT'
+    )
+    umidade = models.DecimalField(
+        max_digits=5,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name='Umidade (%)',
+        help_text='Última leitura de umidade do sensor IoT'
+    )
+    pressao = models.DecimalField(
+        max_digits=7,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name='Pressão (hPa)',
+        help_text='Última leitura de pressão atmosférica do sensor IoT'
+    )
+    peso = models.DecimalField(
+        max_digits=8,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name='Peso (kg)',
+        help_text='Última leitura de peso da colmeia do sensor IoT'
     )
     data_ultima_leitura_sensor = models.DateTimeField(
         null=True,
@@ -879,6 +923,27 @@ class LeituraSensor(models.Model):
         null=True,
         blank=True,
         verbose_name='Luminosidade (lux)'
+    )
+    umidade = models.DecimalField(
+        max_digits=5,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name='Umidade (%)'
+    )
+    pressao = models.DecimalField(
+        max_digits=7,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name='Pressão (hPa)'
+    )
+    peso = models.DecimalField(
+        max_digits=8,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name='Peso (kg)'
     )
     timestamp = models.DateTimeField(
         auto_now_add=True,

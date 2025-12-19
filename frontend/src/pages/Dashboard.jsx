@@ -38,6 +38,9 @@ import {
     VolumeUp as VolumeUpIcon,
     LightMode as LightModeIcon,
     AccessTime as AccessTimeIcon,
+    WaterDrop as WaterDropIcon,
+    Compress as CompressIcon,
+    Scale as ScaleIcon,
 } from '@mui/icons-material';
 import {
     AreaChart,
@@ -484,6 +487,45 @@ export default function Dashboard() {
                                                                 </Typography>
                                                                 <Typography variant="body2" sx={{ fontWeight: 700, color: '#FFC107' }}>
                                                                     {parseFloat(colmeia.luminosidade).toFixed(0)}
+                                                                </Typography>
+                                                            </Box>
+                                                        </Grid>
+                                                    )}
+                                                    {colmeia.umidade && (
+                                                        <Grid item xs={4}>
+                                                            <Box sx={{ textAlign: 'center' }}>
+                                                                <WaterDropIcon sx={{ color: '#2196F3', fontSize: 20, mb: 0.5 }} />
+                                                                <Typography variant="caption" color="text.secondary" display="block">
+                                                                    Umidade
+                                                                </Typography>
+                                                                <Typography variant="body2" sx={{ fontWeight: 700, color: '#2196F3' }}>
+                                                                    {parseFloat(colmeia.umidade).toFixed(1)}%
+                                                                </Typography>
+                                                            </Box>
+                                                        </Grid>
+                                                    )}
+                                                    {colmeia.pressao && (
+                                                        <Grid item xs={4}>
+                                                            <Box sx={{ textAlign: 'center' }}>
+                                                                <CompressIcon sx={{ color: '#9C27B0', fontSize: 20, mb: 0.5 }} />
+                                                                <Typography variant="caption" color="text.secondary" display="block">
+                                                                    Pressão
+                                                                </Typography>
+                                                                <Typography variant="body2" sx={{ fontWeight: 700, color: '#9C27B0' }}>
+                                                                    {parseFloat(colmeia.pressao).toFixed(1)}
+                                                                </Typography>
+                                                            </Box>
+                                                        </Grid>
+                                                    )}
+                                                    {colmeia.peso && (
+                                                        <Grid item xs={4}>
+                                                            <Box sx={{ textAlign: 'center' }}>
+                                                                <ScaleIcon sx={{ color: '#607D8B', fontSize: 20, mb: 0.5 }} />
+                                                                <Typography variant="caption" color="text.secondary" display="block">
+                                                                    Peso
+                                                                </Typography>
+                                                                <Typography variant="body2" sx={{ fontWeight: 700, color: '#607D8B' }}>
+                                                                    {parseFloat(colmeia.peso).toFixed(1)}kg
                                                                 </Typography>
                                                             </Box>
                                                         </Grid>

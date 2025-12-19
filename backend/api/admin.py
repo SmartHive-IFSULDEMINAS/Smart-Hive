@@ -17,11 +17,30 @@ class EspecieAbelhaAdmin(admin.ModelAdmin):
 
 @admin.register(Apiario)
 class ApiarioAdmin(admin.ModelAdmin):
-    list_display = ['nome', 'localizacao', 'responsavel', 'ativo', 'data_criacao', 'total_colmeias', 'colmeias_ativas']
-    list_filter = ['ativo', 'data_criacao']
+    list_display = [
+        'nome', 'localizacao', 'responsavel', 'ativo', 'sensor_iot_ativo', 
+        'temperatura_atual', 'data_criacao', 'total_colmeias', 'colmeias_ativas'
+    ]
+    list_filter = ['ativo', 'data_criacao', 'sensor_iot_ativo']
     search_fields = ['nome', 'localizacao', 'responsavel']
     ordering = ['nome']
     date_hierarchy = 'data_criacao'
+    readonly_fields = ['data_ultima_leitura_sensor']
+    fieldsets = (
+        ('Informações Básicas', {
+            'fields': ('nome', 'localizacao', 'latitude', 'longitude', 'descricao', 'ativo')
+        }),
+        ('Responsáveis', {
+            'fields': ('proprietario', 'responsavel', 'responsavel_nome', 'telefone_contato')
+        }),
+        ('Sensores IoT', {
+            'fields': ('sensor_iot_ativo', 'temperatura_atual', 'data_ultima_leitura_sensor'),
+            'classes': ('collapse',)
+        }),
+        ('Outros', {
+            'fields': ('foto', 'observacoes', 'data_criacao')
+        }),
+    )
     
     def total_colmeias(self, obj):
         return obj.total_colmeias
@@ -55,7 +74,7 @@ class ColmeiaAdmin(admin.ModelAdmin):
         }),
         ('Sensores IoT', {
             'fields': ('sensor_iot_ativo', 'token_iot', 'temperatura_atual', 'nivel_ruido', 
-                      'luminosidade', 'data_ultima_leitura_sensor'),
+                      'luminosidade', 'umidade', 'pressao', 'peso', 'data_ultima_leitura_sensor'),
             'classes': ('collapse',)
         }),
         ('Outros', {

@@ -55,16 +55,20 @@ def receber_dados_iot(request):
     temperatura = request.data.get('temperatura')
     nivel_ruido = request.data.get('nivel_ruido')
     luminosidade = request.data.get('luminosidade')
+    umidade = request.data.get('umidade')
+    pressao = request.data.get('pressao')
+    peso = request.data.get('peso')
     dispositivo_id = request.data.get('dispositivo_id', '')
     bateria_nivel = request.data.get('bateria_nivel')
     sinal_rssi = request.data.get('sinal_rssi')
     
     # Validar que pelo menos um dado de sensor foi enviado
-    if temperatura is None and nivel_ruido is None and luminosidade is None:
+    if (temperatura is None and nivel_ruido is None and luminosidade is None and 
+        umidade is None and pressao is None and peso is None):
         return Response(
             {
                 'success': False,
-                'error': 'Pelo menos um dado de sensor (temperatura, nivel_ruido ou luminosidade) deve ser enviado'
+                'error': 'Pelo menos um dado de sensor deve ser enviado'
             },
             status=status.HTTP_400_BAD_REQUEST
         )
@@ -78,11 +82,18 @@ def receber_dados_iot(request):
             colmeia.nivel_ruido = nivel_ruido
         if luminosidade is not None:
             colmeia.luminosidade = luminosidade
+        if umidade is not None:
+            colmeia.umidade = umidade
+        if pressao is not None:
+            colmeia.pressao = pressao
+        if peso is not None:
+            colmeia.peso = peso
         
         colmeia.data_ultima_leitura_sensor = timezone.now()
         colmeia.sensor_iot_ativo = True  # Ativa automaticamente se receber dados
         colmeia.save(update_fields=[
             'temperatura_atual', 'nivel_ruido', 'luminosidade', 
+            'umidade', 'pressao', 'peso',
             'data_ultima_leitura_sensor', 'sensor_iot_ativo'
         ])
         
@@ -92,6 +103,9 @@ def receber_dados_iot(request):
             temperatura=temperatura,
             nivel_ruido=nivel_ruido,
             luminosidade=luminosidade,
+            umidade=umidade,
+            pressao=pressao,
+            peso=peso,
             dispositivo_id=dispositivo_id,
             bateria_nivel=bateria_nivel,
             sinal_rssi=sinal_rssi,
