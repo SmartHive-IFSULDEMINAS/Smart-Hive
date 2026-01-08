@@ -9,7 +9,7 @@ services:
     container_name: smarthive-backend
     restart: unless-stopped
     volumes:
-      - ./backend/db.sqlite3:/app/db.sqlite3
+      - sqlite_data:/app/data
       - static_volume:/app/staticfiles
       - media_volume:/app/media
     environment:
@@ -59,6 +59,7 @@ services:
       - smarthive-network
 
 volumes:
+  sqlite_data:
   static_volume:
   media_volume:
 

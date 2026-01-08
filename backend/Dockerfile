@@ -23,8 +23,8 @@ RUN pip install --upgrade pip && \
 # Copiar código da aplicação
 COPY . .
 
-# Criar diretório para arquivos estáticos e mídia
-RUN mkdir -p /app/staticfiles /app/media
+# Criar diretório para arquivos estáticos, mídia e banco de dados
+RUN mkdir -p /app/staticfiles /app/media /app/data
 
 # Tornar o script de entrypoint executável
 COPY docker-entrypoint.sh /docker-entrypoint.sh
