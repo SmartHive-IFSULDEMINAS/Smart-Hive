@@ -17,6 +17,7 @@ import {
     useTheme,
     useMediaQuery,
     alpha,
+    Tooltip,
 } from '@mui/material';
 import {
     Menu as MenuIcon,
@@ -27,8 +28,10 @@ import {
     LocalFlorist as HoneyIcon,
     Healing as TreatmentIcon,
     BugReport as BugIcon,
-    ChevronLeft as ChevronLeftIcon,
+    Brightness4 as DarkModeIcon,
+    Brightness7 as LightModeIcon,
 } from '@mui/icons-material';
+import { useThemeMode } from '../contexts/ThemeModeContext';
 
 const drawerWidth = 280;
 
@@ -44,6 +47,7 @@ const menuItems = [
 
 export default function Layout({ children }) {
     const theme = useTheme();
+    const { mode, toggleTheme } = useThemeMode();
     const isMobile = useMediaQuery(theme.breakpoints.down('md'));
     const [mobileOpen, setMobileOpen] = useState(false);
     const location = useLocation();
@@ -170,9 +174,18 @@ export default function Layout({ children }) {
                     >
                         <MenuIcon />
                     </IconButton>
-                    <Typography variant="h6" noWrap component="div" sx={{ fontWeight: 600 }}>
+                    <Typography variant="h6" noWrap component="div" sx={{ fontWeight: 600, flexGrow: 1 }}>
                         {menuItems.find((item) => item.path === location.pathname)?.text || 'Smart-Hive'}
                     </Typography>
+                    <Tooltip title={mode === 'light' ? 'Modo Escuro' : 'Modo Claro'}>
+                        <IconButton 
+                            color="inherit" 
+                            onClick={toggleTheme}
+                            aria-label="alternar modo de cor"
+                        >
+                            {mode === 'light' ? <DarkModeIcon /> : <LightModeIcon />}
+                        </IconButton>
+                    </Tooltip>
                 </Toolbar>
             </AppBar>
 

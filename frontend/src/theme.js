@@ -27,9 +27,10 @@ const palette = {
     },
 };
 
-const theme = createTheme({
+// Função para criar tema baseado no modo
+export const createAppTheme = (mode) => createTheme({
     palette: {
-        mode: 'light',
+        mode,
         primary: {
             main: palette.honey.main,
             light: palette.honey.light,
@@ -43,11 +44,11 @@ const theme = createTheme({
             contrastText: palette.nature.contrastText,
         },
         background: {
-            default: '#F5F5F5',
-            paper: '#FFFFFF',
+            default: mode === 'light' ? '#F5F5F5' : '#121212',
+            paper: mode === 'light' ? '#FFFFFF' : '#1E1E1E',
         },
         text: {
-            primary: palette.earth.dark,
+            primary: mode === 'light' ? palette.earth.dark : '#FFFFFF',
             secondary: palette.earth.main,
         },
         success: {
@@ -266,4 +267,6 @@ const theme = createTheme({
     },
 });
 
+// Exporta tema padrão light para compatibilidade
+const theme = createAppTheme('light');
 export default theme;
