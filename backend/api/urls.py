@@ -21,6 +21,12 @@ from .views import (
 from .auth_views import register, login, me, update_profile, UsuarioViewSet
 from .iot_views import receber_dados_iot, historico_sensores
 from .apiario_iot_views import receber_dados_iot_apiario
+from .export_views import (
+    export_apiarios,
+    export_colmeias,
+    export_producao,
+    export_financeiro,
+)
 
 router = DefaultRouter()
 router.register(r'especies', EspecieAbelhaViewSet, basename='especies')
@@ -54,4 +60,9 @@ urlpatterns = [
     path('iot/colmeia/historico/<str:colmeia_identificador>/', historico_sensores, name='historico_sensores'),
     # IoT endpoints - Apiários
     path('iot/apiario/dados/', receber_dados_iot_apiario, name='receber_dados_iot_apiario'),
+    # Export endpoints
+    path('export/apiarios/', export_apiarios, name='export_apiarios'),
+    path('export/colmeias/', export_colmeias, name='export_colmeias'),
+    path('export/producao/', export_producao, name='export_producao'),
+    path('export/financeiro/', export_financeiro, name='export_financeiro'),
 ]
