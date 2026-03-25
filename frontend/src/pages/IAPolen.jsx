@@ -124,7 +124,8 @@ function TestDialog({ open, onClose, onSuccess }) {
             setResult(res.data);
             onSuccess();
         } catch (err) {
-            setError(err.response?.data?.error || 'Erro ao classificar');
+            const data = err.response?.data;
+            setError(data?.error || data?.detail || JSON.stringify(data) || 'Erro ao classificar. Verifique os logs do backend.');
         } finally {
             setLoading(false);
         }
@@ -303,7 +304,6 @@ export default function IAPolen() {
                                 size="small"
                                 startIcon={<TestIcon />}
                                 onClick={() => setTestOpen(true)}
-                                disabled={!iaOnline}
                             >
                                 Testar
                             </Button>

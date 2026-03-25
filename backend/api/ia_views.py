@@ -149,11 +149,16 @@ def classificar_polen(request):
         raw_dict = {col: raw_values[i] for i, col in enumerate(SENSOR_COLUMNS)}
 
     # ── Normalização L1 + predição ─────────────────────────────────────────
-    X_raw = np.array(raw_values, dtype=float).reshape(1, -1)
-    X_norm = _normalizer.transform(X_raw)
-
-    knn_pred = int(_knn.predict(X_norm)[0])
-    kmeans_pred = int(_kmeans.predict(X_norm)[0])
+    try:
+        X_raw = np.array(raw_values, dtype=float).reshape(1, -1)
+        X_norm = _normalizer.transform(X_raw)
+        knn_pred = int(_knn.predict(X_norm)[0])
+        kmeans_pred = int(_kmeans.predict(X_norm)[0])
+    except Exception as exc:
+        return Response(
+            {'success': False, 'error': f'Erro durante a predição: {exc}'},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        )
 
     norm_dict = {col: round(float(X_norm[0][i]), 6) for i, col in enumerate(SENSOR_COLUMNS)}
 
