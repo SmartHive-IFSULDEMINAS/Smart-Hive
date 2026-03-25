@@ -8,7 +8,6 @@ venv/
 ENV/
 .env
 *.egg-info/
-dist/
 build/
 
 # Django
@@ -37,7 +36,6 @@ yarn-error.log
 Thumbs.db
 
 # Frontend build
-frontend/dist/
 frontend/.env.local
 frontend/.env
 
