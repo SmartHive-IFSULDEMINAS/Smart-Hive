@@ -10,7 +10,8 @@ from django.contrib.auth import get_user_model
 
 from .models import (
     EspecieAbelha, Apiario, Colmeia, Inspecao, ProducaoMel, Tratamento,
-    Custo, Receita, Fornecedor, Equipamento, Notificacao, LeituraSensor
+    Custo, Receita, Fornecedor, Equipamento, Notificacao, LeituraSensor,
+    ClassificacaoPolen,
 )
 from .serializers import (
     EspecieAbelhaSerializer,
@@ -25,7 +26,8 @@ from .serializers import (
     FornecedorSerializer,
     EquipamentoSerializer,
     NotificacaoSerializer,
-    LeituraSensorListSerializer
+    LeituraSensorListSerializer,
+    ClassificacaoPolenSerializer,
 )
 
 User = get_user_model()
@@ -838,5 +840,61 @@ class DashboardProdutividadeView(APIView):
             'producao_por_especie': producao_por_especie,
             'media_por_apiario': apiarios_com_media,
         }
-        
+
         return Response(stats)
+
+
+class ClassificacaoPolenViewSet(viewsets.ModelViewSet):
+    """ViewSet para histórico de classificações espectrais de pólen (IA)"""
+    queryset = ClassificacaoPolen.objects.all()
+    serializer_class = ClassificacaoPolenSerializer
+    permission_classes = [IsAuthenticated]
+    filter_backends = [filters.SearchFilter, filters.OrderingFilter]
+    search_fields = ['dispositivo_id', 'notas']
+    ordering_fields = ['timestamp', 'knn_classe', 'kmeans_cluster']
+    ordering = ['-timestamp']
+    http_method_names = ['get', 'delete', 'head', 'options']  # somente leitura + delete
+
+    def get_queryset(self):
+        queryset = ClassificacaoPolen.objects.all()
+        knn = self.request.query_params.get('knn_classe')
+        cluster = self.request.query_params.get('kmeans_cluster')
+        data_inicio = self.request.query_params.get('data_inicio')
+        data_fim = self.request.query_params.get('data_fim')
+
+        if knn:
+            queryset = queryset.filter(knn_classe=knn)
+        if cluster:
+            queryset = queryset.filter(kmeans_cluster=cluster)
+        if data_inicio:
+            queryset = queryset.filter(timestamp__date__gte=data_inicio)
+        if data_fim:
+            queryset = queryset.filter(timestamp__date__lte=data_fim)
+
+        return queryset
+
+    @action(detail=False, methods=['get'])
+    def estatisticas(self, request):
+        """Retorna distribuição de classes KNN e clusters KMeans"""
+        qs = self.get_queryset()
+        total = qs.count()
+
+        knn_dist = (
+            qs.values('knn_classe')
+            .annotate(total=Count('id'))
+            .order_by('knn_classe')
+        )
+        cluster_dist = (
+            qs.values('kmeans_cluster')
+            .annotate(total=Count('id'))
+            .order_by('kmeans_cluster')
+        )
+
+        ultima = qs.first()
+
+        return Response({
+            'total': total,
+            'distribuicao_knn': list(knn_dist),
+            'distribuicao_clusters': list(cluster_dist),
+            'ultima_classificacao': ClassificacaoPolenSerializer(ultima).data if ultima else None,
+        })

@@ -104,4 +104,11 @@ export const updateTratamento = (id, data) => api.put(`/tratamentos/${id}/`, dat
 export const deleteTratamento = (id) => api.delete(`/tratamentos/${id}/`);
 export const finalizarTratamento = (id, data) => api.post(`/tratamentos/${id}/finalizar/`, data);
 
+// IA — Classificação Espectral de Pólen
+export const classificarPolen = (data) => api.post('/ia/polen/classificar/', data);
+export const getIAStatus = () => api.get('/ia/status/');
+export const getClassificacoes = (params) => api.get('/ia/classificacoes/', { params });
+export const getClassificacaoEstatisticas = (params) => api.get('/ia/classificacoes/estatisticas/', { params });
+export const deleteClassificacao = (id) => api.delete(`/ia/classificacoes/${id}/`);
+
 export default api;

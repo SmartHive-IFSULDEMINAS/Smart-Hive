@@ -983,3 +983,44 @@ class LeituraSensor(models.Model):
     def __str__(self):
         return f"Leitura {self.colmeia.identificador} - {self.timestamp.strftime('%d/%m/%Y %H:%M')}"
 
+
+class ClassificacaoPolen(models.Model):
+    """Classificação espectral de pólen via sensor AS7341 + modelos de ML"""
+
+    # 10 canais brutos do sensor AS7341
+    canal_f1   = models.FloatField(verbose_name='F1 - Violeta (~415nm)')
+    canal_f2   = models.FloatField(verbose_name='F2 - Azul (~445nm)')
+    canal_f3   = models.FloatField(verbose_name='F3 - Ciano (~480nm)')
+    canal_f4   = models.FloatField(verbose_name='F4 - Verde (~515nm)')
+    canal_f5   = models.FloatField(verbose_name='F5 - Verde-Amarelo (~555nm)')
+    canal_f6   = models.FloatField(verbose_name='F6 - Amarelo (~590nm)')
+    canal_f7   = models.FloatField(verbose_name='F7 - Laranja (~630nm)')
+    canal_f8   = models.FloatField(verbose_name='F8 - Vermelho (~680nm)')
+    canal_nir  = models.FloatField(verbose_name='NIR - Infravermelho (~910nm)')
+    canal_clear = models.FloatField(verbose_name='CLEAR - Luminosidade')
+
+    # Resultados dos modelos
+    knn_classe      = models.IntegerField(verbose_name='Classe KNN (espécie)')
+    kmeans_cluster  = models.IntegerField(verbose_name='Cluster KMeans')
+
+    # Metadados
+    dispositivo_id = models.CharField(
+        max_length=100, blank=True, verbose_name='ID do Dispositivo'
+    )
+    notas = models.TextField(blank=True, verbose_name='Notas')
+    timestamp = models.DateTimeField(
+        auto_now_add=True, verbose_name='Timestamp', db_index=True
+    )
+
+    class Meta:
+        verbose_name = 'Classificação de Pólen'
+        verbose_name_plural = 'Classificações de Pólen'
+        ordering = ['-timestamp']
+        indexes = [
+            models.Index(fields=['-timestamp']),
+            models.Index(fields=['knn_classe']),
+            models.Index(fields=['kmeans_cluster']),
+        ]
+
+    def __str__(self):
+        return f"Pólen TIPO:{self.knn_classe} CLUSTER:{self.kmeans_cluster} — {self.timestamp.strftime('%d/%m/%Y %H:%M')}"

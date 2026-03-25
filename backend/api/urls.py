@@ -17,6 +17,7 @@ from .views import (
     DashboardFinanceiroView,
     DashboardSaudeView,
     DashboardProdutividadeView,
+    ClassificacaoPolenViewSet,
 )
 from .auth_views import register, login, me, update_profile, UsuarioViewSet
 from .iot_views import receber_dados_iot, historico_sensores
@@ -42,6 +43,7 @@ router.register(r'fornecedores', FornecedorViewSet, basename='fornecedores')
 router.register(r'equipamentos', EquipamentoViewSet, basename='equipamentos')
 router.register(r'notificacoes', NotificacaoViewSet, basename='notificacoes')
 router.register(r'usuarios', UsuarioViewSet, basename='usuarios')
+router.register(r'ia/classificacoes', ClassificacaoPolenViewSet, basename='ia-classificacoes')
 
 urlpatterns = [
     path('', include(router.urls)),

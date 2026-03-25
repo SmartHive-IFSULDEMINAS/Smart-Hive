@@ -10,6 +10,8 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 
+from .models import ClassificacaoPolen
+
 # ── Carregamento lazy dos modelos (evita import no topo que quebraria se
 #    scikit-learn não estiver instalado no ambiente de desenvolvimento) ─────────
 
@@ -154,6 +156,26 @@ def classificar_polen(request):
     kmeans_pred = int(_kmeans.predict(X_norm)[0])
 
     norm_dict = {col: round(float(X_norm[0][i]), 6) for i, col in enumerate(SENSOR_COLUMNS)}
+
+    # ── Salvar no banco ────────────────────────────────────────────────────
+    dispositivo_id = data.get('dispositivo_id', '')
+    notas = data.get('notas', '')
+    ClassificacaoPolen.objects.create(
+        canal_f1=raw_values[0],
+        canal_f2=raw_values[1],
+        canal_f3=raw_values[2],
+        canal_f4=raw_values[3],
+        canal_f5=raw_values[4],
+        canal_f6=raw_values[5],
+        canal_f7=raw_values[6],
+        canal_f8=raw_values[7],
+        canal_nir=raw_values[8],
+        canal_clear=raw_values[9],
+        knn_classe=knn_pred,
+        kmeans_cluster=kmeans_pred,
+        dispositivo_id=dispositivo_id,
+        notas=notas,
+    )
 
     return Response(
         {

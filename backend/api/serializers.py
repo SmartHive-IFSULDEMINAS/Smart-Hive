@@ -2,7 +2,8 @@ from rest_framework import serializers
 from django.contrib.auth import get_user_model
 from .models import (
     EspecieAbelha, Apiario, Colmeia, Inspecao, ProducaoMel, Tratamento,
-    Custo, Receita, Fornecedor, Equipamento, Notificacao, LeituraSensor
+    Custo, Receita, Fornecedor, Equipamento, Notificacao, LeituraSensor,
+    ClassificacaoPolen,
 )
 
 User = get_user_model()
@@ -357,8 +358,21 @@ class LeituraSensorListSerializer(serializers.ModelSerializer):
     class Meta:
         model = LeituraSensor
         fields = [
-            'id', 'colmeia_identificador', 'temperatura', 'nivel_ruido', 
+            'id', 'colmeia_identificador', 'temperatura', 'nivel_ruido',
             'luminosidade', 'umidade', 'pressao', 'peso',
             'timestamp', 'dispositivo_id'
         ]
+
+
+class ClassificacaoPolenSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ClassificacaoPolen
+        fields = [
+            'id',
+            'canal_f1', 'canal_f2', 'canal_f3', 'canal_f4', 'canal_f5',
+            'canal_f6', 'canal_f7', 'canal_f8', 'canal_nir', 'canal_clear',
+            'knn_classe', 'kmeans_cluster',
+            'dispositivo_id', 'notas', 'timestamp',
+        ]
+        read_only_fields = ['timestamp']
 

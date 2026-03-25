@@ -1,9 +1,9 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from .models import (
-    Usuario, EspecieAbelha, Apiario, Colmeia, Inspecao, 
-    ProducaoMel, Tratamento, Custo, Receita, Fornecedor, 
-    Equipamento, Notificacao, LeituraSensor
+    Usuario, EspecieAbelha, Apiario, Colmeia, Inspecao,
+    ProducaoMel, Tratamento, Custo, Receita, Fornecedor,
+    Equipamento, Notificacao, LeituraSensor, ClassificacaoPolen,
 )
 
 
@@ -187,3 +187,13 @@ class NotificacaoAdmin(admin.ModelAdmin):
     search_fields = ['titulo', 'mensagem', 'usuario__username']
     ordering = ['-created_at']
     raw_id_fields = ['usuario', 'colmeia', 'apiario']
+
+
+@admin.register(ClassificacaoPolen)
+class ClassificacaoPolenAdmin(admin.ModelAdmin):
+    list_display = ['id', 'knn_classe', 'kmeans_cluster', 'dispositivo_id', 'timestamp']
+    list_filter = ['knn_classe', 'kmeans_cluster', 'timestamp']
+    search_fields = ['dispositivo_id', 'notas']
+    ordering = ['-timestamp']
+    date_hierarchy = 'timestamp'
+    readonly_fields = ['timestamp']

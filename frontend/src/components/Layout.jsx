@@ -31,6 +31,7 @@ import {
     LocalFlorist as HoneyIcon,
     Healing as TreatmentIcon,
     BugReport as BugIcon,
+    Biotech as BiotechIcon,
     Brightness4 as DarkModeIcon,
     Brightness7 as LightModeIcon,
     ChevronLeft as ChevronLeftIcon,
@@ -70,6 +71,12 @@ const menuSections = [
             { text: 'Espécies', icon: <BugIcon />, path: '/especies' },
         ],
     },
+    {
+        label: 'INTELIGÊNCIA ARTIFICIAL',
+        items: [
+            { text: 'Análise de Pólen', icon: <BiotechIcon />, path: '/ia-polen' },
+        ],
+    },
 ];
 
 // Mapa de path → título para o AppBar
@@ -81,6 +88,7 @@ const pageTitles = {
     '/producao':   'Produção',
     '/tratamentos':'Tratamentos',
     '/especies':   'Espécies',
+    '/ia-polen':   'IA — Análise de Pólen',
 };
 
 export default function Layout({ children }) {
