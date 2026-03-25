@@ -290,7 +290,7 @@ export default function Producao() {
                     { label: 'Total de Colheitas', value: loading ? null : totalRegistros, icon: <TrendingIcon />, color: '#64B5F6' },
                     { label: 'Média por Colheita', value: loading ? null : `${mediaKg} kg`, icon: <HoneyIcon />, color: '#81C784' },
                 ].map((stat, i) => (
-                    <Grid item xs={12} sm={4} key={i}>
+                    <Grid size={{ xs: 12, sm: 4 }} key={i}>
                         <Card sx={{ position: 'relative', overflow: 'hidden', '&::before': { content: '""', position: 'absolute', top: 0, left: 0, right: 0, height: '2px', background: stat.color } }}>
                             <CardContent>
                                 <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
@@ -313,7 +313,7 @@ export default function Producao() {
 
             {/* Charts */}
             <Grid container spacing={2} sx={{ mb: 3 }}>
-                <Grid item xs={12} md={6}>
+                <Grid size={{ xs: 12, md: 6 }}>
                     <Card>
                         <CardContent>
                             <Typography variant="subtitle1" fontWeight={600} gutterBottom>Produção por Tipo de Mel</Typography>
@@ -339,7 +339,7 @@ export default function Producao() {
                         </CardContent>
                     </Card>
                 </Grid>
-                <Grid item xs={12} md={6}>
+                <Grid size={{ xs: 12, md: 6 }}>
                     <Card>
                         <CardContent>
                             <Typography variant="subtitle1" fontWeight={600} gutterBottom>Produção por Qualidade</Typography>
@@ -373,7 +373,7 @@ export default function Producao() {
             <Collapse in={filtersOpen}>
                 <Paper sx={{ p: 2, mb: 2, border: '1px solid', borderColor: 'divider' }}>
                     <Grid container spacing={2} alignItems="center">
-                        <Grid item xs={12} sm={5}>
+                        <Grid size={{ xs: 12, sm: 5 }}>
                             <FormControl fullWidth size="small">
                                 <InputLabel>Qualidade</InputLabel>
                                 <Select value={filterQualidade} onChange={(e) => { setFilterQualidade(e.target.value); setPage(0); }} label="Qualidade">
@@ -383,7 +383,7 @@ export default function Producao() {
                             </FormControl>
                         </Grid>
                         {filterQualidade && (
-                            <Grid item xs={12} sm={3}>
+                            <Grid size={{ xs: 12, sm: 3 }}>
                                 <Button size="small" variant="outlined" onClick={() => { setFilterQualidade(''); setPage(0); }} fullWidth>Limpar</Button>
                             </Grid>
                         )}
@@ -495,7 +495,7 @@ export default function Producao() {
                     <DialogTitle>{editingId ? 'Editar Produção' : 'Registrar Colheita'}</DialogTitle>
                     <DialogContent>
                         <Grid container spacing={2} sx={{ mt: 1 }}>
-                            <Grid item xs={12}>
+                            <Grid size={12}>
                                 <FormControl fullWidth required>
                                     <InputLabel>Colmeia</InputLabel>
                                     <Select name="colmeia" value={formData.colmeia} onChange={handleChange} label="Colmeia">
@@ -505,21 +505,21 @@ export default function Producao() {
                                     </Select>
                                 </FormControl>
                             </Grid>
-                            <Grid item xs={12} sm={6}>
+                            <Grid size={{ xs: 12, sm: 6 }}>
                                 <TextField
                                     fullWidth label="Data da Colheita" name="data_colheita" type="date"
                                     value={formData.data_colheita} onChange={handleChange}
                                     InputLabelProps={{ shrink: true }} required
                                 />
                             </Grid>
-                            <Grid item xs={12} sm={6}>
+                            <Grid size={{ xs: 12, sm: 6 }}>
                                 <TextField
                                     fullWidth label="Quantidade (kg)" name="quantidade_kg" type="number"
                                     value={formData.quantidade_kg} onChange={handleChange}
                                     inputProps={{ step: '0.01', min: '0' }} required
                                 />
                             </Grid>
-                            <Grid item xs={12} sm={6}>
+                            <Grid size={{ xs: 12, sm: 6 }}>
                                 <FormControl fullWidth>
                                     <InputLabel>Tipo de Mel</InputLabel>
                                     <Select name="tipo_mel" value={formData.tipo_mel} onChange={handleChange} label="Tipo de Mel">
@@ -527,7 +527,7 @@ export default function Producao() {
                                     </Select>
                                 </FormControl>
                             </Grid>
-                            <Grid item xs={12} sm={6}>
+                            <Grid size={{ xs: 12, sm: 6 }}>
                                 <FormControl fullWidth>
                                     <InputLabel>Qualidade</InputLabel>
                                     <Select name="qualidade" value={formData.qualidade} onChange={handleChange} label="Qualidade">
@@ -535,13 +535,13 @@ export default function Producao() {
                                     </Select>
                                 </FormControl>
                             </Grid>
-                            <Grid item xs={12} sm={6}>
+                            <Grid size={{ xs: 12, sm: 6 }}>
                                 <TextField fullWidth label="Quadros Colhidos" name="numero_quadros_colhidos" type="number" value={formData.numero_quadros_colhidos} onChange={handleChange} />
                             </Grid>
-                            <Grid item xs={12} sm={6}>
+                            <Grid size={{ xs: 12, sm: 6 }}>
                                 <TextField fullWidth label="Umidade do Mel (%)" name="umidade_mel" type="number" value={formData.umidade_mel} onChange={handleChange} inputProps={{ step: '0.1' }} />
                             </Grid>
-                            <Grid item xs={12}>
+                            <Grid size={12}>
                                 <TextField fullWidth label="Observações" name="observacoes" value={formData.observacoes} onChange={handleChange} multiline rows={2} />
                             </Grid>
                         </Grid>

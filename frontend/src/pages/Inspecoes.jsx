@@ -35,6 +35,7 @@ import {
     Tooltip,
     Menu as MuiMenu,
     Divider,
+    CircularProgress,
 } from '@mui/material';
 import {
     Add as AddIcon,
@@ -268,7 +269,7 @@ export default function Inspecoes() {
             <Collapse in={filtersOpen}>
                 <Paper sx={{ p: 2, mb: 2, border: '1px solid', borderColor: 'divider' }}>
                     <Grid container spacing={2} alignItems="center">
-                        <Grid item xs={12} sm={6}>
+                        <Grid size={{ xs: 12, sm: 6 }}>
                             <FormControl fullWidth size="small">
                                 <InputLabel>Condição Geral</InputLabel>
                                 <Select value={filterCondicao} onChange={(e) => { setFilterCondicao(e.target.value); setPage(0); }} label="Condição Geral">
@@ -278,7 +279,7 @@ export default function Inspecoes() {
                             </FormControl>
                         </Grid>
                         {filterCondicao && (
-                            <Grid item xs={12} sm={3}>
+                            <Grid size={{ xs: 12, sm: 3 }}>
                                 <Button size="small" variant="outlined" onClick={() => { setFilterCondicao(''); setPage(0); }} fullWidth>Limpar</Button>
                             </Grid>
                         )}
@@ -396,7 +397,7 @@ export default function Inspecoes() {
                     </DialogTitle>
                     <DialogContent>
                         <Grid container spacing={2} sx={{ mt: 1 }}>
-                            <Grid item xs={12} sm={6}>
+                            <Grid size={{ xs: 12, sm: 6 }}>
                                 <FormControl fullWidth required>
                                     <InputLabel>Colmeia</InputLabel>
                                     <Select
@@ -413,7 +414,7 @@ export default function Inspecoes() {
                                     </Select>
                                 </FormControl>
                             </Grid>
-                            <Grid item xs={12} sm={6}>
+                            <Grid size={{ xs: 12, sm: 6 }}>
                                 <TextField
                                     fullWidth
                                     label="Data e Hora"
@@ -425,7 +426,7 @@ export default function Inspecoes() {
                                     required
                                 />
                             </Grid>
-                            <Grid item xs={12} sm={6}>
+                            <Grid size={{ xs: 12, sm: 6 }}>
                                 <TextField
                                     fullWidth
                                     label="Inspetor/Responsável"
@@ -434,7 +435,7 @@ export default function Inspecoes() {
                                     onChange={handleChange}
                                 />
                             </Grid>
-                            <Grid item xs={12} sm={6}>
+                            <Grid size={{ xs: 12, sm: 6 }}>
                                 <FormControl fullWidth required>
                                     <InputLabel>Condição Geral</InputLabel>
                                     <Select
@@ -451,25 +452,25 @@ export default function Inspecoes() {
                             </Grid>
 
                             {/* Checkboxes */}
-                            <Grid item xs={6} sm={3}>
+                            <Grid size={{ xs: 6, sm: 3 }}>
                                 <FormControlLabel
                                     control={<Switch checked={formData.presenca_rainha} onChange={handleChange} name="presenca_rainha" />}
                                     label="Rainha Presente"
                                 />
                             </Grid>
-                            <Grid item xs={6} sm={3}>
+                            <Grid size={{ xs: 6, sm: 3 }}>
                                 <FormControlLabel
                                     control={<Switch checked={formData.rainha_marcada} onChange={handleChange} name="rainha_marcada" />}
                                     label="Rainha Marcada"
                                 />
                             </Grid>
-                            <Grid item xs={6} sm={3}>
+                            <Grid size={{ xs: 6, sm: 3 }}>
                                 <FormControlLabel
                                     control={<Switch checked={formData.presenca_pragas} onChange={handleChange} name="presenca_pragas" color="error" />}
                                     label="Presença de Pragas"
                                 />
                             </Grid>
-                            <Grid item xs={6} sm={3}>
+                            <Grid size={{ xs: 6, sm: 3 }}>
                                 <FormControlLabel
                                     control={<Switch checked={formData.presenca_doencas} onChange={handleChange} name="presenca_doencas" color="error" />}
                                     label="Presença de Doenças"
@@ -477,7 +478,7 @@ export default function Inspecoes() {
                             </Grid>
 
                             {formData.presenca_pragas && (
-                                <Grid item xs={12} sm={6}>
+                                <Grid size={{ xs: 12, sm: 6 }}>
                                     <TextField
                                         fullWidth
                                         label="Tipo de Pragas"
@@ -488,7 +489,7 @@ export default function Inspecoes() {
                                 </Grid>
                             )}
                             {formData.presenca_doencas && (
-                                <Grid item xs={12} sm={6}>
+                                <Grid size={{ xs: 12, sm: 6 }}>
                                     <TextField
                                         fullWidth
                                         label="Tipo de Doenças"
@@ -500,7 +501,7 @@ export default function Inspecoes() {
                             )}
 
                             {/* Quantidades */}
-                            <Grid item xs={12} sm={4}>
+                            <Grid size={{ xs: 12, sm: 4 }}>
                                 <FormControl fullWidth>
                                     <InputLabel>Qtd. Crias</InputLabel>
                                     <Select name="quantidade_crias" value={formData.quantidade_crias} onChange={handleChange} label="Qtd. Crias">
@@ -508,7 +509,7 @@ export default function Inspecoes() {
                                     </Select>
                                 </FormControl>
                             </Grid>
-                            <Grid item xs={12} sm={4}>
+                            <Grid size={{ xs: 12, sm: 4 }}>
                                 <FormControl fullWidth>
                                     <InputLabel>Qtd. Mel</InputLabel>
                                     <Select name="quantidade_mel" value={formData.quantidade_mel} onChange={handleChange} label="Qtd. Mel">
@@ -516,7 +517,7 @@ export default function Inspecoes() {
                                     </Select>
                                 </FormControl>
                             </Grid>
-                            <Grid item xs={12} sm={4}>
+                            <Grid size={{ xs: 12, sm: 4 }}>
                                 <FormControl fullWidth>
                                     <InputLabel>Qtd. Pólen</InputLabel>
                                     <Select name="quantidade_polen" value={formData.quantidade_polen} onChange={handleChange} label="Qtd. Pólen">
@@ -526,7 +527,7 @@ export default function Inspecoes() {
                             </Grid>
 
                             {/* Clima */}
-                            <Grid item xs={6} sm={3}>
+                            <Grid size={{ xs: 6, sm: 3 }}>
                                 <TextField
                                     fullWidth
                                     label="Temperatura (°C)"
@@ -537,7 +538,7 @@ export default function Inspecoes() {
                                     inputProps={{ step: '0.1' }}
                                 />
                             </Grid>
-                            <Grid item xs={6} sm={3}>
+                            <Grid size={{ xs: 6, sm: 3 }}>
                                 <TextField
                                     fullWidth
                                     label="Umidade (%)"
@@ -547,7 +548,7 @@ export default function Inspecoes() {
                                     onChange={handleChange}
                                 />
                             </Grid>
-                            <Grid item xs={12} sm={6}>
+                            <Grid size={{ xs: 12, sm: 6 }}>
                                 <TextField
                                     fullWidth
                                     label="Próxima Inspeção"
@@ -560,14 +561,14 @@ export default function Inspecoes() {
                             </Grid>
 
                             {/* Alimentação */}
-                            <Grid item xs={12} sm={4}>
+                            <Grid size={{ xs: 12, sm: 4 }}>
                                 <FormControlLabel
                                     control={<Switch checked={formData.alimentacao_artificial} onChange={handleChange} name="alimentacao_artificial" />}
                                     label="Alimentação Artificial"
                                 />
                             </Grid>
                             {formData.alimentacao_artificial && (
-                                <Grid item xs={12} sm={8}>
+                                <Grid size={{ xs: 12, sm: 8 }}>
                                     <TextField
                                         fullWidth
                                         label="Tipo de Alimentação"
@@ -579,7 +580,7 @@ export default function Inspecoes() {
                             )}
 
                             {/* Textos */}
-                            <Grid item xs={12}>
+                            <Grid size={12}>
                                 <TextField
                                     fullWidth
                                     label="Observações"
@@ -590,7 +591,7 @@ export default function Inspecoes() {
                                     rows={2}
                                 />
                             </Grid>
-                            <Grid item xs={12}>
+                            <Grid size={12}>
                                 <TextField
                                     fullWidth
                                     label="Ações Realizadas"

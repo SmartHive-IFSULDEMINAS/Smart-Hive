@@ -188,7 +188,7 @@ export default function Apiarios() {
             <Grid container spacing={2.5}>
                 {loading
                     ? Array.from({ length: 6 }).map((_, i) => (
-                        <Grid item xs={12} sm={6} md={4} key={i}>
+                        <Grid size={{ xs: 12, sm: 6, md: 4 }} key={i}>
                             <Card sx={{ border: '1px solid', borderColor: 'divider' }}>
                                 <CardContent>
                                     <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
@@ -205,7 +205,7 @@ export default function Apiarios() {
                         </Grid>
                     ))
                     : filteredApiarios.map((apiario) => (
-                        <Grid item xs={12} sm={6} md={4} key={apiario.id}>
+                        <Grid size={{ xs: 12, sm: 6, md: 4 }} key={apiario.id}>
                             <Card sx={{
                                 height: '100%',
                                 display: 'flex',
@@ -319,34 +319,34 @@ export default function Apiarios() {
                     <DialogTitle>{editingId ? 'Editar Apiário' : 'Novo Apiário'}</DialogTitle>
                     <DialogContent>
                         <Grid container spacing={2} sx={{ mt: 1 }}>
-                            <Grid item xs={12}>
+                            <Grid size={12}>
                                 <TextField fullWidth label="Nome do Apiário" name="nome" value={formData.nome} onChange={handleChange} required />
                             </Grid>
-                            <Grid item xs={12}>
+                            <Grid size={12}>
                                 <TextField fullWidth label="Localização/Endereço" name="localizacao" value={formData.localizacao} onChange={handleChange} required />
                             </Grid>
-                            <Grid item xs={6}>
+                            <Grid size={6}>
                                 <TextField fullWidth label="Latitude" name="latitude" type="number" value={formData.latitude} onChange={handleChange} slotProps={{ input: { step: 'any' } }} />
                             </Grid>
-                            <Grid item xs={6}>
+                            <Grid size={6}>
                                 <TextField fullWidth label="Longitude" name="longitude" type="number" value={formData.longitude} onChange={handleChange} slotProps={{ input: { step: 'any' } }} />
                             </Grid>
-                            <Grid item xs={12} sm={6}>
+                            <Grid size={{ xs: 12, sm: 6 }}>
                                 <TextField fullWidth label="Responsável" name="responsavel" value={formData.responsavel} onChange={handleChange} />
                             </Grid>
-                            <Grid item xs={12} sm={6}>
+                            <Grid size={{ xs: 12, sm: 6 }}>
                                 <TextField fullWidth label="Telefone de Contato" name="telefone_contato" value={formData.telefone_contato} onChange={handleChange} />
                             </Grid>
-                            <Grid item xs={12} sm={6}>
+                            <Grid size={{ xs: 12, sm: 6 }}>
                                 <TextField fullWidth label="Data de Criação" name="data_criacao" type="date" value={formData.data_criacao} onChange={handleChange} slotProps={{ inputLabel: { shrink: true } }} required />
                             </Grid>
-                            <Grid item xs={12} sm={6}>
+                            <Grid size={{ xs: 12, sm: 6 }}>
                                 <FormControlLabel control={<Switch checked={formData.ativo} onChange={handleChange} name="ativo" color="primary" />} label="Apiário Ativo" />
                             </Grid>
-                            <Grid item xs={12}>
+                            <Grid size={12}>
                                 <TextField fullWidth label="Descrição" name="descricao" value={formData.descricao} onChange={handleChange} multiline rows={2} />
                             </Grid>
-                            <Grid item xs={12}>
+                            <Grid size={12}>
                                 <TextField fullWidth label="Observações" name="observacoes" value={formData.observacoes} onChange={handleChange} multiline rows={2} />
                             </Grid>
                         </Grid>

@@ -271,7 +271,7 @@ export default function Tratamentos() {
             <Collapse in={filtersOpen}>
                 <Paper sx={{ p: 2, mb: 2, border: '1px solid', borderColor: 'divider' }}>
                     <Grid container spacing={2} alignItems="center">
-                        <Grid item xs={12} sm={5}>
+                        <Grid size={{ xs: 12, sm: 5 }}>
                             <FormControl fullWidth size="small">
                                 <InputLabel>Status</InputLabel>
                                 <Select value={filterStatus} onChange={(e) => { setFilterStatus(e.target.value); setPage(0); }} label="Status">
@@ -281,7 +281,7 @@ export default function Tratamentos() {
                             </FormControl>
                         </Grid>
                         {filterStatus && (
-                            <Grid item xs={12} sm={3}>
+                            <Grid size={{ xs: 12, sm: 3 }}>
                                 <Button size="small" variant="outlined" onClick={() => { setFilterStatus(''); setPage(0); }} fullWidth>Limpar</Button>
                             </Grid>
                         )}
@@ -407,7 +407,7 @@ export default function Tratamentos() {
                     <DialogTitle>{editingId ? 'Editar Tratamento' : 'Novo Tratamento'}</DialogTitle>
                     <DialogContent>
                         <Grid container spacing={2} sx={{ mt: 1 }}>
-                            <Grid item xs={12} sm={6}>
+                            <Grid size={{ xs: 12, sm: 6 }}>
                                 <FormControl fullWidth required>
                                     <InputLabel>Colmeia</InputLabel>
                                     <Select name="colmeia" value={formData.colmeia} onChange={handleChange} label="Colmeia">
@@ -417,7 +417,7 @@ export default function Tratamentos() {
                                     </Select>
                                 </FormControl>
                             </Grid>
-                            <Grid item xs={12} sm={6}>
+                            <Grid size={{ xs: 12, sm: 6 }}>
                                 <FormControl fullWidth required>
                                     <InputLabel>Tipo de Tratamento</InputLabel>
                                     <Select name="tipo_tratamento" value={formData.tipo_tratamento} onChange={handleChange} label="Tipo de Tratamento">
@@ -425,7 +425,7 @@ export default function Tratamentos() {
                                     </Select>
                                 </FormControl>
                             </Grid>
-                            <Grid item xs={12} sm={4}>
+                            <Grid size={{ xs: 12, sm: 4 }}>
                                 <TextField
                                     fullWidth
                                     label="Data de Início"
@@ -437,7 +437,7 @@ export default function Tratamentos() {
                                     required
                                 />
                             </Grid>
-                            <Grid item xs={12} sm={4}>
+                            <Grid size={{ xs: 12, sm: 4 }}>
                                 <TextField
                                     fullWidth
                                     label="Data de Término"
@@ -448,7 +448,7 @@ export default function Tratamentos() {
                                     InputLabelProps={{ shrink: true }}
                                 />
                             </Grid>
-                            <Grid item xs={12} sm={4}>
+                            <Grid size={{ xs: 12, sm: 4 }}>
                                 <FormControl fullWidth>
                                     <InputLabel>Status</InputLabel>
                                     <Select name="status" value={formData.status} onChange={handleChange} label="Status">
@@ -456,16 +456,16 @@ export default function Tratamentos() {
                                     </Select>
                                 </FormControl>
                             </Grid>
-                            <Grid item xs={12} sm={6}>
+                            <Grid size={{ xs: 12, sm: 6 }}>
                                 <TextField fullWidth label="Medicamento/Produto" name="medicamento" value={formData.medicamento} onChange={handleChange} />
                             </Grid>
-                            <Grid item xs={12} sm={6}>
+                            <Grid size={{ xs: 12, sm: 6 }}>
                                 <TextField fullWidth label="Dosagem" name="dosagem" value={formData.dosagem} onChange={handleChange} />
                             </Grid>
-                            <Grid item xs={12} sm={6}>
+                            <Grid size={{ xs: 12, sm: 6 }}>
                                 <TextField fullWidth label="Frequência de Aplicação" name="frequencia_aplicacao" value={formData.frequencia_aplicacao} onChange={handleChange} />
                             </Grid>
-                            <Grid item xs={12} sm={6}>
+                            <Grid size={{ xs: 12, sm: 6 }}>
                                 <TextField
                                     fullWidth
                                     label="Custo (R$)"
@@ -476,13 +476,13 @@ export default function Tratamentos() {
                                     inputProps={{ step: '0.01', min: '0' }}
                                 />
                             </Grid>
-                            <Grid item xs={12}>
+                            <Grid size={12}>
                                 <TextField fullWidth label="Motivo/Diagnóstico" name="motivo" value={formData.motivo} onChange={handleChange} multiline rows={2} required />
                             </Grid>
-                            <Grid item xs={12}>
+                            <Grid size={12}>
                                 <TextField fullWidth label="Resultado" name="resultado" value={formData.resultado} onChange={handleChange} multiline rows={2} />
                             </Grid>
-                            <Grid item xs={12}>
+                            <Grid size={12}>
                                 <TextField fullWidth label="Observações" name="observacoes" value={formData.observacoes} onChange={handleChange} multiline rows={2} />
                             </Grid>
                         </Grid>

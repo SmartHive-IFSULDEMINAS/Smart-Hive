@@ -214,7 +214,7 @@ const AdvancedFilters = ({
         <Box sx={{ mt: 2 }}>
           <Grid container spacing={2}>
             {filters.map((filter) => (
-              <Grid item xs={12} sm={filter.gridSize?.sm || 6} md={filter.gridSize?.md || 4} key={filter.name}>
+              <Grid size={{ xs: 12, sm: filter.gridSize?.sm || 6, md: filter.gridSize?.md || 4 }} key={filter.name}>
                 {renderFilterField(filter)}
               </Grid>
             ))}

@@ -287,7 +287,7 @@ export default function Colmeias() {
             <Collapse in={filtersOpen}>
                 <Paper sx={{ p: 2, mb: 2, border: '1px solid', borderColor: 'divider' }}>
                     <Grid container spacing={2} alignItems="center">
-                        <Grid item xs={12} sm={5}>
+                        <Grid size={{ xs: 12, sm: 5 }}>
                             <FormControl fullWidth size="small">
                                 <InputLabel>Apiário</InputLabel>
                                 <Select
@@ -302,7 +302,7 @@ export default function Colmeias() {
                                 </Select>
                             </FormControl>
                         </Grid>
-                        <Grid item xs={12} sm={5}>
+                        <Grid size={{ xs: 12, sm: 5 }}>
                             <FormControl fullWidth size="small">
                                 <InputLabel>Status</InputLabel>
                                 <Select
@@ -318,7 +318,7 @@ export default function Colmeias() {
                             </FormControl>
                         </Grid>
                         {(filterApiario || filterStatus) && (
-                            <Grid item xs={12} sm={2}>
+                            <Grid size={{ xs: 12, sm: 2 }}>
                                 <Button
                                     size="small"
                                     variant="outlined"
@@ -592,20 +592,20 @@ export default function Colmeias() {
                     </DialogTitle>
                     <DialogContent>
                         <Grid container spacing={2} sx={{ mt: 1 }}>
-                            <Grid item xs={12} sm={6}>
+                            <Grid size={{ xs: 12, sm: 6 }}>
                                 <TextField
                                     fullWidth label="Identificador/Código" name="identificador"
                                     value={formData.identificador} onChange={handleChange}
                                     required helperText="Ex: C001, CLM-001"
                                 />
                             </Grid>
-                            <Grid item xs={12} sm={6}>
+                            <Grid size={{ xs: 12, sm: 6 }}>
                                 <TextField
                                     fullWidth label="Nome/Apelido" name="nome"
                                     value={formData.nome} onChange={handleChange}
                                 />
                             </Grid>
-                            <Grid item xs={12} sm={6}>
+                            <Grid size={{ xs: 12, sm: 6 }}>
                                 <FormControl fullWidth required>
                                     <InputLabel>Apiário</InputLabel>
                                     <Select name="apiario" value={formData.apiario} onChange={handleChange} label="Apiário">
@@ -615,7 +615,7 @@ export default function Colmeias() {
                                     </Select>
                                 </FormControl>
                             </Grid>
-                            <Grid item xs={12} sm={6}>
+                            <Grid size={{ xs: 12, sm: 6 }}>
                                 <FormControl fullWidth>
                                     <InputLabel>Espécie</InputLabel>
                                     <Select name="especie" value={formData.especie} onChange={handleChange} label="Espécie">
@@ -626,7 +626,7 @@ export default function Colmeias() {
                                     </Select>
                                 </FormControl>
                             </Grid>
-                            <Grid item xs={12} sm={6}>
+                            <Grid size={{ xs: 12, sm: 6 }}>
                                 <FormControl fullWidth>
                                     <InputLabel>Tipo de Caixa</InputLabel>
                                     <Select name="tipo_caixa" value={formData.tipo_caixa} onChange={handleChange} label="Tipo de Caixa">
@@ -636,7 +636,7 @@ export default function Colmeias() {
                                     </Select>
                                 </FormControl>
                             </Grid>
-                            <Grid item xs={12} sm={6}>
+                            <Grid size={{ xs: 12, sm: 6 }}>
                                 <FormControl fullWidth required>
                                     <InputLabel>Status</InputLabel>
                                     <Select name="status" value={formData.status} onChange={handleChange} label="Status">
@@ -646,34 +646,34 @@ export default function Colmeias() {
                                     </Select>
                                 </FormControl>
                             </Grid>
-                            <Grid item xs={12} sm={4}>
+                            <Grid size={{ xs: 12, sm: 4 }}>
                                 <TextField fullWidth label="Qtd. Abelhas Estimada" name="quantidade_abelhas_estimada"
                                     type="number" value={formData.quantidade_abelhas_estimada} onChange={handleChange} required />
                             </Grid>
-                            <Grid item xs={12} sm={4}>
+                            <Grid size={{ xs: 12, sm: 4 }}>
                                 <TextField fullWidth label="Número de Quadros" name="numero_quadros"
                                     type="number" value={formData.numero_quadros} onChange={handleChange} required />
                             </Grid>
-                            <Grid item xs={12} sm={4}>
+                            <Grid size={{ xs: 12, sm: 4 }}>
                                 <TextField fullWidth label="Peso Estimado (kg)" name="peso_estimado_kg"
                                     type="number" value={formData.peso_estimado_kg} onChange={handleChange}
                                     inputProps={{ step: '0.1' }} />
                             </Grid>
-                            <Grid item xs={12} sm={4}>
+                            <Grid size={{ xs: 12, sm: 4 }}>
                                 <TextField fullWidth label="Data de Instalação" name="data_instalacao"
                                     type="date" value={formData.data_instalacao} onChange={handleChange}
                                     InputLabelProps={{ shrink: true }} required />
                             </Grid>
-                            <Grid item xs={12} sm={4}>
+                            <Grid size={{ xs: 12, sm: 4 }}>
                                 <TextField fullWidth label="Idade da Rainha (meses)" name="idade_rainha_meses"
                                     type="number" value={formData.idade_rainha_meses} onChange={handleChange} />
                             </Grid>
-                            <Grid item xs={12} sm={4}>
+                            <Grid size={{ xs: 12, sm: 4 }}>
                                 <TextField fullWidth label="Última Troca de Rainha" name="data_ultima_troca_rainha"
                                     type="date" value={formData.data_ultima_troca_rainha} onChange={handleChange}
                                     InputLabelProps={{ shrink: true }} />
                             </Grid>
-                            <Grid item xs={12}>
+                            <Grid size={12}>
                                 <TextField fullWidth label="Observações" name="observacoes"
                                     value={formData.observacoes} onChange={handleChange}
                                     multiline rows={3} />
@@ -705,41 +705,41 @@ export default function Colmeias() {
                 <DialogContent>
                     {detailDialog.colmeia && (
                         <Grid container spacing={2} sx={{ mt: 1 }}>
-                            <Grid item xs={6}>
+                            <Grid size={6}>
                                 <Typography variant="body2" color="text.secondary">Apiário</Typography>
                                 <Typography fontWeight={600}>{detailDialog.colmeia.apiario_nome}</Typography>
                             </Grid>
-                            <Grid item xs={6}>
+                            <Grid size={6}>
                                 <Typography variant="body2" color="text.secondary">Espécie</Typography>
                                 <Typography fontWeight={600}>{detailDialog.colmeia.especie_nome || 'Não especificada'}</Typography>
                             </Grid>
-                            <Grid item xs={6}>
+                            <Grid size={6}>
                                 <Typography variant="body2" color="text.secondary">Status</Typography>
                                 {getStatusChip(detailDialog.colmeia.status)}
                             </Grid>
-                            <Grid item xs={6}>
+                            <Grid size={6}>
                                 <Typography variant="body2" color="text.secondary">Tipo de Caixa</Typography>
                                 <Typography fontWeight={600}>{detailDialog.colmeia.tipo_caixa_display}</Typography>
                             </Grid>
-                            <Grid item xs={6}>
+                            <Grid size={6}>
                                 <Typography variant="body2" color="text.secondary">Qtd. Abelhas Estimada</Typography>
                                 <Typography fontWeight={600}>
                                     {detailDialog.colmeia.quantidade_abelhas_estimada?.toLocaleString('pt-BR')}
                                 </Typography>
                             </Grid>
-                            <Grid item xs={6}>
+                            <Grid size={6}>
                                 <Typography variant="body2" color="text.secondary">Produção Total</Typography>
                                 <Typography fontWeight={600} color="primary.main">
                                     {parseFloat(detailDialog.colmeia.producao_total || 0).toFixed(2)} kg
                                 </Typography>
                             </Grid>
-                            <Grid item xs={6}>
+                            <Grid size={6}>
                                 <Typography variant="body2" color="text.secondary">Data de Instalação</Typography>
                                 <Typography fontWeight={600}>
                                     {new Date(detailDialog.colmeia.data_instalacao).toLocaleDateString('pt-BR')}
                                 </Typography>
                             </Grid>
-                            <Grid item xs={6}>
+                            <Grid size={6}>
                                 <Typography variant="body2" color="text.secondary">Última Inspeção</Typography>
                                 <Typography fontWeight={600}>
                                     {detailDialog.colmeia.data_ultima_inspecao
@@ -750,7 +750,7 @@ export default function Colmeias() {
 
                             {detailDialog.colmeia.sensor_iot_ativo && (
                                 <>
-                                    <Grid item xs={12}>
+                                    <Grid size={12}>
                                         <Box sx={{ mt: 1, pt: 2, borderTop: '1px solid', borderColor: 'divider' }}>
                                             <Box sx={{ display: 'flex', alignItems: 'center', mb: 2, gap: 1 }}>
                                                 <SensorsIcon sx={{ color: 'info.main', fontSize: 20 }} />
@@ -767,7 +767,7 @@ export default function Colmeias() {
                                             </Box>
                                             <Grid container spacing={1.5}>
                                                 {detailDialog.colmeia.temperatura_atual && (
-                                                    <Grid item xs={12} sm={4}>
+                                                    <Grid size={{ xs: 12, sm: 4 }}>
                                                         <Paper sx={{ p: 1.5, border: '1px solid', borderColor: alpha('#EF9A9A', 0.3) }}>
                                                             <Box sx={{ display: 'flex', alignItems: 'center', mb: 0.5 }}>
                                                                 <ThermostatIcon sx={{ color: '#EF9A9A', mr: 0.5, fontSize: 16 }} />
@@ -780,7 +780,7 @@ export default function Colmeias() {
                                                     </Grid>
                                                 )}
                                                 {detailDialog.colmeia.nivel_ruido && (
-                                                    <Grid item xs={12} sm={4}>
+                                                    <Grid size={{ xs: 12, sm: 4 }}>
                                                         <Paper sx={{ p: 1.5, border: '1px solid', borderColor: alpha('#FFB74D', 0.3) }}>
                                                             <Box sx={{ display: 'flex', alignItems: 'center', mb: 0.5 }}>
                                                                 <VolumeUpIcon sx={{ color: '#FFB74D', mr: 0.5, fontSize: 16 }} />
@@ -793,7 +793,7 @@ export default function Colmeias() {
                                                     </Grid>
                                                 )}
                                                 {detailDialog.colmeia.luminosidade && (
-                                                    <Grid item xs={12} sm={4}>
+                                                    <Grid size={{ xs: 12, sm: 4 }}>
                                                         <Paper sx={{ p: 1.5, border: '1px solid', borderColor: alpha('#FFC107', 0.3) }}>
                                                             <Box sx={{ display: 'flex', alignItems: 'center', mb: 0.5 }}>
                                                                 <LightModeIcon sx={{ color: '#FFC107', mr: 0.5, fontSize: 16 }} />
@@ -806,7 +806,7 @@ export default function Colmeias() {
                                                     </Grid>
                                                 )}
                                                 {detailDialog.colmeia.umidade && (
-                                                    <Grid item xs={12} sm={4}>
+                                                    <Grid size={{ xs: 12, sm: 4 }}>
                                                         <Paper sx={{ p: 1.5, border: '1px solid', borderColor: alpha('#64B5F6', 0.3) }}>
                                                             <Box sx={{ display: 'flex', alignItems: 'center', mb: 0.5 }}>
                                                                 <WaterDropIcon sx={{ color: '#64B5F6', mr: 0.5, fontSize: 16 }} />
@@ -819,7 +819,7 @@ export default function Colmeias() {
                                                     </Grid>
                                                 )}
                                                 {detailDialog.colmeia.pressao && (
-                                                    <Grid item xs={12} sm={4}>
+                                                    <Grid size={{ xs: 12, sm: 4 }}>
                                                         <Paper sx={{ p: 1.5, border: '1px solid', borderColor: alpha('#CE93D8', 0.3) }}>
                                                             <Box sx={{ display: 'flex', alignItems: 'center', mb: 0.5 }}>
                                                                 <CompressIcon sx={{ color: '#CE93D8', mr: 0.5, fontSize: 16 }} />
@@ -832,7 +832,7 @@ export default function Colmeias() {
                                                     </Grid>
                                                 )}
                                                 {detailDialog.colmeia.peso && (
-                                                    <Grid item xs={12} sm={4}>
+                                                    <Grid size={{ xs: 12, sm: 4 }}>
                                                         <Paper sx={{ p: 1.5, border: '1px solid', borderColor: alpha('#90A4AE', 0.3) }}>
                                                             <Box sx={{ display: 'flex', alignItems: 'center', mb: 0.5 }}>
                                                                 <ScaleIcon sx={{ color: '#90A4AE', mr: 0.5, fontSize: 16 }} />
@@ -851,7 +851,7 @@ export default function Colmeias() {
                             )}
 
                             {detailDialog.colmeia.observacoes && (
-                                <Grid item xs={12}>
+                                <Grid size={12}>
                                     <Typography variant="body2" color="text.secondary">Observações</Typography>
                                     <Typography>{detailDialog.colmeia.observacoes}</Typography>
                                 </Grid>
