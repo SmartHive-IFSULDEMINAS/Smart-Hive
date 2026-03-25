@@ -1,0 +1,67 @@
+# =============================================================================
+# SmartHive .gitignore
+# =============================================================================
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual Environment
+.venv/
+venv/
+ENV/
+env/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Jupyter Notebooks
+.ipynb_checkpoints/
+*.ipynb
+
+# Models (generated, can be re-trained)
+# models/*.pkl  ← incluídos no repo pois são necessários para a API na VPS
+
+# Output files (generated)
+outputs/
+
+# Temporary files
+temporarios/
+*.tmp
+*.temp
+*.log
+
+# Backup files
+*backup*
+*_erro*
+*.bak
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Data files (keep structure, ignore large datasets)
+# Uncomment below if you don't want to track CSV files:
+# data/datasets/*.csv
