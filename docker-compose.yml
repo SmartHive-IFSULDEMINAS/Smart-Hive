@@ -12,11 +12,13 @@ services:
       - sqlite_data:/app/data
       - static_volume:/app/staticfiles
       - media_volume:/app/media
+      - ./IA-smart_hive/models:/app/ia_models:ro
     environment:
       - DJANGO_SETTINGS_MODULE=smarthive.settings
       - DJANGO_ALLOWED_HOSTS=*
       - DJANGO_DEBUG=False
       - DJANGO_SECRET_KEY=change-this-to-a-random-secret-key-in-production
+      - IA_MODELS_DIR=/app/ia_models
     networks:
       - smarthive-network
     healthcheck:
