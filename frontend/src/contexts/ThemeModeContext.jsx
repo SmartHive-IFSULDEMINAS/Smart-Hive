@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useMemo, useEffect } from 'react';
 
 const ThemeModeContext = createContext({
-  mode: 'light',
+  mode: 'dark',
   toggleTheme: () => {},
 });
 
@@ -15,9 +15,11 @@ export const useThemeMode = () => {
 
 export const ThemeModeProvider = ({ children }) => {
   const [mode, setMode] = useState(() => {
-    // Carregar preferência do localStorage
     const savedMode = localStorage.getItem('themeMode');
-    return savedMode || 'dark';
+    if (savedMode === 'light' || savedMode === 'dark') {
+      return savedMode;
+    }
+    return 'dark';
   });
 
   useEffect(() => {

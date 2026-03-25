@@ -13,8 +13,8 @@ import {
     useTheme,
     alpha,
 } from '@mui/material';
-import { Hive as HiveIcon } from '@mui/icons-material';
 import { useAuth } from '../contexts/AuthContext';
+import smartHiveLogo from '../../imagens/logo_smart_hive.png';
 
 export default function Login() {
     const theme = useTheme();
@@ -66,14 +66,21 @@ export default function Login() {
                                     display: 'inline-flex',
                                     alignItems: 'center',
                                     justifyContent: 'center',
-                                    width: 80,
-                                    height: 80,
-                                    borderRadius: '50%',
-                                    bgcolor: alpha(theme.palette.primary.main, 0.1),
+                                    width: 140,
+                                    height: 140,
                                     mb: 2,
                                 }}
                             >
-                                <HiveIcon sx={{ fontSize: 50, color: theme.palette.primary.main }} />
+                                <Box
+                                    component="img"
+                                    src={smartHiveLogo}
+                                    alt="Logo Smart-Hive"
+                                    sx={{
+                                        width: '100%',
+                                        height: '100%',
+                                        objectFit: 'contain',
+                                    }}
+                                />
                             </Box>
                             <Typography variant="h4" gutterBottom sx={{ fontWeight: 700 }}>
                                 Smart-Hive

@@ -42,6 +42,7 @@ import {
 } from '@mui/icons-material';
 import { useThemeMode } from '../contexts/ThemeModeContext';
 import { useAuth } from '../contexts/AuthContext';
+import smartHiveLogo from '../../imagens/logo_smart_hive.png';
 
 const DRAWER_EXPANDED = 240;
 const DRAWER_COLLAPSED = 64;
@@ -135,18 +136,27 @@ export default function Layout({ children }) {
             >
                 <Box
                     sx={{
-                        width: 34,
-                        height: 34,
-                        borderRadius: '9px',
-                        bgcolor: theme.palette.primary.main,
+                        width: 40,
+                        height: 40,
+                        borderRadius: '10px',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
                         flexShrink: 0,
-                        boxShadow: `0 0 12px ${alpha(theme.palette.primary.main, 0.4)}`,
+                        overflow: 'hidden',
+                        boxShadow: `0 0 12px ${alpha(theme.palette.primary.main, 0.28)}`,
                     }}
                 >
-                    <HiveIcon sx={{ fontSize: 20, color: '#000' }} />
+                    <Box
+                        component="img"
+                        src={smartHiveLogo}
+                        alt="Logo Smart-Hive"
+                        sx={{
+                            width: '100%',
+                            height: '100%',
+                            objectFit: 'cover',
+                        }}
+                    />
                 </Box>
 
                 <Box
