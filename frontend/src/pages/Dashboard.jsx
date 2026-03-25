@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
     Box,
     Grid,
@@ -13,7 +13,7 @@ import {
     TableHead,
     TableRow,
     Paper,
-    CircularProgress,
+    Skeleton,
     Alert,
     useTheme,
     alpha,
@@ -21,6 +21,7 @@ import {
     Grow,
     IconButton,
     Tooltip,
+    Divider,
 } from '@mui/material';
 import {
     Hive as HiveIcon,
@@ -29,7 +30,8 @@ import {
     Healing as TreatmentIcon,
     Warning as WarningIcon,
     Search as InspectionIcon,
-    TrendingUp as TrendingIcon,
+    TrendingUp as TrendingUpIcon,
+    TrendingDown as TrendingDownIcon,
     Refresh as RefreshIcon,
     CalendarToday as CalendarIcon,
     Assessment as AssessmentIcon,
@@ -59,112 +61,86 @@ import {
 } from 'recharts';
 import { getDashboard } from '../services/api';
 
-// Componente de Card de Estatística melhorado
+// ─── StatCard — Enterprise Dark design ────────────────────────────────────────
 const StatCard = ({ title, value, subtitle, icon, color, trend, delay = 0 }) => {
     const theme = useTheme();
 
     return (
-        <Grow in={true} timeout={600 + delay}>
+        <Grow in timeout={500 + delay}>
             <Card
                 sx={{
                     height: '100%',
-                    background: `linear-gradient(145deg, ${color}15 0%, ${color}05 50%, ${color}08 100%)`,
-                    border: `2px solid ${alpha(color, 0.2)}`,
                     position: 'relative',
                     overflow: 'hidden',
-                    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                    '&:hover': {
-                        transform: 'translateY(-4px)',
-                        boxShadow: `0 12px 40px ${alpha(color, 0.3)}`,
-                        borderColor: alpha(color, 0.4),
+                    // Accent bar on top
+                    '&::before': {
+                        content: '""',
+                        position: 'absolute',
+                        top: 0, left: 0, right: 0,
+                        height: '2px',
+                        background: color,
+                        borderRadius: '12px 12px 0 0',
                     },
                 }}
             >
-                {/* Padrão de fundo decorativo */}
-                <Box
-                    sx={{
-                        position: 'absolute',
-                        right: -40,
-                        top: -40,
-                        width: 160,
-                        height: 160,
-                        borderRadius: '50%',
-                        background: `radial-gradient(circle, ${alpha(color, 0.15)} 0%, transparent 70%)`,
-                        opacity: 0.6,
-                    }}
-                />
-                <Box
-                    sx={{
-                        position: 'absolute',
-                        right: 20,
-                        top: 20,
-                        width: 80,
-                        height: 80,
-                        borderRadius: '50%',
-                        background: `radial-gradient(circle, ${alpha(color, 0.1)} 0%, transparent 70%)`,
-                    }}
-                />
-
-                <CardContent sx={{ position: 'relative', zIndex: 1, p: 3 }}>
+                <CardContent sx={{ p: 2.5 }}>
+                    {/* Top row: label + icon badge */}
                     <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
-                        <Box sx={{ flex: 1 }}>
-                            <Typography
-                                variant="overline"
-                                sx={{
-                                    color: alpha(color, 0.8),
-                                    fontWeight: 600,
-                                    letterSpacing: 1.2,
-                                    fontSize: '0.7rem',
-                                    textTransform: 'uppercase',
-                                }}
-                            >
-                                {title}
-                            </Typography>
-                            <Typography
-                                variant="h3"
-                                component="div"
-                                sx={{
-                                    fontWeight: 800,
-                                    color: color,
-                                    mt: 0.5,
-                                    mb: 1,
-                                    fontSize: { xs: '2rem', sm: '2.5rem' },
-                                    background: `linear-gradient(135deg, ${color} 0%, ${alpha(color, 0.7)} 100%)`,
-                                    WebkitBackgroundClip: 'text',
-                                    WebkitTextFillColor: 'transparent',
-                                }}
-                            >
-                                {value}
-                            </Typography>
-                            {subtitle && (
-                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mt: 1 }}>
-                                    {trend && <TrendingIcon sx={{ fontSize: 16, color: alpha(color, 0.7) }} />}
-                                    <Typography
-                                        variant="body2"
-                                        sx={{
-                                            color: theme.palette.text.secondary,
-                                            fontWeight: 500,
-                                        }}
-                                    >
-                                        {subtitle}
-                                    </Typography>
-                                </Box>
-                            )}
-                        </Box>
+                        <Typography
+                            variant="overline"
+                            sx={{ color: 'text.secondary', letterSpacing: '0.08em', lineHeight: 1.3 }}
+                        >
+                            {title}
+                        </Typography>
                         <Box
                             sx={{
-                                backgroundColor: alpha(color, 0.2),
-                                borderRadius: 3,
-                                p: 2,
+                                width: 34,
+                                height: 34,
+                                borderRadius: '9px',
+                                backgroundColor: alpha(color, 0.15),
+                                border: `1px solid ${alpha(color, 0.25)}`,
                                 display: 'flex',
                                 alignItems: 'center',
                                 justifyContent: 'center',
-                                border: `2px solid ${alpha(color, 0.3)}`,
-                                boxShadow: `0 4px 12px ${alpha(color, 0.2)}`,
+                                flexShrink: 0,
                             }}
                         >
-                            {icon}
+                            {React.cloneElement(icon, { sx: { fontSize: 18, color } })}
                         </Box>
+                    </Box>
+
+                    {/* Value */}
+                    <Typography
+                        variant="h3"
+                        sx={{
+                            fontWeight: 800,
+                            fontSize: { xs: '2rem', sm: '2.25rem' },
+                            color: 'text.primary',
+                            lineHeight: 1.1,
+                            mb: 1.5,
+                        }}
+                    >
+                        {value}
+                    </Typography>
+
+                    {/* Bottom row: subtitle + trend */}
+                    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 1 }}>
+                        {subtitle && (
+                            <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.78rem' }}>
+                                {subtitle}
+                            </Typography>
+                        )}
+                        {trend && (
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.25, flexShrink: 0 }}>
+                                <TrendingUpIcon sx={{ fontSize: 14, color: theme.palette.success.main }} />
+                                <Typography
+                                    variant="caption"
+                                    sx={{ color: theme.palette.success.main, fontWeight: 600, fontSize: '0.7rem' }}
+                                >
+                                    Atualizado
+                                </Typography>
+                            </Box>
+                        )}
                     </Box>
                 </CardContent>
             </Card>
@@ -172,8 +148,61 @@ const StatCard = ({ title, value, subtitle, icon, color, trend, delay = 0 }) => 
     );
 };
 
+// ─── Section header ───────────────────────────────────────────────────────────
+const SectionHeader = ({ title, icon, badge }) => (
+    <Box sx={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: 1,
+        mb: 2.5,
+        pb: 1.5,
+        borderBottom: '1px solid',
+        borderColor: 'divider',
+    }}>
+        {React.cloneElement(icon, { sx: { color: 'primary.main', fontSize: 20 } })}
+        <Typography variant="subtitle1" fontWeight={700} sx={{ flex: 1, letterSpacing: '-0.01em' }}>
+            {title}
+        </Typography>
+        {badge}
+    </Box>
+);
+
+// ─── Dark tooltip style for Recharts ─────────────────────────────────────────
+const darkTooltipStyle = {
+    background: '#1A1D27',
+    border: '1px solid rgba(255,255,255,0.12)',
+    borderRadius: 10,
+    boxShadow: '0 8px 32px rgba(0,0,0,0.5)',
+    color: '#E8EAED',
+    fontSize: 12,
+};
+
 const COLORS = ['#4CAF50', '#F4A100', '#F44336', '#9E9E9E', '#2196F3'];
 
+// ─── Dashboard skeleton ───────────────────────────────────────────────────────
+const DashboardSkeleton = () => (
+    <Box>
+        <Skeleton variant="text" width={320} height={44} sx={{ mb: 0.5 }} />
+        <Skeleton variant="text" width={240} height={22} sx={{ mb: 3 }} />
+        <Grid container spacing={3} sx={{ mb: 3 }}>
+            {[1, 2, 3, 4].map(i => (
+                <Grid item xs={12} sm={6} md={3} key={i}>
+                    <Skeleton variant="rounded" height={120} sx={{ borderRadius: 2 }} />
+                </Grid>
+            ))}
+        </Grid>
+        <Grid container spacing={3}>
+            <Grid item xs={12} lg={7}>
+                <Skeleton variant="rounded" height={480} sx={{ borderRadius: 2 }} />
+            </Grid>
+            <Grid item xs={12} lg={5}>
+                <Skeleton variant="rounded" height={480} sx={{ borderRadius: 2 }} />
+            </Grid>
+        </Grid>
+    </Box>
+);
+
+// ─── Main component ───────────────────────────────────────────────────────────
 export default function Dashboard() {
     const theme = useTheme();
     const [loading, setLoading] = useState(true);
@@ -204,39 +233,13 @@ export default function Dashboard() {
         }
     };
 
-    if (loading) {
-        return (
-            <Box
-                sx={{
-                    display: 'flex',
-                    flexDirection: 'column',
-                    justifyContent: 'center',
-                    alignItems: 'center',
-                    minHeight: 400,
-                    gap: 2,
-                }}
-            >
-                <CircularProgress
-                    size={60}
-                    sx={{
-                        color: theme.palette.primary.main,
-                    }}
-                />
-                <Typography variant="body1" color="text.secondary">
-                    Carregando dados do apiário...
-                </Typography>
-            </Box>
-        );
-    }
+    if (loading) return <DashboardSkeleton />;
 
     if (error) {
         return (
             <Alert
                 severity="error"
-                sx={{
-                    mb: 2,
-                    borderRadius: 2,
-                }}
+                sx={{ mb: 2, borderRadius: 2 }}
                 action={
                     <IconButton onClick={() => fetchDashboard()} size="small">
                         <RefreshIcon />
@@ -260,46 +263,19 @@ export default function Dashboard() {
 
     return (
         <Box sx={{ position: 'relative' }}>
-            {/* Header com título e ações */}
-            <Box
-                sx={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    mb: 4,
-                    flexWrap: 'wrap',
-                    gap: 2,
-                }}
-            >
+            {/* ─── Header ──────────────────────────────────────────────────── */}
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 3.5, flexWrap: 'wrap', gap: 2 }}>
                 <Box>
-                    <Typography
-                        variant="h3"
-                        sx={{
-                            fontWeight: 800,
-                            mb: 0.5,
-                            background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.secondary.main} 100%)`,
-                            WebkitBackgroundClip: 'text',
-                            WebkitTextFillColor: 'transparent',
-                            fontSize: { xs: '2rem', md: '2.5rem' },
-                        }}
-                    >
+                    <Typography variant="h4" sx={{ fontWeight: 700, color: 'text.primary', mb: 0.5 }}>
                         Visão Geral do Apiário
                     </Typography>
-                    <Typography
-                        variant="body1"
-                        color="text.secondary"
-                        sx={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: 1,
-                        }}
-                    >
-                        <CalendarIcon sx={{ fontSize: 18 }} />
+                    <Typography variant="body2" color="text.secondary" sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
+                        <CalendarIcon sx={{ fontSize: 15 }} />
                         {new Date().toLocaleDateString('pt-BR', {
                             weekday: 'long',
                             year: 'numeric',
                             month: 'long',
-                            day: 'numeric'
+                            day: 'numeric',
                         })}
                     </Typography>
                 </Box>
@@ -307,15 +283,17 @@ export default function Dashboard() {
                     <IconButton
                         onClick={() => fetchDashboard(true)}
                         disabled={refreshing}
+                        size="small"
                         sx={{
-                            backgroundColor: alpha(theme.palette.primary.main, 0.1),
-                            '&:hover': {
-                                backgroundColor: alpha(theme.palette.primary.main, 0.2),
-                            },
+                            bgcolor: alpha(theme.palette.primary.main, 0.1),
+                            border: `1px solid ${alpha(theme.palette.primary.main, 0.2)}`,
+                            '&:hover': { bgcolor: alpha(theme.palette.primary.main, 0.18) },
                         }}
                     >
                         <RefreshIcon
+                            fontSize="small"
                             sx={{
+                                color: 'primary.main',
                                 animation: refreshing ? 'spin 1s linear infinite' : 'none',
                                 '@keyframes spin': {
                                     '0%': { transform: 'rotate(0deg)' },
@@ -327,14 +305,14 @@ export default function Dashboard() {
                 </Tooltip>
             </Box>
 
-            {/* Cards de Estatísticas */}
+            {/* ─── KPI Cards ────────────────────────────────────────────────── */}
             <Grid container spacing={3} sx={{ mb: 4 }}>
                 <Grid item xs={12} sm={6} md={3}>
                     <StatCard
                         title="Apiários"
                         value={data?.total_apiarios || 0}
                         subtitle={`${data?.apiarios_ativos || 0} ativos`}
-                        icon={<PlaceIcon sx={{ color: theme.palette.secondary.main, fontSize: 32 }} />}
+                        icon={<PlaceIcon />}
                         color={theme.palette.secondary.main}
                         trend
                         delay={0}
@@ -345,7 +323,7 @@ export default function Dashboard() {
                         title="Colmeias"
                         value={data?.total_colmeias || 0}
                         subtitle={`${data?.colmeias_ativas || 0} ativas`}
-                        icon={<HiveIcon sx={{ color: theme.palette.primary.main, fontSize: 32 }} />}
+                        icon={<HiveIcon />}
                         color={theme.palette.primary.main}
                         trend
                         delay={100}
@@ -354,9 +332,9 @@ export default function Dashboard() {
                 <Grid item xs={12} sm={6} md={3}>
                     <StatCard
                         title="Produção Anual"
-                        value={`${parseFloat(data?.producao_ano_kg || 0).toFixed(1)}`}
+                        value={`${parseFloat(data?.producao_ano_kg || 0).toFixed(1)} kg`}
                         subtitle={`${parseFloat(data?.producao_mes_kg || 0).toFixed(1)} kg este mês`}
-                        icon={<HoneyIcon sx={{ color: '#FF9800', fontSize: 32 }} />}
+                        icon={<HoneyIcon />}
                         color="#FF9800"
                         trend
                         delay={200}
@@ -367,67 +345,61 @@ export default function Dashboard() {
                         title="Atenção"
                         value={data?.tratamentos_em_andamento || 0}
                         subtitle={`${data?.colmeias_em_quarentena || 0} em quarentena`}
-                        icon={<WarningIcon sx={{ color: theme.palette.error.main, fontSize: 32 }} />}
+                        icon={<WarningIcon />}
                         color={theme.palette.error.main}
                         delay={300}
                     />
                 </Grid>
             </Grid>
 
-            {/* Seção de Sensores IoT */}
+            {/* ─── IoT Section ──────────────────────────────────────────────── */}
             {data?.colmeias_iot && data.colmeias_iot.length > 0 && (
-                <Fade in={true} timeout={1800}>
-                    <Card
-                        sx={{
-                            mb: 4,
-                            background: `linear-gradient(145deg, ${theme.palette.background.paper} 0%, ${alpha('#2196F3', 0.02)} 100%)`,
-                            border: `1px solid ${alpha('#2196F3', 0.1)}`,
-                            borderRadius: 3,
-                        }}
-                    >
+                <Fade in timeout={800}>
+                    <Card sx={{ mb: 4 }}>
                         <CardContent sx={{ p: 3 }}>
-                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 3 }}>
-                                <SensorsIcon sx={{ color: '#2196F3', fontSize: 28 }} />
-                                <Typography variant="h6" sx={{ fontWeight: 700, flex: 1 }}>
-                                    Monitoramento IoT em Tempo Real
-                                </Typography>
-                                <Chip
-                                    label={`${data?.total_colmeias_iot || 0} colmeias com sensores`}
-                                    size="small"
-                                    sx={{
-                                        backgroundColor: alpha('#2196F3', 0.1),
-                                        color: '#2196F3',
-                                        fontWeight: 600,
-                                    }}
-                                />
-                            </Box>
+                            <SectionHeader
+                                title="Monitoramento IoT em Tempo Real"
+                                icon={<SensorsIcon />}
+                                badge={
+                                    <Chip
+                                        label={`${data?.total_colmeias_iot || 0} sensores`}
+                                        size="small"
+                                        color="info"
+                                        variant="outlined"
+                                    />
+                                }
+                            />
                             <Grid container spacing={2}>
                                 {data.colmeias_iot.map((colmeia) => (
                                     <Grid item xs={12} sm={6} md={4} key={colmeia.id}>
                                         <Paper
                                             sx={{
                                                 p: 2,
-                                                background: `linear-gradient(135deg, ${alpha('#2196F3', 0.05)} 0%, ${alpha('#2196F3', 0.02)} 100%)`,
-                                                border: `2px solid ${alpha('#2196F3', 0.2)}`,
-                                                borderRadius: 2,
-                                                transition: 'all 0.3s',
+                                                border: '1px solid',
+                                                borderColor: alpha('#2196F3', 0.2),
                                                 '&:hover': {
-                                                    transform: 'translateY(-2px)',
-                                                    boxShadow: `0 8px 24px ${alpha('#2196F3', 0.2)}`,
                                                     borderColor: alpha('#2196F3', 0.4),
                                                 },
+                                                transition: 'border-color 0.2s ease',
                                             }}
                                         >
                                             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
                                                 <Box>
-                                                    <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
+                                                    <Typography variant="subtitle2" fontWeight={700}>
                                                         {colmeia.identificador}
                                                     </Typography>
                                                     <Typography variant="caption" color="text.secondary">
                                                         {colmeia.apiario_nome}
                                                     </Typography>
                                                 </Box>
-                                                <SensorsIcon sx={{ color: '#2196F3', fontSize: 24 }} />
+                                                <Box sx={{
+                                                    width: 28, height: 28, borderRadius: '7px',
+                                                    bgcolor: alpha('#2196F3', 0.12),
+                                                    border: `1px solid ${alpha('#2196F3', 0.25)}`,
+                                                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                                }}>
+                                                    <SensorsIcon sx={{ fontSize: 16, color: '#64B5F6' }} />
+                                                </Box>
                                             </Box>
 
                                             {(colmeia.temperatura_atual || colmeia.nivel_ruido || colmeia.luminosidade) ? (
@@ -435,31 +407,19 @@ export default function Dashboard() {
                                                     {colmeia.temperatura_atual && (
                                                         <Grid item xs={4}>
                                                             <Box sx={{ textAlign: 'center' }}>
-                                                                <ThermostatIcon
-                                                                    sx={{
-                                                                        color: colmeia.temperatura_atual > 35
-                                                                            ? '#F44336'
-                                                                            : colmeia.temperatura_atual < 20
-                                                                                ? '#2196F3'
-                                                                                : '#4CAF50',
-                                                                        fontSize: 20,
-                                                                        mb: 0.5
-                                                                    }}
-                                                                />
-                                                                <Typography variant="caption" color="text.secondary" display="block">
-                                                                    Temp.
-                                                                </Typography>
-                                                                <Typography
-                                                                    variant="body2"
-                                                                    sx={{
-                                                                        fontWeight: 700,
-                                                                        color: colmeia.temperatura_atual > 35
-                                                                            ? '#F44336'
-                                                                            : colmeia.temperatura_atual < 20
-                                                                                ? '#2196F3'
-                                                                                : '#4CAF50',
-                                                                    }}
-                                                                >
+                                                                <ThermostatIcon sx={{
+                                                                    color: colmeia.temperatura_atual > 35 ? '#EF9A9A'
+                                                                        : colmeia.temperatura_atual < 20 ? '#64B5F6'
+                                                                            : '#81C784',
+                                                                    fontSize: 18, mb: 0.25,
+                                                                }} />
+                                                                <Typography variant="caption" color="text.secondary" display="block" sx={{ fontSize: '0.65rem' }}>Temp.</Typography>
+                                                                <Typography variant="body2" fontWeight={700} sx={{
+                                                                    color: colmeia.temperatura_atual > 35 ? '#EF9A9A'
+                                                                        : colmeia.temperatura_atual < 20 ? '#64B5F6'
+                                                                            : '#81C784',
+                                                                    fontSize: '0.8rem',
+                                                                }}>
                                                                     {parseFloat(colmeia.temperatura_atual).toFixed(1)}°C
                                                                 </Typography>
                                                             </Box>
@@ -468,11 +428,9 @@ export default function Dashboard() {
                                                     {colmeia.nivel_ruido && (
                                                         <Grid item xs={4}>
                                                             <Box sx={{ textAlign: 'center' }}>
-                                                                <VolumeUpIcon sx={{ color: '#FF9800', fontSize: 20, mb: 0.5 }} />
-                                                                <Typography variant="caption" color="text.secondary" display="block">
-                                                                    Ruído
-                                                                </Typography>
-                                                                <Typography variant="body2" sx={{ fontWeight: 700, color: '#FF9800' }}>
+                                                                <VolumeUpIcon sx={{ color: '#FFB74D', fontSize: 18, mb: 0.25 }} />
+                                                                <Typography variant="caption" color="text.secondary" display="block" sx={{ fontSize: '0.65rem' }}>Ruído</Typography>
+                                                                <Typography variant="body2" fontWeight={700} sx={{ color: '#FFB74D', fontSize: '0.8rem' }}>
                                                                     {parseFloat(colmeia.nivel_ruido).toFixed(1)} dB
                                                                 </Typography>
                                                             </Box>
@@ -481,11 +439,9 @@ export default function Dashboard() {
                                                     {colmeia.luminosidade && (
                                                         <Grid item xs={4}>
                                                             <Box sx={{ textAlign: 'center' }}>
-                                                                <LightModeIcon sx={{ color: '#FFC107', fontSize: 20, mb: 0.5 }} />
-                                                                <Typography variant="caption" color="text.secondary" display="block">
-                                                                    Luz
-                                                                </Typography>
-                                                                <Typography variant="body2" sx={{ fontWeight: 700, color: '#FFC107' }}>
+                                                                <LightModeIcon sx={{ color: '#FFC107', fontSize: 18, mb: 0.25 }} />
+                                                                <Typography variant="caption" color="text.secondary" display="block" sx={{ fontSize: '0.65rem' }}>Luz</Typography>
+                                                                <Typography variant="body2" fontWeight={700} sx={{ color: '#FFC107', fontSize: '0.8rem' }}>
                                                                     {parseFloat(colmeia.luminosidade).toFixed(0)}
                                                                 </Typography>
                                                             </Box>
@@ -494,11 +450,9 @@ export default function Dashboard() {
                                                     {colmeia.umidade && (
                                                         <Grid item xs={4}>
                                                             <Box sx={{ textAlign: 'center' }}>
-                                                                <WaterDropIcon sx={{ color: '#2196F3', fontSize: 20, mb: 0.5 }} />
-                                                                <Typography variant="caption" color="text.secondary" display="block">
-                                                                    Umidade
-                                                                </Typography>
-                                                                <Typography variant="body2" sx={{ fontWeight: 700, color: '#2196F3' }}>
+                                                                <WaterDropIcon sx={{ color: '#64B5F6', fontSize: 18, mb: 0.25 }} />
+                                                                <Typography variant="caption" color="text.secondary" display="block" sx={{ fontSize: '0.65rem' }}>Umidade</Typography>
+                                                                <Typography variant="body2" fontWeight={700} sx={{ color: '#64B5F6', fontSize: '0.8rem' }}>
                                                                     {parseFloat(colmeia.umidade).toFixed(1)}%
                                                                 </Typography>
                                                             </Box>
@@ -507,11 +461,9 @@ export default function Dashboard() {
                                                     {colmeia.pressao && (
                                                         <Grid item xs={4}>
                                                             <Box sx={{ textAlign: 'center' }}>
-                                                                <CompressIcon sx={{ color: '#9C27B0', fontSize: 20, mb: 0.5 }} />
-                                                                <Typography variant="caption" color="text.secondary" display="block">
-                                                                    Pressão
-                                                                </Typography>
-                                                                <Typography variant="body2" sx={{ fontWeight: 700, color: '#9C27B0' }}>
+                                                                <CompressIcon sx={{ color: '#CE93D8', fontSize: 18, mb: 0.25 }} />
+                                                                <Typography variant="caption" color="text.secondary" display="block" sx={{ fontSize: '0.65rem' }}>Pressão</Typography>
+                                                                <Typography variant="body2" fontWeight={700} sx={{ color: '#CE93D8', fontSize: '0.8rem' }}>
                                                                     {parseFloat(colmeia.pressao).toFixed(1)}
                                                                 </Typography>
                                                             </Box>
@@ -520,11 +472,9 @@ export default function Dashboard() {
                                                     {colmeia.peso && (
                                                         <Grid item xs={4}>
                                                             <Box sx={{ textAlign: 'center' }}>
-                                                                <ScaleIcon sx={{ color: '#607D8B', fontSize: 20, mb: 0.5 }} />
-                                                                <Typography variant="caption" color="text.secondary" display="block">
-                                                                    Peso
-                                                                </Typography>
-                                                                <Typography variant="body2" sx={{ fontWeight: 700, color: '#607D8B' }}>
+                                                                <ScaleIcon sx={{ color: '#90A4AE', fontSize: 18, mb: 0.25 }} />
+                                                                <Typography variant="caption" color="text.secondary" display="block" sx={{ fontSize: '0.65rem' }}>Peso</Typography>
+                                                                <Typography variant="body2" fontWeight={700} sx={{ color: '#90A4AE', fontSize: '0.8rem' }}>
                                                                     {parseFloat(colmeia.peso).toFixed(1)}kg
                                                                 </Typography>
                                                             </Box>
@@ -532,19 +482,15 @@ export default function Dashboard() {
                                                     )}
                                                 </Grid>
                                             ) : (
-                                                <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'center', py: 1 }}>
+                                                <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'center', py: 1, fontSize: '0.78rem' }}>
                                                     Aguardando primeira leitura...
                                                 </Typography>
                                             )}
 
                                             {colmeia.data_ultima_leitura_sensor && (
-                                                <Box sx={{ mt: 1.5, pt: 1.5, borderTop: `1px solid ${alpha('#000', 0.1)}` }}>
-                                                    <Typography
-                                                        variant="caption"
-                                                        color="text.secondary"
-                                                        sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}
-                                                    >
-                                                        <AccessTimeIcon sx={{ fontSize: 14 }} />
+                                                <Box sx={{ mt: 1.5, pt: 1.5, borderTop: '1px solid', borderColor: 'divider' }}>
+                                                    <Typography variant="caption" color="text.secondary" sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                                                        <AccessTimeIcon sx={{ fontSize: 12 }} />
                                                         {new Date(colmeia.data_ultima_leitura_sensor).toLocaleString('pt-BR')}
                                                     </Typography>
                                                 </Box>
@@ -558,76 +504,57 @@ export default function Dashboard() {
                 </Fade>
             )}
 
-            {/* Gráficos */}
+            {/* ─── Charts ───────────────────────────────────────────────────── */}
             <Grid container spacing={3} sx={{ mb: 4 }}>
                 <Grid item xs={12} lg={7}>
-                    <Fade in={true} timeout={800}>
-                        <Card
-                            sx={{
-                                background: `linear-gradient(145deg, ${theme.palette.background.paper} 0%, ${alpha(theme.palette.primary.main, 0.02)} 100%)`,
-                                border: `1px solid ${alpha(theme.palette.primary.main, 0.1)}`,
-                                borderRadius: 3,
-                                overflow: 'hidden',
-                            }}
-                        >
+                    <Fade in timeout={900}>
+                        <Card>
                             <CardContent sx={{ p: 3 }}>
-                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 3 }}>
-                                    <AssessmentIcon sx={{ color: theme.palette.primary.main }} />
-                                    <Typography variant="h6" sx={{ fontWeight: 700, flex: 1 }}>
-                                        Evolução da Produção
-                                    </Typography>
-                                    <Chip
-                                        label="12 meses"
-                                        size="small"
-                                        sx={{
-                                            backgroundColor: alpha(theme.palette.primary.main, 0.1),
-                                            color: theme.palette.primary.main,
-                                        }}
-                                    />
-                                </Box>
-                                <Box sx={{ height: 450 }}>
+                                <SectionHeader
+                                    title="Evolução da Produção"
+                                    icon={<AssessmentIcon />}
+                                    badge={<Chip label="12 meses" size="small" variant="outlined" />}
+                                />
+                                <Box sx={{ height: 420 }}>
                                     <ResponsiveContainer width="100%" height="100%">
                                         <AreaChart data={data?.producao_por_mes || []}>
                                             <defs>
                                                 <linearGradient id="colorProducao" x1="0" y1="0" x2="0" y2="1">
-                                                    <stop offset="5%" stopColor={theme.palette.primary.main} stopOpacity={0.4} />
-                                                    <stop offset="50%" stopColor={theme.palette.primary.main} stopOpacity={0.2} />
+                                                    <stop offset="5%"  stopColor={theme.palette.primary.main} stopOpacity={0.35} />
+                                                    <stop offset="50%" stopColor={theme.palette.primary.main} stopOpacity={0.12} />
                                                     <stop offset="95%" stopColor={theme.palette.primary.main} stopOpacity={0} />
                                                 </linearGradient>
                                             </defs>
                                             <CartesianGrid
-                                                strokeDasharray="3 3"
-                                                stroke={alpha(theme.palette.text.secondary, 0.1)}
+                                                stroke="rgba(255,255,255,0.05)"
+                                                strokeDasharray="0"
                                                 vertical={false}
                                             />
                                             <XAxis
                                                 dataKey="mes"
                                                 tick={{ fontSize: 11, fill: theme.palette.text.secondary }}
-                                                stroke={alpha(theme.palette.text.secondary, 0.3)}
+                                                stroke="rgba(255,255,255,0.08)"
                                             />
                                             <YAxis
                                                 tick={{ fontSize: 11, fill: theme.palette.text.secondary }}
-                                                stroke={alpha(theme.palette.text.secondary, 0.3)}
+                                                stroke="rgba(255,255,255,0.08)"
                                                 unit=" kg"
                                             />
                                             <RechartsTooltip
-                                                contentStyle={{
-                                                    borderRadius: 12,
-                                                    border: `1px solid ${alpha(theme.palette.primary.main, 0.2)}`,
-                                                    boxShadow: '0 8px 24px rgba(0,0,0,0.12)',
-                                                    backgroundColor: theme.palette.background.paper,
-                                                }}
+                                                contentStyle={darkTooltipStyle}
+                                                labelStyle={{ color: '#E8EAED', fontWeight: 600 }}
+                                                itemStyle={{ color: 'rgba(232,234,237,0.75)' }}
                                                 formatter={(value) => [`${parseFloat(value).toFixed(1)} kg`, 'Produção']}
                                             />
                                             <Area
                                                 type="monotone"
                                                 dataKey="producao_kg"
                                                 stroke={theme.palette.primary.main}
-                                                strokeWidth={3}
+                                                strokeWidth={2}
                                                 fillOpacity={1}
                                                 fill="url(#colorProducao)"
-                                                dot={{ fill: theme.palette.primary.main, r: 4 }}
-                                                activeDot={{ r: 6 }}
+                                                dot={{ fill: theme.palette.primary.main, r: 3, strokeWidth: 0 }}
+                                                activeDot={{ r: 5, strokeWidth: 0 }}
                                             />
                                         </AreaChart>
                                     </ResponsiveContainer>
@@ -638,32 +565,23 @@ export default function Dashboard() {
                 </Grid>
 
                 <Grid item xs={12} lg={5}>
-                    <Fade in={true} timeout={1000}>
-                        <Card
-                            sx={{
-                                height: '100%',
-                                background: `linear-gradient(145deg, ${theme.palette.background.paper} 0%, ${alpha(theme.palette.secondary.main, 0.02)} 100%)`,
-                                border: `1px solid ${alpha(theme.palette.secondary.main, 0.1)}`,
-                                borderRadius: 3,
-                            }}
-                        >
+                    <Fade in timeout={1000}>
+                        <Card sx={{ height: '100%' }}>
                             <CardContent sx={{ p: 3 }}>
-                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 3 }}>
-                                    <HiveIcon sx={{ color: theme.palette.secondary.main }} />
-                                    <Typography variant="h6" sx={{ fontWeight: 700, flex: 1 }}>
-                                        Status das Colmeias
-                                    </Typography>
-                                </Box>
-                                <Box sx={{ height: 400, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                                <SectionHeader
+                                    title="Status das Colmeias"
+                                    icon={<HiveIcon />}
+                                />
+                                <Box sx={{ height: 420, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
                                     {statusData.length > 0 ? (
                                         <ResponsiveContainer width="100%" height="100%">
                                             <PieChart>
                                                 <Pie
                                                     data={statusData}
                                                     cx="50%"
-                                                    cy="50%"
-                                                    innerRadius={90}
-                                                    outerRadius={130}
+                                                    cy="45%"
+                                                    innerRadius={85}
+                                                    outerRadius={120}
                                                     paddingAngle={3}
                                                     dataKey="value"
                                                 >
@@ -672,16 +590,13 @@ export default function Dashboard() {
                                                     ))}
                                                 </Pie>
                                                 <RechartsTooltip
+                                                    contentStyle={darkTooltipStyle}
+                                                    labelStyle={{ color: '#E8EAED', fontWeight: 600 }}
                                                     formatter={(value) => [value, 'Colmeias']}
-                                                    contentStyle={{
-                                                        borderRadius: 8,
-                                                        border: 'none',
-                                                        boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-                                                    }}
                                                 />
                                                 <Legend
                                                     formatter={(value, entry) => (
-                                                        <span style={{ color: entry.color, fontWeight: 600 }}>
+                                                        <span style={{ color: entry.color, fontWeight: 600, fontSize: 13 }}>
                                                             {value}
                                                         </span>
                                                     )}
@@ -698,46 +613,31 @@ export default function Dashboard() {
                 </Grid>
             </Grid>
 
-            {/* Tabelas */}
+            {/* ─── Tables ───────────────────────────────────────────────────── */}
             <Grid container spacing={3}>
                 <Grid item xs={12} md={6}>
-                    <Fade in={true} timeout={1200}>
-                        <Card
-                            sx={{
-                                background: `linear-gradient(145deg, ${theme.palette.background.paper} 0%, ${alpha('#2196F3', 0.02)} 100%)`,
-                                border: `1px solid ${alpha('#2196F3', 0.1)}`,
-                                borderRadius: 3,
-                            }}
-                        >
+                    <Fade in timeout={1100}>
+                        <Card>
                             <CardContent sx={{ p: 3 }}>
-                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
-                                    <InspectionIcon sx={{ color: '#2196F3' }} />
-                                    <Typography variant="h6" sx={{ fontWeight: 700, flex: 1 }}>
-                                        Próximas Inspeções
-                                    </Typography>
-                                </Box>
+                                <SectionHeader
+                                    title="Próximas Inspeções"
+                                    icon={<InspectionIcon />}
+                                />
                                 {data?.proximas_inspecoes?.length > 0 ? (
                                     <TableContainer>
                                         <Table size="small">
                                             <TableHead>
                                                 <TableRow>
-                                                    <TableCell sx={{ fontWeight: 600 }}>Colmeia</TableCell>
-                                                    <TableCell sx={{ fontWeight: 600 }}>Apiário</TableCell>
-                                                    <TableCell sx={{ fontWeight: 600 }}>Condição</TableCell>
+                                                    <TableCell>Colmeia</TableCell>
+                                                    <TableCell>Apiário</TableCell>
+                                                    <TableCell>Condição</TableCell>
                                                 </TableRow>
                                             </TableHead>
                                             <TableBody>
-                                                {data.proximas_inspecoes.map((insp, index) => (
-                                                    <TableRow
-                                                        key={insp.id}
-                                                        sx={{
-                                                            '&:hover': {
-                                                                backgroundColor: alpha('#2196F3', 0.05),
-                                                            },
-                                                        }}
-                                                    >
+                                                {data.proximas_inspecoes.map((insp) => (
+                                                    <TableRow key={insp.id}>
                                                         <TableCell>
-                                                            <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                                                            <Typography variant="body2" fontWeight={600}>
                                                                 {insp.colmeia_identificador}
                                                             </Typography>
                                                         </TableCell>
@@ -750,19 +650,10 @@ export default function Dashboard() {
                                                             <Chip
                                                                 label={insp.condicao_geral_display}
                                                                 size="small"
-                                                                sx={{
-                                                                    fontWeight: 600,
-                                                                    backgroundColor:
-                                                                        insp.condicao_geral === 'excelente' ? alpha('#4CAF50', 0.2) :
-                                                                            insp.condicao_geral === 'boa' ? alpha('#4CAF50', 0.15) :
-                                                                                insp.condicao_geral === 'regular' ? alpha('#F4A100', 0.2) :
-                                                                                    alpha('#F44336', 0.2),
-                                                                    color:
-                                                                        insp.condicao_geral === 'excelente' ? '#4CAF50' :
-                                                                            insp.condicao_geral === 'boa' ? '#4CAF50' :
-                                                                                insp.condicao_geral === 'regular' ? '#F4A100' :
-                                                                                    '#F44336',
-                                                                }}
+                                                                color={
+                                                                    insp.condicao_geral === 'excelente' || insp.condicao_geral === 'boa' ? 'success' :
+                                                                        insp.condicao_geral === 'regular' ? 'warning' : 'error'
+                                                                }
                                                             />
                                                         </TableCell>
                                                     </TableRow>
@@ -771,8 +662,8 @@ export default function Dashboard() {
                                         </Table>
                                     </TableContainer>
                                 ) : (
-                                    <Box sx={{ py: 4, textAlign: 'center' }}>
-                                        <Typography color="text.secondary">
+                                    <Box sx={{ py: 5, textAlign: 'center' }}>
+                                        <Typography variant="body2" color="text.secondary">
                                             Nenhuma inspeção agendada
                                         </Typography>
                                     </Box>
@@ -783,43 +674,28 @@ export default function Dashboard() {
                 </Grid>
 
                 <Grid item xs={12} md={6}>
-                    <Fade in={true} timeout={1400}>
-                        <Card
-                            sx={{
-                                background: `linear-gradient(145deg, ${theme.palette.background.paper} 0%, ${alpha('#FF9800', 0.02)} 100%)`,
-                                border: `1px solid ${alpha('#FF9800', 0.1)}`,
-                                borderRadius: 3,
-                            }}
-                        >
+                    <Fade in timeout={1200}>
+                        <Card>
                             <CardContent sx={{ p: 3 }}>
-                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
-                                    <HoneyIcon sx={{ color: '#FF9800' }} />
-                                    <Typography variant="h6" sx={{ fontWeight: 700, flex: 1 }}>
-                                        Últimas Produções
-                                    </Typography>
-                                </Box>
+                                <SectionHeader
+                                    title="Últimas Produções"
+                                    icon={<HoneyIcon />}
+                                />
                                 {data?.ultimas_producoes?.length > 0 ? (
                                     <TableContainer>
                                         <Table size="small">
                                             <TableHead>
                                                 <TableRow>
-                                                    <TableCell sx={{ fontWeight: 600 }}>Colmeia</TableCell>
-                                                    <TableCell sx={{ fontWeight: 600 }}>Apiário</TableCell>
-                                                    <TableCell align="right" sx={{ fontWeight: 600 }}>Quantidade</TableCell>
+                                                    <TableCell>Colmeia</TableCell>
+                                                    <TableCell>Apiário</TableCell>
+                                                    <TableCell align="right">Quantidade</TableCell>
                                                 </TableRow>
                                             </TableHead>
                                             <TableBody>
                                                 {data.ultimas_producoes.map((prod) => (
-                                                    <TableRow
-                                                        key={prod.id}
-                                                        sx={{
-                                                            '&:hover': {
-                                                                backgroundColor: alpha('#FF9800', 0.05),
-                                                            },
-                                                        }}
-                                                    >
+                                                    <TableRow key={prod.id}>
                                                         <TableCell>
-                                                            <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                                                            <Typography variant="body2" fontWeight={600}>
                                                                 {prod.colmeia_identificador}
                                                             </Typography>
                                                         </TableCell>
@@ -832,11 +708,7 @@ export default function Dashboard() {
                                                             <Chip
                                                                 label={`${prod.quantidade_kg} kg`}
                                                                 size="small"
-                                                                sx={{
-                                                                    fontWeight: 700,
-                                                                    backgroundColor: alpha('#FF9800', 0.2),
-                                                                    color: '#FF9800',
-                                                                }}
+                                                                color="warning"
                                                             />
                                                         </TableCell>
                                                     </TableRow>
@@ -845,8 +717,8 @@ export default function Dashboard() {
                                         </Table>
                                     </TableContainer>
                                 ) : (
-                                    <Box sx={{ py: 4, textAlign: 'center' }}>
-                                        <Typography color="text.secondary">
+                                    <Box sx={{ py: 5, textAlign: 'center' }}>
+                                        <Typography variant="body2" color="text.secondary">
                                             Nenhuma produção registrada
                                         </Typography>
                                     </Box>
@@ -856,57 +728,46 @@ export default function Dashboard() {
                     </Fade>
                 </Grid>
 
-                {/* Gráfico de Colmeias por Apiário */}
+                {/* Bar chart — distribution by apiary */}
                 <Grid item xs={12}>
-                    <Fade in={true} timeout={1600}>
-                        <Card
-                            sx={{
-                                background: `linear-gradient(145deg, ${theme.palette.background.paper} 0%, ${alpha(theme.palette.secondary.main, 0.02)} 100%)`,
-                                border: `1px solid ${alpha(theme.palette.secondary.main, 0.1)}`,
-                                borderRadius: 3,
-                            }}
-                        >
+                    <Fade in timeout={1300}>
+                        <Card>
                             <CardContent sx={{ p: 3 }}>
-                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 3 }}>
-                                    <PlaceIcon sx={{ color: theme.palette.secondary.main }} />
-                                    <Typography variant="h6" sx={{ fontWeight: 700, flex: 1 }}>
-                                        Distribuição de Colmeias por Apiário
-                                    </Typography>
-                                </Box>
-                                <Box sx={{ height: 320 }}>
+                                <SectionHeader
+                                    title="Distribuição de Colmeias por Apiário"
+                                    icon={<PlaceIcon />}
+                                />
+                                <Box sx={{ height: 300 }}>
                                     {data?.colmeias_por_apiario?.length > 0 ? (
                                         <ResponsiveContainer width="100%" height="100%">
                                             <BarChart data={data.colmeias_por_apiario} layout="vertical">
                                                 <CartesianGrid
-                                                    strokeDasharray="3 3"
-                                                    stroke={alpha(theme.palette.text.secondary, 0.1)}
-                                                    horizontal={true}
-                                                    vertical={false}
+                                                    stroke="rgba(255,255,255,0.05)"
+                                                    strokeDasharray="0"
+                                                    horizontal={false}
                                                 />
                                                 <XAxis
                                                     type="number"
                                                     tick={{ fontSize: 11, fill: theme.palette.text.secondary }}
-                                                    stroke={alpha(theme.palette.text.secondary, 0.3)}
+                                                    stroke="rgba(255,255,255,0.08)"
                                                 />
                                                 <YAxis
                                                     type="category"
                                                     dataKey="apiario__nome"
-                                                    width={180}
+                                                    width={160}
                                                     tick={{ fontSize: 11, fill: theme.palette.text.secondary }}
-                                                    stroke={alpha(theme.palette.text.secondary, 0.3)}
+                                                    stroke="rgba(255,255,255,0.08)"
                                                 />
                                                 <RechartsTooltip
-                                                    contentStyle={{
-                                                        borderRadius: 8,
-                                                        border: 'none',
-                                                        boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-                                                    }}
+                                                    contentStyle={darkTooltipStyle}
+                                                    labelStyle={{ color: '#E8EAED', fontWeight: 600 }}
                                                     formatter={(value) => [value, 'Colmeias']}
                                                 />
                                                 <Bar
                                                     dataKey="total"
                                                     fill={theme.palette.secondary.main}
-                                                    radius={[0, 12, 12, 0]}
+                                                    radius={[0, 8, 8, 0]}
+                                                    maxBarSize={28}
                                                 />
                                             </BarChart>
                                         </ResponsiveContainer>

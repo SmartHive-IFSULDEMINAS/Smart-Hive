@@ -17,7 +17,7 @@ export const ThemeModeProvider = ({ children }) => {
   const [mode, setMode] = useState(() => {
     // Carregar preferência do localStorage
     const savedMode = localStorage.getItem('themeMode');
-    return savedMode || 'light';
+    return savedMode || 'dark';
   });
 
   useEffect(() => {

@@ -19,15 +19,20 @@ import {
     MenuItem,
     IconButton,
     Chip,
-    CircularProgress,
+    Skeleton,
     Alert,
     Snackbar,
     InputAdornment,
     useTheme,
+    alpha,
     Grid,
     FormControl,
     InputLabel,
     Select,
+    Collapse,
+    Tooltip,
+    Menu as MuiMenu,
+    Divider,
 } from '@mui/material';
 import {
     Add as AddIcon,
@@ -36,6 +41,9 @@ import {
     Search as SearchIcon,
     CheckCircle as CheckIcon,
     Healing as TreatmentIcon,
+    MoreVert as MoreVertIcon,
+    FilterList as FilterListIcon,
+    FileDownload as FileDownloadIcon,
 } from '@mui/icons-material';
 import {
     getTratamentos,
@@ -87,11 +95,13 @@ export default function Tratamentos() {
     const [saving, setSaving] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
     const [filterStatus, setFilterStatus] = useState('');
+    const [filtersOpen, setFiltersOpen] = useState(false);
     const [page, setPage] = useState(0);
     const [rowsPerPage, setRowsPerPage] = useState(10);
     const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
     const [deleteConfirm, setDeleteConfirm] = useState({ open: false, id: null });
     const [finalizarDialog, setFinalizarDialog] = useState({ open: false, id: null, resultado: '' });
+    const [actionMenu, setActionMenu] = useState({ anchor: null, trat: null });
 
     useEffect(() => {
         fetchData();
@@ -213,65 +223,82 @@ export default function Tratamentos() {
         return option ? <Chip label={option.label} color={option.color} size="small" /> : status;
     };
 
-    if (loading) {
-        return (
-            <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 400 }}>
-                <CircularProgress color="primary" size={60} />
-            </Box>
-        );
-    }
-
     const tratamentosEmAndamento = tratamentos.filter(t => t.status === 'em_andamento').length;
+
+    const closeActionMenu = () => setActionMenu({ anchor: null, trat: null });
 
     return (
         <Box>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-                <Box>
-                    <Typography variant="h4" sx={{ fontWeight: 700 }}>
-                        Tratamentos
-                    </Typography>
+            {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
+
+            {/* Toolbar */}
+            <Box sx={{ display: 'flex', alignItems: 'center', mb: 2.5, gap: 1, flexWrap: 'wrap' }}>
+                <TreatmentIcon sx={{ color: 'primary.main' }} />
+                <Box sx={{ flex: 1, minWidth: 120 }}>
+                    <Typography variant="h5" fontWeight={700} sx={{ lineHeight: 1.2 }}>Tratamentos</Typography>
                     {tratamentosEmAndamento > 0 && (
-                        <Typography variant="body2" color="warning.main" sx={{ mt: 0.5 }}>
-                            {tratamentosEmAndamento} tratamento(s) em andamento
+                        <Typography variant="caption" color="warning.main">
+                            {tratamentosEmAndamento} em andamento
                         </Typography>
                     )}
                 </Box>
-                <Button variant="contained" startIcon={<AddIcon />} onClick={() => handleOpenDialog()}>
+                <TextField
+                    placeholder="Buscar por colmeia ou medicamento..."
+                    value={searchTerm}
+                    onChange={(e) => { setSearchTerm(e.target.value); setPage(0); }}
+                    size="small"
+                    sx={{ width: { xs: '100%', sm: 260 } }}
+                    InputProps={{ startAdornment: <InputAdornment position="start"><SearchIcon sx={{ fontSize: 18, color: 'text.disabled' }} /></InputAdornment> }}
+                />
+                <Tooltip title="Filtros">
+                    <IconButton size="small" onClick={() => setFiltersOpen(v => !v)}
+                        color={filtersOpen ? 'primary' : 'default'}
+                        sx={{ border: '1px solid', borderColor: filtersOpen ? 'primary.main' : 'divider' }}>
+                        <FilterListIcon fontSize="small" />
+                    </IconButton>
+                </Tooltip>
+                <Tooltip title="Exportar">
+                    <IconButton size="small" sx={{ border: '1px solid', borderColor: 'divider' }}>
+                        <FileDownloadIcon fontSize="small" />
+                    </IconButton>
+                </Tooltip>
+                <Button variant="contained" startIcon={<AddIcon />} size="small" onClick={() => handleOpenDialog()}>
                     Novo Tratamento
                 </Button>
             </Box>
 
-            {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
-
-            {/* Filtros */}
-            <Paper sx={{ p: 2, mb: 3 }}>
-                <Grid container spacing={2} alignItems="center">
-                    <Grid item xs={12} sm={6}>
-                        <TextField
-                            fullWidth
-                            placeholder="Buscar por colmeia ou medicamento..."
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                            InputProps={{
-                                startAdornment: <InputAdornment position="start"><SearchIcon color="action" /></InputAdornment>,
-                            }}
-                            size="small"
-                        />
+            {/* Collapsible filter */}
+            <Collapse in={filtersOpen}>
+                <Paper sx={{ p: 2, mb: 2, border: '1px solid', borderColor: 'divider' }}>
+                    <Grid container spacing={2} alignItems="center">
+                        <Grid item xs={12} sm={5}>
+                            <FormControl fullWidth size="small">
+                                <InputLabel>Status</InputLabel>
+                                <Select value={filterStatus} onChange={(e) => { setFilterStatus(e.target.value); setPage(0); }} label="Status">
+                                    <MenuItem value="">Todos</MenuItem>
+                                    {statusOptions.map(opt => <MenuItem key={opt.value} value={opt.value}>{opt.label}</MenuItem>)}
+                                </Select>
+                            </FormControl>
+                        </Grid>
+                        {filterStatus && (
+                            <Grid item xs={12} sm={3}>
+                                <Button size="small" variant="outlined" onClick={() => { setFilterStatus(''); setPage(0); }} fullWidth>Limpar</Button>
+                            </Grid>
+                        )}
                     </Grid>
-                    <Grid item xs={12} sm={6}>
-                        <FormControl fullWidth size="small">
-                            <InputLabel>Status</InputLabel>
-                            <Select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)} label="Status">
-                                <MenuItem value="">Todos</MenuItem>
-                                {statusOptions.map(opt => <MenuItem key={opt.value} value={opt.value}>{opt.label}</MenuItem>)}
-                            </Select>
-                        </FormControl>
-                    </Grid>
-                </Grid>
-            </Paper>
+                </Paper>
+            </Collapse>
 
-            {/* Tabela */}
-            <Paper>
+            {/* Active filter chips */}
+            {(searchTerm || filterStatus) && (
+                <Box sx={{ display: 'flex', gap: 1, mb: 2, flexWrap: 'wrap' }}>
+                    {searchTerm && <Chip label={`Busca: "${searchTerm}"`} size="small" onDelete={() => { setSearchTerm(''); setPage(0); }} variant="outlined" />}
+                    {filterStatus && <Chip label={`Status: ${statusOptions.find(o => o.value === filterStatus)?.label}`} size="small" onDelete={() => { setFilterStatus(''); setPage(0); }} variant="outlined" />}
+                </Box>
+            )}
+
+            {/* Table */}
+            <Paper sx={{ border: '1px solid', borderColor: 'divider', overflow: 'hidden' }}>
                 <TableContainer>
                     <Table>
                         <TableHead>
@@ -283,56 +310,44 @@ export default function Tratamentos() {
                                 <TableCell>Medicamento</TableCell>
                                 <TableCell>Status</TableCell>
                                 <TableCell align="right">Custo</TableCell>
-                                <TableCell align="center">Ações</TableCell>
+                                <TableCell align="center" sx={{ width: 48 }}>Ações</TableCell>
                             </TableRow>
                         </TableHead>
                         <TableBody>
-                            {filteredTratamentos
-                                .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-                                .map((trat) => (
-                                    <TableRow key={trat.id} hover>
-                                        <TableCell>
-                                            <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                                                <TreatmentIcon sx={{ color: theme.palette.error.main, mr: 1, fontSize: 20 }} />
-                                                <Typography fontWeight={600}>{trat.colmeia_identificador}</Typography>
-                                            </Box>
-                                        </TableCell>
-                                        <TableCell>{trat.apiario_nome}</TableCell>
-                                        <TableCell>{trat.tipo_tratamento_display}</TableCell>
-                                        <TableCell>{new Date(trat.data_inicio).toLocaleDateString('pt-BR')}</TableCell>
-                                        <TableCell>{trat.medicamento || '-'}</TableCell>
-                                        <TableCell>{getStatusChip(trat.status)}</TableCell>
-                                        <TableCell align="right">
-                                            {trat.custo ? `R$ ${parseFloat(trat.custo).toFixed(2)}` : '-'}
-                                        </TableCell>
-                                        <TableCell align="center">
-                                            {trat.status === 'em_andamento' && (
-                                                <IconButton
-                                                    size="small"
-                                                    onClick={() => setFinalizarDialog({ open: true, id: trat.id, resultado: '' })}
-                                                    sx={{ color: theme.palette.success.main }}
-                                                    title="Finalizar Tratamento"
-                                                >
-                                                    <CheckIcon />
-                                                </IconButton>
-                                            )}
-                                            <IconButton
-                                                size="small"
-                                                onClick={() => handleOpenDialog(trat)}
-                                                sx={{ color: theme.palette.primary.main }}
-                                            >
-                                                <EditIcon />
-                                            </IconButton>
-                                            <IconButton
-                                                size="small"
-                                                onClick={() => setDeleteConfirm({ open: true, id: trat.id })}
-                                                sx={{ color: theme.palette.error.main }}
-                                            >
-                                                <DeleteIcon />
-                                            </IconButton>
-                                        </TableCell>
+                            {loading
+                                ? Array.from({ length: rowsPerPage }).map((_, i) => (
+                                    <TableRow key={i}>
+                                        {[1,2,3,4,5,6,7,8].map(c => <TableCell key={c}><Skeleton height={20} /></TableCell>)}
                                     </TableRow>
-                                ))}
+                                ))
+                                : filteredTratamentos
+                                    .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+                                    .map((trat) => (
+                                        <TableRow key={trat.id} hover>
+                                            <TableCell>
+                                                <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                                                    <TreatmentIcon sx={{ color: 'error.light', mr: 1, fontSize: 18 }} />
+                                                    <Typography variant="body2" fontWeight={600}>{trat.colmeia_identificador}</Typography>
+                                                </Box>
+                                            </TableCell>
+                                            <TableCell><Typography variant="body2">{trat.apiario_nome}</Typography></TableCell>
+                                            <TableCell><Typography variant="body2">{trat.tipo_tratamento_display}</Typography></TableCell>
+                                            <TableCell><Typography variant="body2">{new Date(trat.data_inicio).toLocaleDateString('pt-BR')}</Typography></TableCell>
+                                            <TableCell><Typography variant="body2">{trat.medicamento || '-'}</Typography></TableCell>
+                                            <TableCell>{getStatusChip(trat.status)}</TableCell>
+                                            <TableCell align="right">
+                                                <Typography variant="body2">
+                                                    {trat.custo ? `R$ ${parseFloat(trat.custo).toFixed(2)}` : '-'}
+                                                </Typography>
+                                            </TableCell>
+                                            <TableCell align="center" sx={{ p: '4px' }}>
+                                                <IconButton size="small" onClick={(e) => setActionMenu({ anchor: e.currentTarget, trat })} sx={{ color: 'text.disabled' }}>
+                                                    <MoreVertIcon fontSize="small" />
+                                                </IconButton>
+                                            </TableCell>
+                                        </TableRow>
+                                    ))
+                            }
                         </TableBody>
                     </Table>
                 </TableContainer>
@@ -343,17 +358,48 @@ export default function Tratamentos() {
                     onPageChange={(e, newPage) => setPage(newPage)}
                     rowsPerPage={rowsPerPage}
                     onRowsPerPageChange={(e) => { setRowsPerPage(parseInt(e.target.value, 10)); setPage(0); }}
-                    labelRowsPerPage="Linhas por página"
-                    labelDisplayedRows={({ from, to, count }) => `${from}-${to} de ${count}`}
+                    labelRowsPerPage="Linhas:"
+                    labelDisplayedRows={({ from, to, count }) => `${from}–${to} de ${count}`}
                 />
             </Paper>
 
+            {/* Empty state */}
             {filteredTratamentos.length === 0 && !loading && (
-                <Box sx={{ textAlign: 'center', py: 8 }}>
-                    <TreatmentIcon sx={{ fontSize: 64, color: 'text.secondary', mb: 2 }} />
-                    <Typography variant="h6" color="text.secondary">Nenhum tratamento encontrado</Typography>
+                <Box sx={{ textAlign: 'center', py: 10, mt: 1, borderRadius: 2, border: '1px dashed', borderColor: 'divider' }}>
+                    <TreatmentIcon sx={{ fontSize: 52, color: alpha(theme.palette.primary.main, 0.25), mb: 2 }} />
+                    <Typography variant="h6" fontWeight={600} gutterBottom>
+                        {(searchTerm || filterStatus) ? 'Nenhum tratamento encontrado para os filtros aplicados' : 'Nenhum tratamento cadastrado'}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+                        {(searchTerm || filterStatus) ? 'Tente ajustar os filtros' : 'Comece registrando o primeiro tratamento'}
+                    </Typography>
+                    {!(searchTerm || filterStatus) && (
+                        <Button variant="outlined" startIcon={<AddIcon />} onClick={() => handleOpenDialog()}>Novo Tratamento</Button>
+                    )}
                 </Box>
             )}
+
+            {/* Action menu */}
+            <MuiMenu
+                anchorEl={actionMenu.anchor}
+                open={Boolean(actionMenu.anchor)}
+                onClose={closeActionMenu}
+                transformOrigin={{ horizontal: 'right', vertical: 'top' }}
+                anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
+            >
+                {actionMenu.trat?.status === 'em_andamento' && (
+                    <MenuItem onClick={() => { setFinalizarDialog({ open: true, id: actionMenu.trat.id, resultado: '' }); closeActionMenu(); }}>
+                        <CheckIcon fontSize="small" sx={{ mr: 1.5, color: 'success.main' }} /> Finalizar
+                    </MenuItem>
+                )}
+                <MenuItem onClick={() => { handleOpenDialog(actionMenu.trat); closeActionMenu(); }}>
+                    <EditIcon fontSize="small" sx={{ mr: 1.5, color: 'primary.main' }} /> Editar
+                </MenuItem>
+                <Divider />
+                <MenuItem sx={{ color: 'error.main' }} onClick={() => { setDeleteConfirm({ open: true, id: actionMenu.trat.id }); closeActionMenu(); }}>
+                    <DeleteIcon fontSize="small" sx={{ mr: 1.5 }} /> Excluir
+                </MenuItem>
+            </MuiMenu>
 
             {/* Dialog de Criação/Edição */}
             <Dialog open={openDialog} onClose={handleCloseDialog} maxWidth="md" fullWidth>
@@ -444,7 +490,7 @@ export default function Tratamentos() {
                     <DialogActions sx={{ p: 2 }}>
                         <Button onClick={handleCloseDialog} disabled={saving}>Cancelar</Button>
                         <Button type="submit" variant="contained" disabled={saving}>
-                            {saving ? <CircularProgress size={24} /> : editingId ? 'Salvar' : 'Registrar'}
+                            {saving ? 'Salvando...' : editingId ? 'Salvar' : 'Registrar'}
                         </Button>
                     </DialogActions>
                 </form>

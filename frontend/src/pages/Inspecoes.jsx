@@ -19,23 +19,31 @@ import {
     MenuItem,
     IconButton,
     Chip,
-    CircularProgress,
+    Skeleton,
     Alert,
     Snackbar,
     InputAdornment,
     useTheme,
+    alpha,
     Grid,
     FormControl,
     InputLabel,
     Select,
     Switch,
     FormControlLabel,
+    Collapse,
+    Tooltip,
+    Menu as MuiMenu,
+    Divider,
 } from '@mui/material';
 import {
     Add as AddIcon,
     Edit as EditIcon,
     Delete as DeleteIcon,
     Search as SearchIcon,
+    MoreVert as MoreVertIcon,
+    FilterList as FilterListIcon,
+    FileDownload as FileDownloadIcon,
 } from '@mui/icons-material';
 import {
     getInspecoes,
@@ -95,10 +103,12 @@ export default function Inspecoes() {
     const [saving, setSaving] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
     const [filterCondicao, setFilterCondicao] = useState('');
+    const [filtersOpen, setFiltersOpen] = useState(false);
     const [page, setPage] = useState(0);
     const [rowsPerPage, setRowsPerPage] = useState(10);
     const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
     const [deleteConfirm, setDeleteConfirm] = useState({ open: false, id: null });
+    const [actionMenu, setActionMenu] = useState({ anchor: null, insp: null });
 
     useEffect(() => {
         fetchData();
@@ -222,66 +232,70 @@ export default function Inspecoes() {
         ) : condicao;
     };
 
-    if (loading) {
-        return (
-            <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 400 }}>
-                <CircularProgress color="primary" size={60} />
-            </Box>
-        );
-    }
-
     return (
         <Box>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-                <Typography variant="h4" sx={{ fontWeight: 700 }}>
-                    Inspeções
-                </Typography>
-                <Button
-                    variant="contained"
-                    startIcon={<AddIcon />}
-                    onClick={() => handleOpenDialog()}
-                >
+            {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
+
+            {/* Toolbar */}
+            <Box sx={{ display: 'flex', alignItems: 'center', mb: 2.5, gap: 1, flexWrap: 'wrap' }}>
+                <Typography variant="h5" fontWeight={700} sx={{ flex: 1, minWidth: 120 }}>Inspeções</Typography>
+                <TextField
+                    placeholder="Buscar..."
+                    value={searchTerm}
+                    onChange={(e) => { setSearchTerm(e.target.value); setPage(0); }}
+                    size="small"
+                    sx={{ width: { xs: '100%', sm: 220 } }}
+                    InputProps={{ startAdornment: <InputAdornment position="start"><SearchIcon sx={{ fontSize: 18, color: 'text.disabled' }} /></InputAdornment> }}
+                />
+                <Tooltip title="Filtros">
+                    <IconButton size="small" onClick={() => setFiltersOpen(v => !v)}
+                        color={filtersOpen ? 'primary' : 'default'}
+                        sx={{ border: '1px solid', borderColor: filtersOpen ? 'primary.main' : 'divider' }}>
+                        <FilterListIcon fontSize="small" />
+                    </IconButton>
+                </Tooltip>
+                <Tooltip title="Exportar">
+                    <IconButton size="small" sx={{ border: '1px solid', borderColor: 'divider' }}>
+                        <FileDownloadIcon fontSize="small" />
+                    </IconButton>
+                </Tooltip>
+                <Button variant="contained" startIcon={<AddIcon />} size="small" onClick={() => handleOpenDialog()}>
                     Nova Inspeção
                 </Button>
             </Box>
 
-            {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
-
-            {/* Filtros */}
-            <Paper sx={{ p: 2, mb: 3 }}>
-                <Grid container spacing={2} alignItems="center">
-                    <Grid item xs={12} sm={6}>
-                        <TextField
-                            fullWidth
-                            placeholder="Buscar por colmeia ou inspetor..."
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                            InputProps={{
-                                startAdornment: <InputAdornment position="start"><SearchIcon color="action" /></InputAdornment>,
-                            }}
-                            size="small"
-                        />
+            {/* Collapsible filter */}
+            <Collapse in={filtersOpen}>
+                <Paper sx={{ p: 2, mb: 2, border: '1px solid', borderColor: 'divider' }}>
+                    <Grid container spacing={2} alignItems="center">
+                        <Grid item xs={12} sm={6}>
+                            <FormControl fullWidth size="small">
+                                <InputLabel>Condição Geral</InputLabel>
+                                <Select value={filterCondicao} onChange={(e) => { setFilterCondicao(e.target.value); setPage(0); }} label="Condição Geral">
+                                    <MenuItem value="">Todas</MenuItem>
+                                    {condicaoOptions.map(opt => <MenuItem key={opt.value} value={opt.value}>{opt.label}</MenuItem>)}
+                                </Select>
+                            </FormControl>
+                        </Grid>
+                        {filterCondicao && (
+                            <Grid item xs={12} sm={3}>
+                                <Button size="small" variant="outlined" onClick={() => { setFilterCondicao(''); setPage(0); }} fullWidth>Limpar</Button>
+                            </Grid>
+                        )}
                     </Grid>
-                    <Grid item xs={12} sm={6}>
-                        <FormControl fullWidth size="small">
-                            <InputLabel>Condição</InputLabel>
-                            <Select
-                                value={filterCondicao}
-                                onChange={(e) => setFilterCondicao(e.target.value)}
-                                label="Condição"
-                            >
-                                <MenuItem value="">Todas</MenuItem>
-                                {condicaoOptions.map(opt => (
-                                    <MenuItem key={opt.value} value={opt.value}>{opt.label}</MenuItem>
-                                ))}
-                            </Select>
-                        </FormControl>
-                    </Grid>
-                </Grid>
-            </Paper>
+                </Paper>
+            </Collapse>
 
-            {/* Tabela */}
-            <Paper>
+            {/* Active filter chips */}
+            {(searchTerm || filterCondicao) && (
+                <Box sx={{ display: 'flex', gap: 1, mb: 2, flexWrap: 'wrap' }}>
+                    {searchTerm && <Chip label={`Busca: "${searchTerm}"`} size="small" onDelete={() => { setSearchTerm(''); setPage(0); }} variant="outlined" />}
+                    {filterCondicao && <Chip label={`Condição: ${condicaoOptions.find(o => o.value === filterCondicao)?.label}`} size="small" onDelete={() => { setFilterCondicao(''); setPage(0); }} variant="outlined" />}
+                </Box>
+            )}
+
+            {/* Table */}
+            <Paper sx={{ border: '1px solid', borderColor: 'divider', overflow: 'hidden' }}>
                 <TableContainer>
                     <Table>
                         <TableHead>
@@ -294,66 +308,38 @@ export default function Inspecoes() {
                                 <TableCell align="center">Rainha</TableCell>
                                 <TableCell align="center">Pragas</TableCell>
                                 <TableCell align="center">Doenças</TableCell>
-                                <TableCell align="center">Ações</TableCell>
+                                <TableCell align="center" sx={{ width: 48 }}>Ações</TableCell>
                             </TableRow>
                         </TableHead>
                         <TableBody>
-                            {filteredInspecoes
-                                .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-                                .map((insp) => (
-                                    <TableRow key={insp.id} hover>
-                                        <TableCell>
-                                            {new Date(insp.data).toLocaleDateString('pt-BR', {
-                                                day: '2-digit',
-                                                month: '2-digit',
-                                                year: 'numeric',
-                                                hour: '2-digit',
-                                                minute: '2-digit',
-                                            })}
-                                        </TableCell>
-                                        <TableCell fontWeight={600}>{insp.colmeia_identificador}</TableCell>
-                                        <TableCell>{insp.apiario_nome}</TableCell>
-                                        <TableCell>{insp.inspetor || '-'}</TableCell>
-                                        <TableCell>{getCondicaoChip(insp.condicao_geral)}</TableCell>
-                                        <TableCell align="center">
-                                            <Chip
-                                                label={insp.presenca_rainha ? 'Sim' : 'Não'}
-                                                color={insp.presenca_rainha ? 'success' : 'error'}
-                                                size="small"
-                                            />
-                                        </TableCell>
-                                        <TableCell align="center">
-                                            <Chip
-                                                label={insp.presenca_pragas ? 'Sim' : 'Não'}
-                                                color={insp.presenca_pragas ? 'error' : 'success'}
-                                                size="small"
-                                            />
-                                        </TableCell>
-                                        <TableCell align="center">
-                                            <Chip
-                                                label={insp.presenca_doencas ? 'Sim' : 'Não'}
-                                                color={insp.presenca_doencas ? 'error' : 'success'}
-                                                size="small"
-                                            />
-                                        </TableCell>
-                                        <TableCell align="center">
-                                            <IconButton
-                                                size="small"
-                                                onClick={() => handleOpenDialog(insp)}
-                                                sx={{ color: theme.palette.primary.main }}
-                                            >
-                                                <EditIcon />
-                                            </IconButton>
-                                            <IconButton
-                                                size="small"
-                                                onClick={() => setDeleteConfirm({ open: true, id: insp.id })}
-                                                sx={{ color: theme.palette.error.main }}
-                                            >
-                                                <DeleteIcon />
-                                            </IconButton>
-                                        </TableCell>
+                            {loading
+                                ? Array.from({ length: rowsPerPage }).map((_, i) => (
+                                    <TableRow key={i}>
+                                        {[1,2,3,4,5,6,7,8,9].map(c => <TableCell key={c}><Skeleton height={20} /></TableCell>)}
                                     </TableRow>
-                                ))}
+                                ))
+                                : filteredInspecoes
+                                    .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+                                    .map((insp) => (
+                                        <TableRow key={insp.id} hover>
+                                            <TableCell>
+                                                {new Date(insp.data).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                                            </TableCell>
+                                            <TableCell><Typography variant="body2" fontWeight={600}>{insp.colmeia_identificador}</Typography></TableCell>
+                                            <TableCell><Typography variant="body2">{insp.apiario_nome}</Typography></TableCell>
+                                            <TableCell><Typography variant="body2">{insp.inspetor || '-'}</Typography></TableCell>
+                                            <TableCell>{getCondicaoChip(insp.condicao_geral)}</TableCell>
+                                            <TableCell align="center"><Chip label={insp.presenca_rainha ? 'Sim' : 'Não'} color={insp.presenca_rainha ? 'success' : 'error'} size="small" /></TableCell>
+                                            <TableCell align="center"><Chip label={insp.presenca_pragas ? 'Sim' : 'Não'} color={insp.presenca_pragas ? 'error' : 'success'} size="small" /></TableCell>
+                                            <TableCell align="center"><Chip label={insp.presenca_doencas ? 'Sim' : 'Não'} color={insp.presenca_doencas ? 'error' : 'success'} size="small" /></TableCell>
+                                            <TableCell align="center" sx={{ p: '4px' }}>
+                                                <IconButton size="small" onClick={(e) => setActionMenu({ anchor: e.currentTarget, insp })} sx={{ color: 'text.disabled' }}>
+                                                    <MoreVertIcon fontSize="small" />
+                                                </IconButton>
+                                            </TableCell>
+                                        </TableRow>
+                                    ))
+                            }
                         </TableBody>
                     </Table>
                 </TableContainer>
@@ -363,14 +349,44 @@ export default function Inspecoes() {
                     page={page}
                     onPageChange={(e, newPage) => setPage(newPage)}
                     rowsPerPage={rowsPerPage}
-                    onRowsPerPageChange={(e) => {
-                        setRowsPerPage(parseInt(e.target.value, 10));
-                        setPage(0);
-                    }}
-                    labelRowsPerPage="Linhas por página"
-                    labelDisplayedRows={({ from, to, count }) => `${from}-${to} de ${count}`}
+                    onRowsPerPageChange={(e) => { setRowsPerPage(parseInt(e.target.value, 10)); setPage(0); }}
+                    labelRowsPerPage="Linhas:"
+                    labelDisplayedRows={({ from, to, count }) => `${from}–${to} de ${count}`}
                 />
             </Paper>
+
+            {/* Empty state */}
+            {filteredInspecoes.length === 0 && !loading && (
+                <Box sx={{ textAlign: 'center', py: 10, mt: 1, borderRadius: 2, border: '1px dashed', borderColor: 'divider' }}>
+                    <SearchIcon sx={{ fontSize: 52, color: alpha(theme.palette.primary.main, 0.25), mb: 2 }} />
+                    <Typography variant="h6" fontWeight={600} gutterBottom>
+                        {(searchTerm || filterCondicao) ? 'Nenhuma inspeção encontrada para os filtros aplicados' : 'Nenhuma inspeção cadastrada'}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+                        {(searchTerm || filterCondicao) ? 'Tente ajustar os filtros' : 'Comece registrando a primeira inspeção'}
+                    </Typography>
+                    {!(searchTerm || filterCondicao) && (
+                        <Button variant="outlined" startIcon={<AddIcon />} onClick={() => handleOpenDialog()}>Nova Inspeção</Button>
+                    )}
+                </Box>
+            )}
+
+            {/* Action menu */}
+            <MuiMenu
+                anchorEl={actionMenu.anchor}
+                open={Boolean(actionMenu.anchor)}
+                onClose={() => setActionMenu({ anchor: null, insp: null })}
+                transformOrigin={{ horizontal: 'right', vertical: 'top' }}
+                anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
+            >
+                <MenuItem onClick={() => { handleOpenDialog(actionMenu.insp); setActionMenu({ anchor: null, insp: null }); }}>
+                    <EditIcon fontSize="small" sx={{ mr: 1.5, color: 'primary.main' }} /> Editar
+                </MenuItem>
+                <Divider />
+                <MenuItem sx={{ color: 'error.main' }} onClick={() => { setDeleteConfirm({ open: true, id: actionMenu.insp.id }); setActionMenu({ anchor: null, insp: null }); }}>
+                    <DeleteIcon fontSize="small" sx={{ mr: 1.5 }} /> Excluir
+                </MenuItem>
+            </MuiMenu>
 
             {/* Dialog de Criação/Edição */}
             <Dialog open={openDialog} onClose={handleCloseDialog} maxWidth="md" fullWidth>

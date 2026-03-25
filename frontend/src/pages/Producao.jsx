@@ -19,7 +19,7 @@ import {
     MenuItem,
     IconButton,
     Chip,
-    CircularProgress,
+    Skeleton,
     Alert,
     Snackbar,
     InputAdornment,
@@ -31,6 +31,10 @@ import {
     Card,
     CardContent,
     alpha,
+    Collapse,
+    Tooltip,
+    Menu as MuiMenu,
+    Divider,
 } from '@mui/material';
 import {
     Add as AddIcon,
@@ -39,6 +43,9 @@ import {
     Search as SearchIcon,
     LocalFlorist as HoneyIcon,
     TrendingUp as TrendingIcon,
+    MoreVert as MoreVertIcon,
+    FilterList as FilterListIcon,
+    FileDownload as FileDownloadIcon,
 } from '@mui/icons-material';
 import {
     getProducoes,
@@ -54,7 +61,7 @@ import {
     XAxis,
     YAxis,
     CartesianGrid,
-    Tooltip,
+    Tooltip as RechartsTooltip,
     ResponsiveContainer,
     PieChart,
     Pie,
@@ -63,10 +70,10 @@ import {
 } from 'recharts';
 
 const qualidadeOptions = [
-    { value: 'extra', label: 'Extra', color: '#4CAF50' },
-    { value: 'primeira', label: 'Primeira', color: '#2196F3' },
-    { value: 'segunda', label: 'Segunda', color: '#FF9800' },
-    { value: 'industrial', label: 'Industrial', color: '#9E9E9E' },
+    { value: 'extra', label: 'Extra', color: '#81C784' },
+    { value: 'primeira', label: 'Primeira', color: '#64B5F6' },
+    { value: 'segunda', label: 'Segunda', color: '#FFB74D' },
+    { value: 'industrial', label: 'Industrial', color: '#90A4AE' },
 ];
 
 const tipoMelOptions = [
@@ -79,7 +86,14 @@ const tipoMelOptions = [
     { value: 'outro', label: 'Outro' },
 ];
 
-const COLORS = ['#4CAF50', '#2196F3', '#FF9800', '#9E9E9E', '#F44336', '#9C27B0'];
+const COLORS = ['#81C784', '#64B5F6', '#FFB74D', '#90A4AE', '#EF9A9A', '#CE93D8'];
+
+const darkTooltipStyle = {
+    background: '#1A1D27',
+    border: '1px solid rgba(255,255,255,0.12)',
+    borderRadius: 10,
+    fontSize: 13,
+};
 
 const initialFormData = {
     colmeia: '',
@@ -104,10 +118,13 @@ export default function Producao() {
     const [formData, setFormData] = useState(initialFormData);
     const [saving, setSaving] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
+    const [filtersOpen, setFiltersOpen] = useState(false);
+    const [filterQualidade, setFilterQualidade] = useState('');
     const [page, setPage] = useState(0);
     const [rowsPerPage, setRowsPerPage] = useState(10);
     const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
     const [deleteConfirm, setDeleteConfirm] = useState({ open: false, id: null });
+    const [actionMenu, setActionMenu] = useState({ anchor: null, prod: null });
 
     useEffect(() => {
         fetchData();
@@ -203,29 +220,25 @@ export default function Producao() {
         }
     };
 
-    const filteredProducoes = producoes.filter(prod =>
-        prod.colmeia_identificador.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        prod.apiario_nome.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    const filteredProducoes = producoes.filter(prod => {
+        const matchesSearch = prod.colmeia_identificador.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            prod.apiario_nome.toLowerCase().includes(searchTerm.toLowerCase());
+        const matchesQualidade = !filterQualidade || prod.qualidade === filterQualidade;
+        return matchesSearch && matchesQualidade;
+    });
 
     const getQualidadeChip = (qualidade) => {
         const option = qualidadeOptions.find(o => o.value === qualidade);
         return option ? (
-            <Chip
-                label={option.label}
-                size="small"
-                sx={{ bgcolor: alpha(option.color, 0.15), color: option.color }}
-            />
+            <Chip label={option.label} size="small" sx={{ bgcolor: alpha(option.color, 0.15), color: option.color }} />
         ) : qualidade;
     };
 
-    if (loading) {
-        return (
-            <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 400 }}>
-                <CircularProgress color="primary" size={60} />
-            </Box>
-        );
-    }
+    const closeActionMenu = () => setActionMenu({ anchor: null, prod: null });
+
+    const totalKg = parseFloat(relatorio?.total?.total_kg || 0);
+    const totalRegistros = relatorio?.total?.total_registros || 0;
+    const mediaKg = totalRegistros ? (totalKg / totalRegistros).toFixed(1) : 0;
 
     const porTipoData = relatorio?.por_tipo?.map(item => ({
         name: tipoMelOptions.find(o => o.value === item.tipo_mel)?.label || item.tipo_mel,
@@ -239,94 +252,87 @@ export default function Producao() {
 
     return (
         <Box>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-                <Typography variant="h4" sx={{ fontWeight: 700 }}>
-                    Produção de Mel
-                </Typography>
-                <Button
-                    variant="contained"
-                    startIcon={<AddIcon />}
-                    onClick={() => handleOpenDialog()}
-                >
+            {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
+
+            {/* Toolbar */}
+            <Box sx={{ display: 'flex', alignItems: 'center', mb: 2.5, gap: 1, flexWrap: 'wrap' }}>
+                <HoneyIcon sx={{ color: 'primary.main' }} />
+                <Typography variant="h5" fontWeight={700} sx={{ flex: 1, minWidth: 120 }}>Produção de Mel</Typography>
+                <TextField
+                    placeholder="Buscar por colmeia ou apiário..."
+                    value={searchTerm}
+                    onChange={(e) => { setSearchTerm(e.target.value); setPage(0); }}
+                    size="small"
+                    sx={{ width: { xs: '100%', sm: 240 } }}
+                    InputProps={{ startAdornment: <InputAdornment position="start"><SearchIcon sx={{ fontSize: 18, color: 'text.disabled' }} /></InputAdornment> }}
+                />
+                <Tooltip title="Filtros">
+                    <IconButton size="small" onClick={() => setFiltersOpen(v => !v)}
+                        color={filtersOpen ? 'primary' : 'default'}
+                        sx={{ border: '1px solid', borderColor: filtersOpen ? 'primary.main' : 'divider' }}>
+                        <FilterListIcon fontSize="small" />
+                    </IconButton>
+                </Tooltip>
+                <Tooltip title="Exportar">
+                    <IconButton size="small" sx={{ border: '1px solid', borderColor: 'divider' }}>
+                        <FileDownloadIcon fontSize="small" />
+                    </IconButton>
+                </Tooltip>
+                <Button variant="contained" startIcon={<AddIcon />} size="small" onClick={() => handleOpenDialog()}>
                     Registrar Colheita
                 </Button>
             </Box>
 
-            {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
-
-            {/* Cards de resumo */}
-            <Grid container spacing={3} sx={{ mb: 3 }}>
-                <Grid item xs={12} sm={4}>
-                    <Card sx={{ background: `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.1)} 0%, ${alpha(theme.palette.primary.main, 0.05)} 100%)` }}>
-                        <CardContent>
-                            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                                <Box>
-                                    <Typography color="text.secondary" variant="body2">Produção Total</Typography>
-                                    <Typography variant="h4" sx={{ fontWeight: 700, color: theme.palette.primary.main }}>
-                                        {parseFloat(relatorio?.total?.total_kg || 0).toFixed(1)} kg
-                                    </Typography>
+            {/* Summary cards */}
+            <Grid container spacing={2} sx={{ mb: 3 }}>
+                {[
+                    { label: 'Produção Total', value: loading ? null : `${totalKg.toFixed(1)} kg`, icon: <HoneyIcon />, color: theme.palette.primary.main },
+                    { label: 'Total de Colheitas', value: loading ? null : totalRegistros, icon: <TrendingIcon />, color: '#64B5F6' },
+                    { label: 'Média por Colheita', value: loading ? null : `${mediaKg} kg`, icon: <HoneyIcon />, color: '#81C784' },
+                ].map((stat, i) => (
+                    <Grid item xs={12} sm={4} key={i}>
+                        <Card sx={{ position: 'relative', overflow: 'hidden', '&::before': { content: '""', position: 'absolute', top: 0, left: 0, right: 0, height: '2px', background: stat.color } }}>
+                            <CardContent>
+                                <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
+                                    <Box>
+                                        <Typography variant="overline" color="text.secondary" sx={{ fontSize: '0.7rem', letterSpacing: 1 }}>{stat.label}</Typography>
+                                        {stat.value === null
+                                            ? <Skeleton width={80} height={40} />
+                                            : <Typography variant="h4" fontWeight={700} color="text.primary">{stat.value}</Typography>
+                                        }
+                                    </Box>
+                                    <Box sx={{ width: 34, height: 34, borderRadius: 1.5, bgcolor: alpha(stat.color, 0.12), display: 'flex', alignItems: 'center', justifyContent: 'center', color: stat.color }}>
+                                        {stat.icon}
+                                    </Box>
                                 </Box>
-                                <HoneyIcon sx={{ fontSize: 40, color: theme.palette.primary.main, opacity: 0.5 }} />
-                            </Box>
-                        </CardContent>
-                    </Card>
-                </Grid>
-                <Grid item xs={12} sm={4}>
-                    <Card sx={{ background: `linear-gradient(135deg, ${alpha(theme.palette.secondary.main, 0.1)} 0%, ${alpha(theme.palette.secondary.main, 0.05)} 100%)` }}>
-                        <CardContent>
-                            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                                <Box>
-                                    <Typography color="text.secondary" variant="body2">Total de Colheitas</Typography>
-                                    <Typography variant="h4" sx={{ fontWeight: 700, color: theme.palette.secondary.main }}>
-                                        {relatorio?.total?.total_registros || 0}
-                                    </Typography>
-                                </Box>
-                                <TrendingIcon sx={{ fontSize: 40, color: theme.palette.secondary.main, opacity: 0.5 }} />
-                            </Box>
-                        </CardContent>
-                    </Card>
-                </Grid>
-                <Grid item xs={12} sm={4}>
-                    <Card sx={{ background: `linear-gradient(135deg, ${alpha('#2196F3', 0.1)} 0%, ${alpha('#2196F3', 0.05)} 100%)` }}>
-                        <CardContent>
-                            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                                <Box>
-                                    <Typography color="text.secondary" variant="body2">Média por Colheita</Typography>
-                                    <Typography variant="h4" sx={{ fontWeight: 700, color: '#2196F3' }}>
-                                        {relatorio?.total?.total_registros
-                                            ? (parseFloat(relatorio.total.total_kg) / relatorio.total.total_registros).toFixed(1)
-                                            : 0} kg
-                                    </Typography>
-                                </Box>
-                                <HoneyIcon sx={{ fontSize: 40, color: '#2196F3', opacity: 0.5 }} />
-                            </Box>
-                        </CardContent>
-                    </Card>
-                </Grid>
+                            </CardContent>
+                        </Card>
+                    </Grid>
+                ))}
             </Grid>
 
-            {/* Gráficos */}
-            <Grid container spacing={3} sx={{ mb: 3 }}>
+            {/* Charts */}
+            <Grid container spacing={2} sx={{ mb: 3 }}>
                 <Grid item xs={12} md={6}>
                     <Card>
                         <CardContent>
-                            <Typography variant="h6" gutterBottom sx={{ fontWeight: 600 }}>
-                                Produção por Tipo de Mel
-                            </Typography>
-                            <Box sx={{ height: 250 }}>
-                                {porTipoData.length > 0 ? (
+                            <Typography variant="subtitle1" fontWeight={600} gutterBottom>Produção por Tipo de Mel</Typography>
+                            <Box sx={{ height: 220 }}>
+                                {loading ? (
+                                    <Skeleton variant="rectangular" height="100%" sx={{ borderRadius: 1 }} />
+                                ) : porTipoData.length > 0 ? (
                                     <ResponsiveContainer width="100%" height="100%">
                                         <BarChart data={porTipoData} layout="vertical">
-                                            <CartesianGrid strokeDasharray="3 3" />
-                                            <XAxis type="number" unit=" kg" />
-                                            <YAxis type="category" dataKey="name" width={100} tick={{ fontSize: 12 }} />
-                                            <Tooltip formatter={(value) => [`${value} kg`, 'Produção']} />
+                                            <CartesianGrid stroke="rgba(255,255,255,0.05)" strokeDasharray="0" horizontal={false} />
+                                            <XAxis type="number" unit=" kg" tick={{ fill: 'rgba(232,234,237,0.55)', fontSize: 11 }} axisLine={false} tickLine={false} />
+                                            <YAxis type="category" dataKey="name" width={110} tick={{ fill: 'rgba(232,234,237,0.55)', fontSize: 11 }} axisLine={false} tickLine={false} />
+                                            <RechartsTooltip formatter={(v) => [`${v} kg`, 'Produção']} contentStyle={darkTooltipStyle} />
                                             <Bar dataKey="value" fill={theme.palette.primary.main} radius={[0, 4, 4, 0]} />
                                         </BarChart>
                                     </ResponsiveContainer>
                                 ) : (
                                     <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
-                                        <Typography color="text.secondary">Nenhum dado disponível</Typography>
+                                        <Typography variant="body2" color="text.secondary">Nenhum dado disponível</Typography>
                                     </Box>
                                 )}
                             </Box>
@@ -336,33 +342,25 @@ export default function Producao() {
                 <Grid item xs={12} md={6}>
                     <Card>
                         <CardContent>
-                            <Typography variant="h6" gutterBottom sx={{ fontWeight: 600 }}>
-                                Produção por Qualidade
-                            </Typography>
-                            <Box sx={{ height: 250 }}>
-                                {porQualidadeData.length > 0 ? (
+                            <Typography variant="subtitle1" fontWeight={600} gutterBottom>Produção por Qualidade</Typography>
+                            <Box sx={{ height: 220 }}>
+                                {loading ? (
+                                    <Skeleton variant="rectangular" height="100%" sx={{ borderRadius: 1 }} />
+                                ) : porQualidadeData.length > 0 ? (
                                     <ResponsiveContainer width="100%" height="100%">
                                         <PieChart>
-                                            <Pie
-                                                data={porQualidadeData}
-                                                cx="50%"
-                                                cy="50%"
-                                                innerRadius={50}
-                                                outerRadius={80}
-                                                paddingAngle={5}
-                                                dataKey="value"
-                                            >
+                                            <Pie data={porQualidadeData} cx="50%" cy="50%" innerRadius={50} outerRadius={80} paddingAngle={5} dataKey="value">
                                                 {porQualidadeData.map((entry, index) => (
                                                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                                                 ))}
                                             </Pie>
-                                            <Tooltip formatter={(value) => [`${value} kg`, 'Produção']} />
-                                            <Legend />
+                                            <RechartsTooltip formatter={(v) => [`${v} kg`, 'Produção']} contentStyle={darkTooltipStyle} />
+                                            <Legend wrapperStyle={{ fontSize: 12, color: 'rgba(232,234,237,0.55)' }} />
                                         </PieChart>
                                     </ResponsiveContainer>
                                 ) : (
                                     <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
-                                        <Typography color="text.secondary">Nenhum dado disponível</Typography>
+                                        <Typography variant="body2" color="text.secondary">Nenhum dado disponível</Typography>
                                     </Box>
                                 )}
                             </Box>
@@ -371,21 +369,38 @@ export default function Producao() {
                 </Grid>
             </Grid>
 
-            {/* Filtro e Tabela */}
-            <Paper sx={{ p: 2, mb: 2 }}>
-                <TextField
-                    fullWidth
-                    placeholder="Buscar por colmeia ou apiário..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    InputProps={{
-                        startAdornment: <InputAdornment position="start"><SearchIcon color="action" /></InputAdornment>,
-                    }}
-                    size="small"
-                />
-            </Paper>
+            {/* Collapsible filter */}
+            <Collapse in={filtersOpen}>
+                <Paper sx={{ p: 2, mb: 2, border: '1px solid', borderColor: 'divider' }}>
+                    <Grid container spacing={2} alignItems="center">
+                        <Grid item xs={12} sm={5}>
+                            <FormControl fullWidth size="small">
+                                <InputLabel>Qualidade</InputLabel>
+                                <Select value={filterQualidade} onChange={(e) => { setFilterQualidade(e.target.value); setPage(0); }} label="Qualidade">
+                                    <MenuItem value="">Todas</MenuItem>
+                                    {qualidadeOptions.map(opt => <MenuItem key={opt.value} value={opt.value}>{opt.label}</MenuItem>)}
+                                </Select>
+                            </FormControl>
+                        </Grid>
+                        {filterQualidade && (
+                            <Grid item xs={12} sm={3}>
+                                <Button size="small" variant="outlined" onClick={() => { setFilterQualidade(''); setPage(0); }} fullWidth>Limpar</Button>
+                            </Grid>
+                        )}
+                    </Grid>
+                </Paper>
+            </Collapse>
 
-            <Paper>
+            {/* Active filter chips */}
+            {(searchTerm || filterQualidade) && (
+                <Box sx={{ display: 'flex', gap: 1, mb: 2, flexWrap: 'wrap' }}>
+                    {searchTerm && <Chip label={`Busca: "${searchTerm}"`} size="small" onDelete={() => { setSearchTerm(''); setPage(0); }} variant="outlined" />}
+                    {filterQualidade && <Chip label={`Qualidade: ${qualidadeOptions.find(o => o.value === filterQualidade)?.label}`} size="small" onDelete={() => { setFilterQualidade(''); setPage(0); }} variant="outlined" />}
+                </Box>
+            )}
+
+            {/* Table */}
+            <Paper sx={{ border: '1px solid', borderColor: 'divider', overflow: 'hidden' }}>
                 <TableContainer>
                     <Table>
                         <TableHead>
@@ -396,34 +411,36 @@ export default function Producao() {
                                 <TableCell align="right">Quantidade</TableCell>
                                 <TableCell>Tipo</TableCell>
                                 <TableCell>Qualidade</TableCell>
-                                <TableCell align="center">Ações</TableCell>
+                                <TableCell align="center" sx={{ width: 48 }}>Ações</TableCell>
                             </TableRow>
                         </TableHead>
                         <TableBody>
-                            {filteredProducoes
-                                .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-                                .map((prod) => (
-                                    <TableRow key={prod.id} hover>
-                                        <TableCell>{new Date(prod.data_colheita).toLocaleDateString('pt-BR')}</TableCell>
-                                        <TableCell fontWeight={600}>{prod.colmeia_identificador}</TableCell>
-                                        <TableCell>{prod.apiario_nome}</TableCell>
-                                        <TableCell align="right">
-                                            <Typography fontWeight={600} color="primary">{prod.quantidade_kg} kg</Typography>
-                                        </TableCell>
-                                        <TableCell>
-                                            {tipoMelOptions.find(o => o.value === prod.tipo_mel)?.label || prod.tipo_mel}
-                                        </TableCell>
-                                        <TableCell>{getQualidadeChip(prod.qualidade)}</TableCell>
-                                        <TableCell align="center">
-                                            <IconButton size="small" onClick={() => handleOpenDialog(prod)} sx={{ color: theme.palette.primary.main }}>
-                                                <EditIcon />
-                                            </IconButton>
-                                            <IconButton size="small" onClick={() => setDeleteConfirm({ open: true, id: prod.id })} sx={{ color: theme.palette.error.main }}>
-                                                <DeleteIcon />
-                                            </IconButton>
-                                        </TableCell>
+                            {loading
+                                ? Array.from({ length: rowsPerPage }).map((_, i) => (
+                                    <TableRow key={i}>
+                                        {[1,2,3,4,5,6,7].map(c => <TableCell key={c}><Skeleton height={20} /></TableCell>)}
                                     </TableRow>
-                                ))}
+                                ))
+                                : filteredProducoes
+                                    .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+                                    .map((prod) => (
+                                        <TableRow key={prod.id} hover>
+                                            <TableCell><Typography variant="body2">{new Date(prod.data_colheita).toLocaleDateString('pt-BR')}</Typography></TableCell>
+                                            <TableCell><Typography variant="body2" fontWeight={600}>{prod.colmeia_identificador}</Typography></TableCell>
+                                            <TableCell><Typography variant="body2">{prod.apiario_nome}</Typography></TableCell>
+                                            <TableCell align="right">
+                                                <Typography variant="body2" fontWeight={600} color="primary.main">{prod.quantidade_kg} kg</Typography>
+                                            </TableCell>
+                                            <TableCell><Typography variant="body2">{tipoMelOptions.find(o => o.value === prod.tipo_mel)?.label || prod.tipo_mel}</Typography></TableCell>
+                                            <TableCell>{getQualidadeChip(prod.qualidade)}</TableCell>
+                                            <TableCell align="center" sx={{ p: '4px' }}>
+                                                <IconButton size="small" onClick={(e) => setActionMenu({ anchor: e.currentTarget, prod })} sx={{ color: 'text.disabled' }}>
+                                                    <MoreVertIcon fontSize="small" />
+                                                </IconButton>
+                                            </TableCell>
+                                        </TableRow>
+                                    ))
+                            }
                         </TableBody>
                     </Table>
                 </TableContainer>
@@ -434,10 +451,43 @@ export default function Producao() {
                     onPageChange={(e, newPage) => setPage(newPage)}
                     rowsPerPage={rowsPerPage}
                     onRowsPerPageChange={(e) => { setRowsPerPage(parseInt(e.target.value, 10)); setPage(0); }}
-                    labelRowsPerPage="Linhas por página"
-                    labelDisplayedRows={({ from, to, count }) => `${from}-${to} de ${count}`}
+                    labelRowsPerPage="Linhas:"
+                    labelDisplayedRows={({ from, to, count }) => `${from}–${to} de ${count}`}
                 />
             </Paper>
+
+            {/* Empty state */}
+            {filteredProducoes.length === 0 && !loading && (
+                <Box sx={{ textAlign: 'center', py: 10, mt: 1, borderRadius: 2, border: '1px dashed', borderColor: 'divider' }}>
+                    <HoneyIcon sx={{ fontSize: 52, color: alpha(theme.palette.primary.main, 0.25), mb: 2 }} />
+                    <Typography variant="h6" fontWeight={600} gutterBottom>
+                        {(searchTerm || filterQualidade) ? 'Nenhum registro encontrado para os filtros aplicados' : 'Nenhum registro de produção'}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+                        {(searchTerm || filterQualidade) ? 'Tente ajustar os filtros' : 'Comece registrando a primeira colheita'}
+                    </Typography>
+                    {!(searchTerm || filterQualidade) && (
+                        <Button variant="outlined" startIcon={<AddIcon />} onClick={() => handleOpenDialog()}>Registrar Colheita</Button>
+                    )}
+                </Box>
+            )}
+
+            {/* Action menu */}
+            <MuiMenu
+                anchorEl={actionMenu.anchor}
+                open={Boolean(actionMenu.anchor)}
+                onClose={closeActionMenu}
+                transformOrigin={{ horizontal: 'right', vertical: 'top' }}
+                anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
+            >
+                <MenuItem onClick={() => { handleOpenDialog(actionMenu.prod); closeActionMenu(); }}>
+                    <EditIcon fontSize="small" sx={{ mr: 1.5, color: 'primary.main' }} /> Editar
+                </MenuItem>
+                <Divider />
+                <MenuItem sx={{ color: 'error.main' }} onClick={() => { setDeleteConfirm({ open: true, id: actionMenu.prod.id }); closeActionMenu(); }}>
+                    <DeleteIcon fontSize="small" sx={{ mr: 1.5 }} /> Excluir
+                </MenuItem>
+            </MuiMenu>
 
             {/* Dialog de Criação/Edição */}
             <Dialog open={openDialog} onClose={handleCloseDialog} maxWidth="sm" fullWidth>
@@ -457,26 +507,16 @@ export default function Producao() {
                             </Grid>
                             <Grid item xs={12} sm={6}>
                                 <TextField
-                                    fullWidth
-                                    label="Data da Colheita"
-                                    name="data_colheita"
-                                    type="date"
-                                    value={formData.data_colheita}
-                                    onChange={handleChange}
-                                    InputLabelProps={{ shrink: true }}
-                                    required
+                                    fullWidth label="Data da Colheita" name="data_colheita" type="date"
+                                    value={formData.data_colheita} onChange={handleChange}
+                                    InputLabelProps={{ shrink: true }} required
                                 />
                             </Grid>
                             <Grid item xs={12} sm={6}>
                                 <TextField
-                                    fullWidth
-                                    label="Quantidade (kg)"
-                                    name="quantidade_kg"
-                                    type="number"
-                                    value={formData.quantidade_kg}
-                                    onChange={handleChange}
-                                    inputProps={{ step: '0.01', min: '0' }}
-                                    required
+                                    fullWidth label="Quantidade (kg)" name="quantidade_kg" type="number"
+                                    value={formData.quantidade_kg} onChange={handleChange}
+                                    inputProps={{ step: '0.01', min: '0' }} required
                                 />
                             </Grid>
                             <Grid item xs={12} sm={6}>
@@ -496,43 +536,20 @@ export default function Producao() {
                                 </FormControl>
                             </Grid>
                             <Grid item xs={12} sm={6}>
-                                <TextField
-                                    fullWidth
-                                    label="Quadros Colhidos"
-                                    name="numero_quadros_colhidos"
-                                    type="number"
-                                    value={formData.numero_quadros_colhidos}
-                                    onChange={handleChange}
-                                />
+                                <TextField fullWidth label="Quadros Colhidos" name="numero_quadros_colhidos" type="number" value={formData.numero_quadros_colhidos} onChange={handleChange} />
                             </Grid>
                             <Grid item xs={12} sm={6}>
-                                <TextField
-                                    fullWidth
-                                    label="Umidade do Mel (%)"
-                                    name="umidade_mel"
-                                    type="number"
-                                    value={formData.umidade_mel}
-                                    onChange={handleChange}
-                                    inputProps={{ step: '0.1' }}
-                                />
+                                <TextField fullWidth label="Umidade do Mel (%)" name="umidade_mel" type="number" value={formData.umidade_mel} onChange={handleChange} inputProps={{ step: '0.1' }} />
                             </Grid>
                             <Grid item xs={12}>
-                                <TextField
-                                    fullWidth
-                                    label="Observações"
-                                    name="observacoes"
-                                    value={formData.observacoes}
-                                    onChange={handleChange}
-                                    multiline
-                                    rows={2}
-                                />
+                                <TextField fullWidth label="Observações" name="observacoes" value={formData.observacoes} onChange={handleChange} multiline rows={2} />
                             </Grid>
                         </Grid>
                     </DialogContent>
                     <DialogActions sx={{ p: 2 }}>
                         <Button onClick={handleCloseDialog} disabled={saving}>Cancelar</Button>
                         <Button type="submit" variant="contained" disabled={saving}>
-                            {saving ? <CircularProgress size={24} /> : editingId ? 'Salvar' : 'Registrar'}
+                            {saving ? 'Salvando...' : editingId ? 'Salvar' : 'Registrar'}
                         </Button>
                     </DialogActions>
                 </form>

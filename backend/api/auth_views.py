@@ -56,16 +56,32 @@ def register(request):
 @permission_classes([AllowAny])
 def login(request):
     """Login de usuário"""
-    username = request.data.get('username')
+    username = (request.data.get('username') or request.data.get('email') or '').strip()
     password = request.data.get('password')
     
     if not username or not password:
         return Response(
-            {'error': 'Username e senha são obrigatórios'},
+            {'error': 'Usuário/e-mail e senha são obrigatórios'},
             status=status.HTTP_400_BAD_REQUEST
         )
-    
-    user = authenticate(username=username, password=password)
+
+    user = authenticate(request=request, username=username, password=password)
+
+    if user is None:
+        identifier = username.lower()
+        normalized_user = None
+
+        if '@' in identifier:
+            normalized_user = User.objects.filter(email__iexact=username).first()
+        else:
+            normalized_user = User.objects.filter(username__iexact=username).first()
+
+        if normalized_user:
+            user = authenticate(
+                request=request,
+                username=normalized_user.get_username(),
+                password=password,
+            )
     
     if user is None or not user.is_active:
         return Response(

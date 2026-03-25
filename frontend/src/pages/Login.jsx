@@ -92,7 +92,7 @@ export default function Login() {
                         <Box component="form" onSubmit={handleSubmit}>
                             <TextField
                                 fullWidth
-                                label="Usuário"
+                                label="Usuário ou e-mail"
                                 value={username}
                                 onChange={(e) => setUsername(e.target.value)}
                                 margin="normal"

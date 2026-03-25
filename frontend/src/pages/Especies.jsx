@@ -15,7 +15,7 @@ import {
     MenuItem,
     IconButton,
     Chip,
-    CircularProgress,
+    Skeleton,
     Alert,
     Snackbar,
     InputAdornment,
@@ -163,157 +163,150 @@ export default function Especies() {
         return theme.palette.error.main;
     };
 
-    if (loading) {
-        return (
-            <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 400 }}>
-                <CircularProgress color="primary" size={60} />
-            </Box>
-        );
-    }
-
     return (
         <Box>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-                <Typography variant="h4" sx={{ fontWeight: 700 }}>
-                    Espécies de Abelhas
-                </Typography>
-                <Button variant="contained" startIcon={<AddIcon />} onClick={() => handleOpenDialog()}>
+            {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
+
+            {/* Toolbar */}
+            <Box sx={{ display: 'flex', alignItems: 'center', mb: 3, gap: 1, flexWrap: 'wrap' }}>
+                <BugIcon sx={{ color: 'primary.main' }} />
+                <Typography variant="h5" fontWeight={700} sx={{ flex: 1, minWidth: 100 }}>Espécies de Abelhas</Typography>
+                <TextField
+                    placeholder="Buscar espécies..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    size="small"
+                    sx={{ width: { xs: '100%', sm: 220 } }}
+                    slotProps={{ input: { startAdornment: <InputAdornment position="start"><SearchIcon sx={{ fontSize: 18, color: 'text.disabled' }} /></InputAdornment> } }}
+                />
+                <Button variant="contained" startIcon={<AddIcon />} size="small" onClick={() => handleOpenDialog()}>
                     Nova Espécie
                 </Button>
             </Box>
 
-            {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
-
-            <TextField
-                fullWidth
-                placeholder="Buscar espécies..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                sx={{ mb: 3 }}
-                InputProps={{
-                    startAdornment: <InputAdornment position="start"><SearchIcon color="action" /></InputAdornment>,
-                }}
-            />
-
-            <Grid container spacing={3}>
-                {filteredEspecies.map((especie) => (
-                    <Grid item xs={12} sm={6} md={4} key={especie.id}>
-                        <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-                            <Box
-                                sx={{
-                                    height: 8,
-                                    background: especie.cor_identificacao || theme.palette.primary.main,
-                                }}
-                            />
-                            <CardContent sx={{ flex: 1 }}>
-                                <Box sx={{ display: 'flex', alignItems: 'flex-start', mb: 2 }}>
-                                    <Box
-                                        sx={{
-                                            width: 48,
-                                            height: 48,
-                                            borderRadius: 2,
-                                            backgroundColor: alpha(especie.cor_identificacao || theme.palette.primary.main, 0.15),
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            justifyContent: 'center',
-                                            mr: 2,
-                                        }}
-                                    >
-                                        <BugIcon sx={{ color: especie.cor_identificacao || theme.palette.primary.main }} />
+            {/* Card grid */}
+            <Grid container spacing={2.5}>
+                {loading
+                    ? Array.from({ length: 6 }).map((_, i) => (
+                        <Grid item xs={12} sm={6} md={4} key={i}>
+                            <Card sx={{ border: '1px solid', borderColor: 'divider' }}>
+                                <Skeleton variant="rectangular" height={8} />
+                                <CardContent>
+                                    <Box sx={{ display: 'flex', mb: 2 }}>
+                                        <Skeleton variant="rounded" width={48} height={48} sx={{ mr: 2, borderRadius: 2 }} />
+                                        <Box sx={{ flex: 1 }}>
+                                            <Skeleton width="55%" height={24} />
+                                            <Skeleton width="75%" height={18} />
+                                        </Box>
                                     </Box>
-                                    <Box sx={{ flex: 1 }}>
-                                        <Typography variant="h6" sx={{ fontWeight: 600 }}>
-                                            {especie.nome}
-                                        </Typography>
-                                        {especie.nome_cientifico && (
-                                            <Typography variant="body2" color="text.secondary" sx={{ fontStyle: 'italic' }}>
-                                                {especie.nome_cientifico}
-                                            </Typography>
-                                        )}
+                                    <Skeleton height={16} sx={{ mb: 1 }} />
+                                    <Skeleton width="50%" height={16} />
+                                </CardContent>
+                            </Card>
+                        </Grid>
+                    ))
+                    : filteredEspecies.map((especie) => (
+                        <Grid item xs={12} sm={6} md={4} key={especie.id}>
+                            <Card sx={{
+                                height: '100%',
+                                display: 'flex',
+                                flexDirection: 'column',
+                                border: '1px solid',
+                                borderColor: 'divider',
+                                transition: 'border-color 0.2s',
+                                '&:hover': { borderColor: 'primary.main' },
+                            }}>
+                                <Box sx={{ height: 4, background: especie.cor_identificacao || theme.palette.primary.main }} />
+                                <CardContent sx={{ flex: 1 }}>
+                                    <Box sx={{ display: 'flex', alignItems: 'flex-start', mb: 2 }}>
+                                        <Box sx={{
+                                            width: 44, height: 44, borderRadius: 2,
+                                            bgcolor: alpha(especie.cor_identificacao || theme.palette.primary.main, 0.15),
+                                            display: 'flex', alignItems: 'center', justifyContent: 'center', mr: 1.5, flexShrink: 0,
+                                        }}>
+                                            <BugIcon sx={{ color: especie.cor_identificacao || 'primary.main', fontSize: 22 }} />
+                                        </Box>
+                                        <Box sx={{ flex: 1, minWidth: 0 }}>
+                                            <Typography variant="subtitle1" fontWeight={600} sx={{ lineHeight: 1.2 }}>{especie.nome}</Typography>
+                                            {especie.nome_cientifico && (
+                                                <Typography variant="caption" color="text.secondary" sx={{ fontStyle: 'italic' }}>
+                                                    {especie.nome_cientifico}
+                                                </Typography>
+                                            )}
+                                        </Box>
                                     </Box>
-                                </Box>
 
-                                <Box sx={{ mb: 2 }}>
-                                    <Typography variant="body2" color="text.secondary" gutterBottom>
-                                        Agressividade
-                                    </Typography>
-                                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                        <Rating
-                                            value={especie.nivel_agressividade}
-                                            max={5}
-                                            readOnly
-                                            size="small"
-                                            sx={{
-                                                '& .MuiRating-iconFilled': {
+                                    <Box sx={{ mb: 1.5 }}>
+                                        <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 0.5 }}>Agressividade</Typography>
+                                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                            <Rating
+                                                value={especie.nivel_agressividade}
+                                                max={5}
+                                                readOnly
+                                                size="small"
+                                                sx={{ '& .MuiRating-iconFilled': { color: getAgressividadeColor(especie.nivel_agressividade) } }}
+                                            />
+                                            <Chip
+                                                label={agressividadeLabels[especie.nivel_agressividade]}
+                                                size="small"
+                                                sx={{
+                                                    bgcolor: alpha(getAgressividadeColor(especie.nivel_agressividade), 0.15),
                                                     color: getAgressividadeColor(especie.nivel_agressividade),
-                                                },
-                                            }}
-                                        />
-                                        <Chip
-                                            label={agressividadeLabels[especie.nivel_agressividade]}
-                                            size="small"
-                                            sx={{
-                                                backgroundColor: alpha(getAgressividadeColor(especie.nivel_agressividade), 0.15),
-                                                color: getAgressividadeColor(especie.nivel_agressividade),
-                                            }}
-                                        />
+                                                    height: 20, fontSize: '0.7rem',
+                                                }}
+                                            />
+                                        </Box>
                                     </Box>
-                                </Box>
 
-                                {especie.producao_media_anual_kg && (
-                                    <Box sx={{ mb: 2 }}>
-                                        <Typography variant="body2" color="text.secondary">
-                                            Produção Média Anual
+                                    {especie.producao_media_anual_kg && (
+                                        <Box sx={{ mb: 1.5 }}>
+                                            <Typography variant="caption" color="text.secondary">Produção Média Anual</Typography>
+                                            <Typography variant="h6" color="primary.main" fontWeight={600}>
+                                                {especie.producao_media_anual_kg} kg
+                                            </Typography>
+                                        </Box>
+                                    )}
+
+                                    {especie.descricao && (
+                                        <Typography variant="body2" color="text.secondary" sx={{
+                                            overflow: 'hidden',
+                                            textOverflow: 'ellipsis',
+                                            display: '-webkit-box',
+                                            WebkitLineClamp: 3,
+                                            WebkitBoxOrient: 'vertical',
+                                        }}>
+                                            {especie.descricao}
                                         </Typography>
-                                        <Typography variant="h6" color="primary" sx={{ fontWeight: 600 }}>
-                                            {especie.producao_media_anual_kg} kg
-                                        </Typography>
-                                    </Box>
-                                )}
+                                    )}
+                                </CardContent>
 
-                                {especie.descricao && (
-                                    <Typography variant="body2" color="text.secondary" sx={{
-                                        overflow: 'hidden',
-                                        textOverflow: 'ellipsis',
-                                        display: '-webkit-box',
-                                        WebkitLineClamp: 3,
-                                        WebkitBoxOrient: 'vertical',
-                                    }}>
-                                        {especie.descricao}
-                                    </Typography>
-                                )}
-                            </CardContent>
-
-                            <CardActions sx={{ justifyContent: 'flex-end', p: 2 }}>
-                                <IconButton
-                                    size="small"
-                                    onClick={() => handleOpenDialog(especie)}
-                                    sx={{ color: theme.palette.primary.main }}
-                                >
-                                    <EditIcon />
-                                </IconButton>
-                                <IconButton
-                                    size="small"
-                                    onClick={() => setDeleteConfirm({ open: true, id: especie.id, nome: especie.nome })}
-                                    sx={{ color: theme.palette.error.main }}
-                                >
-                                    <DeleteIcon />
-                                </IconButton>
-                            </CardActions>
-                        </Card>
-                    </Grid>
-                ))}
+                                <CardActions sx={{ justifyContent: 'flex-end', px: 2, pb: 1.5, pt: 0 }}>
+                                    <IconButton size="small" onClick={() => handleOpenDialog(especie)} sx={{ color: 'primary.main' }}>
+                                        <EditIcon fontSize="small" />
+                                    </IconButton>
+                                    <IconButton size="small" onClick={() => setDeleteConfirm({ open: true, id: especie.id, nome: especie.nome })} sx={{ color: 'error.main' }}>
+                                        <DeleteIcon fontSize="small" />
+                                    </IconButton>
+                                </CardActions>
+                            </Card>
+                        </Grid>
+                    ))
+                }
             </Grid>
 
+            {/* Empty state */}
             {filteredEspecies.length === 0 && !loading && (
-                <Box sx={{ textAlign: 'center', py: 8 }}>
-                    <BugIcon sx={{ fontSize: 64, color: 'text.secondary', mb: 2 }} />
-                    <Typography variant="h6" color="text.secondary">
+                <Box sx={{ textAlign: 'center', py: 10, borderRadius: 2, border: '1px dashed', borderColor: 'divider' }}>
+                    <BugIcon sx={{ fontSize: 52, color: alpha(theme.palette.primary.main, 0.25), mb: 2 }} />
+                    <Typography variant="h6" fontWeight={600} gutterBottom>
                         {searchTerm ? 'Nenhuma espécie encontrada' : 'Nenhuma espécie cadastrada'}
                     </Typography>
                     <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-                        {searchTerm ? 'Tente uma busca diferente' : 'Clique no botão acima para adicionar uma espécie'}
+                        {searchTerm ? 'Tente uma busca diferente' : 'Comece adicionando uma espécie de abelha'}
                     </Typography>
+                    {!searchTerm && (
+                        <Button variant="outlined" startIcon={<AddIcon />} onClick={() => handleOpenDialog()}>Nova Espécie</Button>
+                    )}
                 </Box>
             )}
 
@@ -324,33 +317,15 @@ export default function Especies() {
                     <DialogContent>
                         <Grid container spacing={2} sx={{ mt: 1 }}>
                             <Grid item xs={12}>
-                                <TextField
-                                    fullWidth
-                                    label="Nome Popular"
-                                    name="nome"
-                                    value={formData.nome}
-                                    onChange={handleChange}
-                                    required
-                                />
+                                <TextField fullWidth label="Nome Popular" name="nome" value={formData.nome} onChange={handleChange} required />
                             </Grid>
                             <Grid item xs={12}>
-                                <TextField
-                                    fullWidth
-                                    label="Nome Científico"
-                                    name="nome_cientifico"
-                                    value={formData.nome_cientifico}
-                                    onChange={handleChange}
-                                />
+                                <TextField fullWidth label="Nome Científico" name="nome_cientifico" value={formData.nome_cientifico} onChange={handleChange} />
                             </Grid>
                             <Grid item xs={12} sm={6}>
                                 <FormControl fullWidth>
                                     <InputLabel>Nível de Agressividade</InputLabel>
-                                    <Select
-                                        name="nivel_agressividade"
-                                        value={formData.nivel_agressividade}
-                                        onChange={handleChange}
-                                        label="Nível de Agressividade"
-                                    >
+                                    <Select name="nivel_agressividade" value={formData.nivel_agressividade} onChange={handleChange} label="Nível de Agressividade">
                                         {[1, 2, 3, 4, 5].map(n => (
                                             <MenuItem key={n} value={n}>{n} - {agressividadeLabels[n]}</MenuItem>
                                         ))}
@@ -359,66 +334,34 @@ export default function Especies() {
                             </Grid>
                             <Grid item xs={12} sm={6}>
                                 <TextField
-                                    fullWidth
-                                    label="Produção Média Anual (kg)"
-                                    name="producao_media_anual_kg"
-                                    type="number"
-                                    value={formData.producao_media_anual_kg}
-                                    onChange={handleChange}
-                                    inputProps={{ step: '0.01', min: '0' }}
+                                    fullWidth label="Produção Média Anual (kg)" name="producao_media_anual_kg" type="number"
+                                    value={formData.producao_media_anual_kg} onChange={handleChange}
+                                    slotProps={{ input: { step: '0.01', min: '0' } }}
                                 />
                             </Grid>
                             <Grid item xs={12}>
                                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                                     <TextField
-                                        label="Cor de Identificação"
-                                        name="cor_identificacao"
-                                        type="color"
-                                        value={formData.cor_identificacao}
-                                        onChange={handleChange}
-                                        sx={{ width: 120 }}
-                                        InputLabelProps={{ shrink: true }}
+                                        label="Cor de Identificação" name="cor_identificacao" type="color"
+                                        value={formData.cor_identificacao} onChange={handleChange}
+                                        sx={{ width: 120 }} slotProps={{ inputLabel: { shrink: true } }}
                                     />
-                                    <Box
-                                        sx={{
-                                            width: 40,
-                                            height: 40,
-                                            borderRadius: 1,
-                                            backgroundColor: formData.cor_identificacao,
-                                            border: '1px solid',
-                                            borderColor: 'divider',
-                                        }}
-                                    />
+                                    <Box sx={{ width: 40, height: 40, borderRadius: 1, bgcolor: formData.cor_identificacao, border: '1px solid', borderColor: 'divider' }} />
+                                    <Typography variant="caption" color="text.secondary">{formData.cor_identificacao}</Typography>
                                 </Box>
                             </Grid>
                             <Grid item xs={12}>
-                                <TextField
-                                    fullWidth
-                                    label="Descrição"
-                                    name="descricao"
-                                    value={formData.descricao}
-                                    onChange={handleChange}
-                                    multiline
-                                    rows={2}
-                                />
+                                <TextField fullWidth label="Descrição" name="descricao" value={formData.descricao} onChange={handleChange} multiline rows={2} />
                             </Grid>
                             <Grid item xs={12}>
-                                <TextField
-                                    fullWidth
-                                    label="Características"
-                                    name="caracteristicas"
-                                    value={formData.caracteristicas}
-                                    onChange={handleChange}
-                                    multiline
-                                    rows={2}
-                                />
+                                <TextField fullWidth label="Características" name="caracteristicas" value={formData.caracteristicas} onChange={handleChange} multiline rows={2} />
                             </Grid>
                         </Grid>
                     </DialogContent>
                     <DialogActions sx={{ p: 2 }}>
                         <Button onClick={handleCloseDialog} disabled={saving}>Cancelar</Button>
                         <Button type="submit" variant="contained" disabled={saving}>
-                            {saving ? <CircularProgress size={24} /> : editingId ? 'Salvar' : 'Criar'}
+                            {saving ? 'Salvando...' : editingId ? 'Salvar' : 'Criar'}
                         </Button>
                     </DialogActions>
                 </form>

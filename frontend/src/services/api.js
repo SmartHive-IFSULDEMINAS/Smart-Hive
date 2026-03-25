@@ -1,7 +1,8 @@
 import axios from 'axios';
 
-// Use variável de ambiente ou URL relativa em produção
-const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
+// Em desenvolvimento usa rota relativa com proxy do Vite (localhost:8000).
+// Em produção mantém rota relativa para o servidor (Nginx/Django).
+const API_BASE_URL = '/api';
 
 const api = axios.create({
     baseURL: API_BASE_URL,
