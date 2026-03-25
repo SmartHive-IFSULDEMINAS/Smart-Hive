@@ -114,10 +114,13 @@ const StatCard = ({ title, value, subtitle, icon, color, trend, delay = 0 }) => 
                         variant="h3"
                         sx={{
                             fontWeight: 800,
-                            fontSize: { xs: '2rem', sm: '2.25rem' },
+                            fontSize: { xs: '1.65rem', sm: '1.9rem' },
                             color: 'text.primary',
                             lineHeight: 1.1,
                             mb: 1.5,
+                            whiteSpace: 'nowrap',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
                         }}
                     >
                         {value}
@@ -186,16 +189,16 @@ const DashboardSkeleton = () => (
         <Skeleton variant="text" width={240} height={22} sx={{ mb: 3 }} />
         <Grid container spacing={3} sx={{ mb: 3 }}>
             {[1, 2, 3, 4].map(i => (
-                <Grid item xs={12} sm={6} md={3} key={i}>
+                <Grid size={{ xs: 12, sm: 6, md: 3 }} key={i}>
                     <Skeleton variant="rounded" height={120} sx={{ borderRadius: 2 }} />
                 </Grid>
             ))}
         </Grid>
         <Grid container spacing={3}>
-            <Grid item xs={12} lg={7}>
+            <Grid size={{ xs: 12, md: 6 }}>
                 <Skeleton variant="rounded" height={480} sx={{ borderRadius: 2 }} />
             </Grid>
-            <Grid item xs={12} lg={5}>
+            <Grid size={{ xs: 12, md: 6 }}>
                 <Skeleton variant="rounded" height={480} sx={{ borderRadius: 2 }} />
             </Grid>
         </Grid>
@@ -307,7 +310,7 @@ export default function Dashboard() {
 
             {/* ─── KPI Cards ────────────────────────────────────────────────── */}
             <Grid container spacing={3} sx={{ mb: 4 }}>
-                <Grid item xs={12} sm={6} md={3}>
+                <Grid size={{ xs: 12, sm: 6, md: 3 }}>
                     <StatCard
                         title="Apiários"
                         value={data?.total_apiarios || 0}
@@ -318,7 +321,7 @@ export default function Dashboard() {
                         delay={0}
                     />
                 </Grid>
-                <Grid item xs={12} sm={6} md={3}>
+                <Grid size={{ xs: 12, sm: 6, md: 3 }}>
                     <StatCard
                         title="Colmeias"
                         value={data?.total_colmeias || 0}
@@ -329,7 +332,7 @@ export default function Dashboard() {
                         delay={100}
                     />
                 </Grid>
-                <Grid item xs={12} sm={6} md={3}>
+                <Grid size={{ xs: 12, sm: 6, md: 3 }}>
                     <StatCard
                         title="Produção Anual"
                         value={`${parseFloat(data?.producao_ano_kg || 0).toFixed(1)} kg`}
@@ -340,7 +343,7 @@ export default function Dashboard() {
                         delay={200}
                     />
                 </Grid>
-                <Grid item xs={12} sm={6} md={3}>
+                <Grid size={{ xs: 12, sm: 6, md: 3 }}>
                     <StatCard
                         title="Atenção"
                         value={data?.tratamentos_em_andamento || 0}
@@ -371,7 +374,7 @@ export default function Dashboard() {
                             />
                             <Grid container spacing={2}>
                                 {data.colmeias_iot.map((colmeia) => (
-                                    <Grid item xs={12} sm={6} md={4} key={colmeia.id}>
+                                    <Grid size={{ xs: 12, sm: 6, md: 4 }} key={colmeia.id}>
                                         <Paper
                                             sx={{
                                                 p: 2,
@@ -405,7 +408,7 @@ export default function Dashboard() {
                                             {(colmeia.temperatura_atual || colmeia.nivel_ruido || colmeia.luminosidade) ? (
                                                 <Grid container spacing={1.5}>
                                                     {colmeia.temperatura_atual && (
-                                                        <Grid item xs={4}>
+                                                        <Grid size={4}>
                                                             <Box sx={{ textAlign: 'center' }}>
                                                                 <ThermostatIcon sx={{
                                                                     color: colmeia.temperatura_atual > 35 ? '#EF9A9A'
@@ -426,7 +429,7 @@ export default function Dashboard() {
                                                         </Grid>
                                                     )}
                                                     {colmeia.nivel_ruido && (
-                                                        <Grid item xs={4}>
+                                                        <Grid size={4}>
                                                             <Box sx={{ textAlign: 'center' }}>
                                                                 <VolumeUpIcon sx={{ color: '#FFB74D', fontSize: 18, mb: 0.25 }} />
                                                                 <Typography variant="caption" color="text.secondary" display="block" sx={{ fontSize: '0.65rem' }}>Ruído</Typography>
@@ -437,7 +440,7 @@ export default function Dashboard() {
                                                         </Grid>
                                                     )}
                                                     {colmeia.luminosidade && (
-                                                        <Grid item xs={4}>
+                                                        <Grid size={4}>
                                                             <Box sx={{ textAlign: 'center' }}>
                                                                 <LightModeIcon sx={{ color: '#FFC107', fontSize: 18, mb: 0.25 }} />
                                                                 <Typography variant="caption" color="text.secondary" display="block" sx={{ fontSize: '0.65rem' }}>Luz</Typography>
@@ -448,7 +451,7 @@ export default function Dashboard() {
                                                         </Grid>
                                                     )}
                                                     {colmeia.umidade && (
-                                                        <Grid item xs={4}>
+                                                        <Grid size={4}>
                                                             <Box sx={{ textAlign: 'center' }}>
                                                                 <WaterDropIcon sx={{ color: '#64B5F6', fontSize: 18, mb: 0.25 }} />
                                                                 <Typography variant="caption" color="text.secondary" display="block" sx={{ fontSize: '0.65rem' }}>Umidade</Typography>
@@ -459,7 +462,7 @@ export default function Dashboard() {
                                                         </Grid>
                                                     )}
                                                     {colmeia.pressao && (
-                                                        <Grid item xs={4}>
+                                                        <Grid size={4}>
                                                             <Box sx={{ textAlign: 'center' }}>
                                                                 <CompressIcon sx={{ color: '#CE93D8', fontSize: 18, mb: 0.25 }} />
                                                                 <Typography variant="caption" color="text.secondary" display="block" sx={{ fontSize: '0.65rem' }}>Pressão</Typography>
@@ -470,7 +473,7 @@ export default function Dashboard() {
                                                         </Grid>
                                                     )}
                                                     {colmeia.peso && (
-                                                        <Grid item xs={4}>
+                                                        <Grid size={4}>
                                                             <Box sx={{ textAlign: 'center' }}>
                                                                 <ScaleIcon sx={{ color: '#90A4AE', fontSize: 18, mb: 0.25 }} />
                                                                 <Typography variant="caption" color="text.secondary" display="block" sx={{ fontSize: '0.65rem' }}>Peso</Typography>
@@ -506,7 +509,7 @@ export default function Dashboard() {
 
             {/* ─── Charts ───────────────────────────────────────────────────── */}
             <Grid container spacing={3} sx={{ mb: 4 }}>
-                <Grid item xs={12} lg={7}>
+                <Grid size={{ xs: 12, md: 6 }}>
                     <Fade in timeout={900}>
                         <Card>
                             <CardContent sx={{ p: 3 }}>
@@ -564,7 +567,7 @@ export default function Dashboard() {
                     </Fade>
                 </Grid>
 
-                <Grid item xs={12} lg={5}>
+                <Grid size={{ xs: 12, md: 6 }}>
                     <Fade in timeout={1000}>
                         <Card sx={{ height: '100%' }}>
                             <CardContent sx={{ p: 3 }}>
@@ -579,9 +582,9 @@ export default function Dashboard() {
                                                 <Pie
                                                     data={statusData}
                                                     cx="50%"
-                                                    cy="45%"
-                                                    innerRadius={85}
-                                                    outerRadius={120}
+                                                    cy="42%"
+                                                    innerRadius={90}
+                                                    outerRadius={155}
                                                     paddingAngle={3}
                                                     dataKey="value"
                                                 >
@@ -615,9 +618,9 @@ export default function Dashboard() {
 
             {/* ─── Tables ───────────────────────────────────────────────────── */}
             <Grid container spacing={3}>
-                <Grid item xs={12} md={6}>
+                <Grid size={{ xs: 12, md: 6 }}>
                     <Fade in timeout={1100}>
-                        <Card>
+                        <Card sx={{ height: '100%' }}>
                             <CardContent sx={{ p: 3 }}>
                                 <SectionHeader
                                     title="Próximas Inspeções"
@@ -673,9 +676,9 @@ export default function Dashboard() {
                     </Fade>
                 </Grid>
 
-                <Grid item xs={12} md={6}>
+                <Grid size={{ xs: 12, md: 6 }}>
                     <Fade in timeout={1200}>
-                        <Card>
+                        <Card sx={{ height: '100%' }}>
                             <CardContent sx={{ p: 3 }}>
                                 <SectionHeader
                                     title="Últimas Produções"
@@ -729,7 +732,7 @@ export default function Dashboard() {
                 </Grid>
 
                 {/* Bar chart — distribution by apiary */}
-                <Grid item xs={12}>
+                <Grid size={12}>
                     <Fade in timeout={1300}>
                         <Card>
                             <CardContent sx={{ p: 3 }}>

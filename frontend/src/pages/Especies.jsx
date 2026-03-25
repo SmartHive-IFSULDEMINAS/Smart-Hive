@@ -188,7 +188,7 @@ export default function Especies() {
             <Grid container spacing={2.5}>
                 {loading
                     ? Array.from({ length: 6 }).map((_, i) => (
-                        <Grid item xs={12} sm={6} md={4} key={i}>
+                        <Grid size={{ xs: 12, sm: 6, md: 4 }} key={i}>
                             <Card sx={{ border: '1px solid', borderColor: 'divider' }}>
                                 <Skeleton variant="rectangular" height={8} />
                                 <CardContent>
@@ -206,7 +206,7 @@ export default function Especies() {
                         </Grid>
                     ))
                     : filteredEspecies.map((especie) => (
-                        <Grid item xs={12} sm={6} md={4} key={especie.id}>
+                        <Grid size={{ xs: 12, sm: 6, md: 4 }} key={especie.id}>
                             <Card sx={{
                                 height: '100%',
                                 display: 'flex',
@@ -316,13 +316,13 @@ export default function Especies() {
                     <DialogTitle>{editingId ? 'Editar Espécie' : 'Nova Espécie'}</DialogTitle>
                     <DialogContent>
                         <Grid container spacing={2} sx={{ mt: 1 }}>
-                            <Grid item xs={12}>
+                            <Grid size={12}>
                                 <TextField fullWidth label="Nome Popular" name="nome" value={formData.nome} onChange={handleChange} required />
                             </Grid>
-                            <Grid item xs={12}>
+                            <Grid size={12}>
                                 <TextField fullWidth label="Nome Científico" name="nome_cientifico" value={formData.nome_cientifico} onChange={handleChange} />
                             </Grid>
-                            <Grid item xs={12} sm={6}>
+                            <Grid size={{ xs: 12, sm: 6 }}>
                                 <FormControl fullWidth>
                                     <InputLabel>Nível de Agressividade</InputLabel>
                                     <Select name="nivel_agressividade" value={formData.nivel_agressividade} onChange={handleChange} label="Nível de Agressividade">
@@ -332,14 +332,14 @@ export default function Especies() {
                                     </Select>
                                 </FormControl>
                             </Grid>
-                            <Grid item xs={12} sm={6}>
+                            <Grid size={{ xs: 12, sm: 6 }}>
                                 <TextField
                                     fullWidth label="Produção Média Anual (kg)" name="producao_media_anual_kg" type="number"
                                     value={formData.producao_media_anual_kg} onChange={handleChange}
                                     slotProps={{ input: { step: '0.01', min: '0' } }}
                                 />
                             </Grid>
-                            <Grid item xs={12}>
+                            <Grid size={12}>
                                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                                     <TextField
                                         label="Cor de Identificação" name="cor_identificacao" type="color"
@@ -350,10 +350,10 @@ export default function Especies() {
                                     <Typography variant="caption" color="text.secondary">{formData.cor_identificacao}</Typography>
                                 </Box>
                             </Grid>
-                            <Grid item xs={12}>
+                            <Grid size={12}>
                                 <TextField fullWidth label="Descrição" name="descricao" value={formData.descricao} onChange={handleChange} multiline rows={2} />
                             </Grid>
-                            <Grid item xs={12}>
+                            <Grid size={12}>
                                 <TextField fullWidth label="Características" name="caracteristicas" value={formData.caracteristicas} onChange={handleChange} multiline rows={2} />
                             </Grid>
                         </Grid>
