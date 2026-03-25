@@ -595,6 +595,7 @@ export default function Dashboard() {
                                                 <RechartsTooltip
                                                     contentStyle={darkTooltipStyle}
                                                     labelStyle={{ color: '#E8EAED', fontWeight: 600 }}
+                                                    itemStyle={{ color: 'rgba(232,234,237,0.75)' }}
                                                     formatter={(value) => [value, 'Colmeias']}
                                                 />
                                                 <Legend
@@ -764,6 +765,7 @@ export default function Dashboard() {
                                                 <RechartsTooltip
                                                     contentStyle={darkTooltipStyle}
                                                     labelStyle={{ color: '#E8EAED', fontWeight: 600 }}
+                                                    itemStyle={{ color: 'rgba(232,234,237,0.75)' }}
                                                     formatter={(value) => [value, 'Colmeias']}
                                                 />
                                                 <Bar

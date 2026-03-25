@@ -326,7 +326,12 @@ export default function Producao() {
                                             <CartesianGrid stroke="rgba(255,255,255,0.05)" strokeDasharray="0" horizontal={false} />
                                             <XAxis type="number" unit=" kg" tick={{ fill: 'rgba(232,234,237,0.55)', fontSize: 11 }} axisLine={false} tickLine={false} />
                                             <YAxis type="category" dataKey="name" width={110} tick={{ fill: 'rgba(232,234,237,0.55)', fontSize: 11 }} axisLine={false} tickLine={false} />
-                                            <RechartsTooltip formatter={(v) => [`${v} kg`, 'Produção']} contentStyle={darkTooltipStyle} />
+                                            <RechartsTooltip
+                                                formatter={(v) => [`${v} kg`, 'Produção']}
+                                                contentStyle={darkTooltipStyle}
+                                                labelStyle={{ color: '#E8EAED', fontWeight: 600 }}
+                                                itemStyle={{ color: 'rgba(232,234,237,0.75)' }}
+                                            />
                                             <Bar dataKey="value" fill={theme.palette.primary.main} radius={[0, 4, 4, 0]} />
                                         </BarChart>
                                     </ResponsiveContainer>
@@ -354,7 +359,12 @@ export default function Producao() {
                                                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                                                 ))}
                                             </Pie>
-                                            <RechartsTooltip formatter={(v) => [`${v} kg`, 'Produção']} contentStyle={darkTooltipStyle} />
+                                            <RechartsTooltip
+                                                formatter={(v) => [`${v} kg`, 'Produção']}
+                                                contentStyle={darkTooltipStyle}
+                                                labelStyle={{ color: '#E8EAED', fontWeight: 600 }}
+                                                itemStyle={{ color: 'rgba(232,234,237,0.75)' }}
+                                            />
                                             <Legend wrapperStyle={{ fontSize: 12, color: 'rgba(232,234,237,0.55)' }} />
                                         </PieChart>
                                     </ResponsiveContainer>
