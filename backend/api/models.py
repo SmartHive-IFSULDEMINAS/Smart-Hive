@@ -1008,6 +1008,10 @@ class ClassificacaoPolen(models.Model):
         max_length=100, blank=True, verbose_name='ID do Dispositivo'
     )
     notas = models.TextField(blank=True, verbose_name='Notas')
+    requisicao_raw = models.JSONField(
+        blank=True, null=True, verbose_name='Requisição Raw (JSON)',
+        help_text='Payload completo da requisição recebida'
+    )
     timestamp = models.DateTimeField(
         auto_now_add=True, verbose_name='Timestamp', db_index=True
     )

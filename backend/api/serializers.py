@@ -372,7 +372,7 @@ class ClassificacaoPolenSerializer(serializers.ModelSerializer):
             'canal_f1', 'canal_f2', 'canal_f3', 'canal_f4', 'canal_f5',
             'canal_f6', 'canal_f7', 'canal_f8', 'canal_nir', 'canal_clear',
             'knn_classe', 'kmeans_cluster',
-            'dispositivo_id', 'notas', 'timestamp',
+            'dispositivo_id', 'notas', 'requisicao_raw', 'timestamp',
         ]
         read_only_fields = ['timestamp']
 

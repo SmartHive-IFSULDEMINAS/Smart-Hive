@@ -2,8 +2,11 @@
 Views para o módulo de IA — classificação espectral de pólen (AS7341)
 """
 import os
+import logging
 import numpy as np
 from pathlib import Path
+
+logger = logging.getLogger(__name__)
 
 from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes
@@ -148,12 +151,24 @@ def classificar_polen(request):
             )
         raw_dict = {col: raw_values[i] for i, col in enumerate(SENSOR_COLUMNS)}
 
+    # ── Log dos dados recebidos ────────────────────────────────────────────
+    logger.info(
+        "[IA-Polen] Canais brutos recebidos: %s | dispositivo: %s",
+        dict(zip(['F1','F2','F3','F4','F5','F6','F7','F8','NIR','CLEAR'], raw_values)),
+        data.get('dispositivo_id', 'N/A'),
+    )
+
     # ── Normalização L1 + predição ─────────────────────────────────────────
     try:
         X_raw = np.array(raw_values, dtype=float).reshape(1, -1)
         X_norm = _normalizer.transform(X_raw)
         knn_pred = int(_knn.predict(X_norm)[0])
         kmeans_pred = int(_kmeans.predict(X_norm)[0])
+        logger.info(
+            "[IA-Polen] Resultado — KNN: TIPO %d | KMeans: CLUSTER %d | normalizado: %s",
+            knn_pred, kmeans_pred,
+            [round(float(v), 4) for v in X_norm[0]],
+        )
     except Exception as exc:
         return Response(
             {'success': False, 'error': f'Erro durante a predição: {exc}'},
@@ -166,6 +181,7 @@ def classificar_polen(request):
     dispositivo_id = data.get('dispositivo_id', '')
     notas = data.get('notas', '')
     ClassificacaoPolen.objects.create(
+        requisicao_raw=dict(data),
         canal_f1=raw_values[0],
         canal_f2=raw_values[1],
         canal_f3=raw_values[2],
