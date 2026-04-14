@@ -159,9 +159,9 @@ export default function Alertas() {
 
     return (
         <Box>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2, flexWrap: 'wrap' }}>
                 <AlertsIcon color="primary" />
-                <Typography variant="h5" fontWeight={700}>
+                <Typography variant="h5" fontWeight={700} sx={{ fontSize: { xs: '1.3rem', sm: '1.5rem' } }}>
                     Alertas
                 </Typography>
             </Box>
@@ -183,7 +183,7 @@ export default function Alertas() {
             )}
 
             <Card>
-                <CardContent>
+                <CardContent sx={{ p: { xs: 1.5, sm: 2.5 } }}>
                     <Grid container spacing={2.5}>
                         <Grid size={12}>
                             <Typography variant="subtitle2" sx={{ mb: 1 }}>
@@ -191,7 +191,7 @@ export default function Alertas() {
                             </Typography>
                         </Grid>
 
-                        <Grid size={{ xs: 12, md: 4 }}>
+                        <Grid size={{ xs: 12, sm: 6, md: 4 }}>
                             <Typography variant="subtitle2" sx={{ mb: 1 }}>
                                 Alertas de sensores ativos
                             </Typography>
@@ -201,7 +201,7 @@ export default function Alertas() {
                             />
                         </Grid>
 
-                        <Grid size={{ xs: 12, md: 4 }}>
+                        <Grid size={{ xs: 12, sm: 6, md: 4 }}>
                             <FormControl fullWidth size="small">
                                 <InputLabel>Destino dos alertas</InputLabel>
                                 <Select
@@ -217,7 +217,7 @@ export default function Alertas() {
                             </FormControl>
                         </Grid>
 
-                        <Grid size={{ xs: 12, md: 4 }}>
+                        <Grid size={{ xs: 12, sm: 6, md: 4 }}>
                             <FormControl fullWidth size="small" disabled={config.destino_alerta !== 'usuario'}>
                                 <InputLabel>Usuário destino</InputLabel>
                                 <Select
@@ -236,7 +236,7 @@ export default function Alertas() {
                             </FormControl>
                         </Grid>
 
-                        <Grid size={{ xs: 12, md: 4 }}>
+                        <Grid size={{ xs: 12, sm: 6, md: 4 }}>
                             <FormControl fullWidth size="small">
                                 <InputLabel>Janela de média</InputLabel>
                                 <Select
@@ -252,7 +252,7 @@ export default function Alertas() {
                             </FormControl>
                         </Grid>
 
-                        <Grid size={{ xs: 12, md: 4 }}>
+                        <Grid size={{ xs: 12, sm: 6, md: 4 }}>
                             <TextField
                                 fullWidth
                                 size="small"
@@ -273,7 +273,7 @@ export default function Alertas() {
                             </Typography>
                         </Grid>
 
-                        <Grid size={{ xs: 12, md: 6 }}>
+                        <Grid size={{ xs: 12, sm: 6, md: 6 }}>
                             <Typography variant="body2" sx={{ mb: 1 }}>Ruído</Typography>
                             <Switch
                                 checked={Boolean(config.ativo)}
@@ -290,7 +290,7 @@ export default function Alertas() {
                             />
                         </Grid>
 
-                        <Grid size={{ xs: 12, md: 6 }}>
+                        <Grid size={{ xs: 12, sm: 6, md: 6 }}>
                             <Typography variant="body2" sx={{ mb: 1 }}>Temperatura</Typography>
                             <Switch
                                 checked={Boolean(config.alertar_temperatura)}
@@ -307,7 +307,7 @@ export default function Alertas() {
                             />
                         </Grid>
 
-                        <Grid size={{ xs: 12, md: 6 }}>
+                        <Grid size={{ xs: 12, sm: 6, md: 6 }}>
                             <Typography variant="body2" sx={{ mb: 1 }}>Luminosidade</Typography>
                             <Switch
                                 checked={Boolean(config.alertar_luminosidade)}
@@ -324,7 +324,7 @@ export default function Alertas() {
                             />
                         </Grid>
 
-                        <Grid size={{ xs: 12, md: 6 }}>
+                        <Grid size={{ xs: 12, sm: 6, md: 6 }}>
                             <Typography variant="body2" sx={{ mb: 1 }}>Umidade</Typography>
                             <Switch
                                 checked={Boolean(config.alertar_umidade)}
@@ -341,7 +341,7 @@ export default function Alertas() {
                             />
                         </Grid>
 
-                        <Grid size={{ xs: 12, md: 6 }}>
+                        <Grid size={{ xs: 12, sm: 6, md: 6 }}>
                             <Typography variant="body2" sx={{ mb: 1 }}>Pressão</Typography>
                             <Switch
                                 checked={Boolean(config.alertar_pressao)}
@@ -358,7 +358,7 @@ export default function Alertas() {
                             />
                         </Grid>
 
-                        <Grid size={{ xs: 12, md: 6 }}>
+                        <Grid size={{ xs: 12, sm: 6, md: 6 }}>
                             <Typography variant="body2" sx={{ mb: 1 }}>Peso</Typography>
                             <Switch
                                 checked={Boolean(config.alertar_peso)}
@@ -382,7 +382,7 @@ export default function Alertas() {
                             </Typography>
                         </Grid>
 
-                        <Grid size={{ xs: 12, md: 6 }}>
+                        <Grid size={{ xs: 12, sm: 6, md: 6 }}>
                             <Typography variant="body2" sx={{ mb: 1 }}>Alertar variações de produção</Typography>
                             <Switch
                                 checked={Boolean(config.alertar_producao)}
@@ -404,6 +404,8 @@ export default function Alertas() {
                                 variant="contained"
                                 onClick={handleSave}
                                 disabled={saving}
+                                fullWidth
+                                sx={{ width: { xs: '100%', sm: 'auto' } }}
                             >
                                 {saving ? 'Salvando...' : 'Salvar configurações'}
                             </Button>

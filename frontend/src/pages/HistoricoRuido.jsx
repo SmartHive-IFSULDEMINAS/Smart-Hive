@@ -20,6 +20,7 @@ import {
     TableHead,
     TableRow,
     Typography,
+    useMediaQuery,
     useTheme,
     alpha,
 } from '@mui/material';
@@ -63,6 +64,7 @@ const getPeriodStartDate = (period) => {
 
 export default function HistoricoRuido() {
     const theme = useTheme();
+    const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
     const [loading, setLoading] = useState(true);
     const [loadingReadings, setLoadingReadings] = useState(false);
     const [error, setError] = useState(null);
@@ -193,7 +195,7 @@ export default function HistoricoRuido() {
 
             <Paper sx={{ p: 2, mb: 2, border: '1px solid', borderColor: 'divider' }}>
                 <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
-                    <FormControl size="small" sx={{ minWidth: 240 }}>
+                    <FormControl size="small" sx={{ minWidth: { xs: '100%', sm: 240 }, flex: 1 }}>
                         <InputLabel>Colmeia</InputLabel>
                         <Select
                             value={selectedColmeia}
@@ -208,7 +210,7 @@ export default function HistoricoRuido() {
                         </Select>
                     </FormControl>
 
-                    <FormControl size="small" sx={{ minWidth: 220 }}>
+                    <FormControl size="small" sx={{ minWidth: { xs: '100%', sm: 220 }, flex: { sm: '0 0 auto' } }}>
                         <InputLabel>Período</InputLabel>
                         <Select value={period} label="Período" onChange={(event) => setPeriod(event.target.value)}>
                             {PERIOD_OPTIONS.map((option) => (
@@ -232,19 +234,21 @@ export default function HistoricoRuido() {
                 <Tabs
                     value={viewMode}
                     onChange={(_, value) => setViewMode(value)}
+                    variant={isMobile ? 'scrollable' : 'standard'}
+                    scrollButtons="auto"
                     sx={{ px: 1.5, borderBottom: '1px solid', borderColor: 'divider' }}
                 >
                     <Tab icon={<TimelineIcon />} iconPosition="start" value="grafico" label="Visualização em gráfico" />
                     <Tab icon={<ListIcon />} iconPosition="start" value="lista" label="Visualização em lista" />
                 </Tabs>
 
-                <Box sx={{ p: 2.5 }}>
+                <Box sx={{ p: { xs: 1.5, sm: 2.5 } }}>
                     {loadingReadings ? (
                         <Skeleton variant="rounded" height={320} sx={{ borderRadius: 2 }} />
                     ) : filteredReadings.length === 0 ? (
                         <Alert severity="info">Sem leituras de ruído para o período selecionado.</Alert>
                     ) : viewMode === 'grafico' ? (
-                        <Box sx={{ height: 360 }}>
+                        <Box sx={{ height: { xs: 280, sm: 360 } }}>
                             <ResponsiveContainer width="100%" height="100%">
                                 <LineChart data={chartData}>
                                     <CartesianGrid strokeDasharray="3 3" stroke={alpha(theme.palette.text.secondary, 0.2)} />
@@ -266,8 +270,8 @@ export default function HistoricoRuido() {
                             </ResponsiveContainer>
                         </Box>
                     ) : (
-                        <TableContainer>
-                            <Table size="small">
+                        <TableContainer sx={{ overflowX: 'auto' }}>
+                            <Table size="small" sx={{ minWidth: 520 }}>
                                 <TableHead>
                                     <TableRow>
                                         <TableCell>Data/Hora</TableCell>

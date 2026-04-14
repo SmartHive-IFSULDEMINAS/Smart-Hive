@@ -111,6 +111,7 @@ export default function Layout({ children }) {
     const { mode, toggleTheme } = useThemeMode();
     const { user, logout, isDono, isGestor } = useAuth();
     const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+    const isSmallMobile = useMediaQuery(theme.breakpoints.down('sm'));
     const [mobileOpen, setMobileOpen] = useState(false);
     const [sidebarExpanded, setSidebarExpanded] = useState(true);
     const [userMenuAnchor, setUserMenuAnchor] = useState(null);
@@ -384,7 +385,12 @@ export default function Layout({ children }) {
                     <Typography
                         variant="h6"
                         noWrap
-                        sx={{ fontWeight: 600, flexGrow: 1, fontSize: '1rem' }}
+                        sx={{
+                            fontWeight: 600,
+                            flexGrow: 1,
+                            fontSize: { xs: '0.92rem', sm: '1rem' },
+                            maxWidth: { xs: '40vw', sm: 'unset' },
+                        }}
                     >
                         {pageTitles[location.pathname] || 'Smart-Hive'}
                     </Typography>
@@ -422,9 +428,9 @@ export default function Layout({ children }) {
                         sx={{
                             display: 'flex',
                             alignItems: 'center',
-                            gap: 0.75,
+                            gap: { xs: 0.25, sm: 0.75 },
                             cursor: 'pointer',
-                            px: 1,
+                            px: { xs: 0.5, sm: 1 },
                             py: 0.5,
                             borderRadius: 2,
                             '&:hover': { bgcolor: alpha('#fff', 0.06) },
@@ -466,7 +472,14 @@ export default function Layout({ children }) {
                 onClose={handleNotificationsClose}
                 transformOrigin={{ horizontal: 'right', vertical: 'top' }}
                 anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
-                PaperProps={{ sx: { minWidth: 360, maxWidth: 420, mt: 0.5 } }}
+                PaperProps={{
+                    sx: {
+                        width: isSmallMobile ? 'calc(100vw - 24px)' : 'auto',
+                        minWidth: { xs: 'unset', sm: 360 },
+                        maxWidth: { xs: 'calc(100vw - 24px)', sm: 420 },
+                        mt: 0.5,
+                    },
+                }}
             >
                 <Box sx={{ px: 2, py: 1.5, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                     <Typography variant="subtitle2" fontWeight={700}>
@@ -508,7 +521,16 @@ export default function Layout({ children }) {
                                     <Typography variant="body2" fontWeight={item.lida ? 500 : 700}>
                                         {item.titulo}
                                     </Typography>
-                                    <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.25 }}>
+                                    <Typography
+                                        variant="caption"
+                                        color="text.secondary"
+                                        sx={{
+                                            display: 'block',
+                                            mt: 0.25,
+                                            whiteSpace: 'normal',
+                                            wordBreak: 'break-word',
+                                        }}
+                                    >
                                         {item.mensagem}
                                     </Typography>
                                     <Typography variant="caption" color="text.disabled" sx={{ display: 'block', mt: 0.5 }}>
@@ -563,7 +585,8 @@ export default function Layout({ children }) {
                         display: { xs: 'block', md: 'none' },
                         '& .MuiDrawer-paper': {
                             boxSizing: 'border-box',
-                            width: DRAWER_EXPANDED,
+                            width: { xs: '85vw', sm: DRAWER_EXPANDED },
+                            maxWidth: 300,
                         },
                     }}
                 >
@@ -593,7 +616,7 @@ export default function Layout({ children }) {
                 component="main"
                 sx={{
                     flexGrow: 1,
-                    p: 3,
+                    p: { xs: 1.5, sm: 2, md: 3 },
                     ml: { md: 0 },
                     width: { md: `calc(100% - ${drawerWidth}px)` },
                     transition: 'width 0.2s ease',
