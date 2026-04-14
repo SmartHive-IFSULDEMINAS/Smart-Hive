@@ -52,6 +52,8 @@ export const updateProfile = (data) =>
 
 // Dashboard
 export const getDashboard = () => api.get('/dashboard/');
+export const getDashboardComparativo = (params) => api.get('/dashboard/comparativo/', { params });
+export const getDashboardPrevisao = (params) => api.get('/dashboard/previsao/', { params });
 
 // Espécies de Abelhas
 export const getEspecies = (params) => api.get('/especies/', { params });

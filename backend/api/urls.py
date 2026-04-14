@@ -17,6 +17,8 @@ from .views import (
     DashboardFinanceiroView,
     DashboardSaudeView,
     DashboardProdutividadeView,
+    DashboardComparativoView,
+    DashboardPrevisaoView,
     ClassificacaoPolenViewSet,
 )
 from .auth_views import register, login, me, update_profile, UsuarioViewSet
@@ -58,6 +60,8 @@ urlpatterns = [
     path('dashboard/financeiro/', DashboardFinanceiroView.as_view(), name='dashboard_financeiro'),
     path('dashboard/saude/', DashboardSaudeView.as_view(), name='dashboard_saude'),
     path('dashboard/produtividade/', DashboardProdutividadeView.as_view(), name='dashboard_produtividade'),
+    path('dashboard/comparativo/', DashboardComparativoView.as_view(), name='dashboard_comparativo'),
+    path('dashboard/previsao/', DashboardPrevisaoView.as_view(), name='dashboard_previsao'),
     # IoT endpoints - Colmeias
     path('iot/colmeia/dados/', receber_dados_iot, name='receber_dados_iot'),
     path('iot/colmeia/historico/<str:colmeia_identificador>/', historico_sensores, name='historico_sensores'),

@@ -447,6 +447,24 @@ class DashboardView(APIView):
         ).select_related('apiario', 'especie').order_by('-data_ultima_leitura_sensor')[:10]
         
         stats['colmeias_iot'] = ColmeiaListSerializer(colmeias_iot, many=True).data
+
+        colmeias_iot_map = {item['id']: item for item in stats['colmeias_iot']}
+        for colmeia in colmeias_iot:
+            pontos = list(
+                LeituraSensor.objects.filter(colmeia=colmeia)
+                .order_by('-timestamp')
+                .values('timestamp', 'temperatura', 'nivel_ruido', 'luminosidade', 'umidade', 'pressao', 'peso')[:12]
+            )
+            pontos.reverse()
+
+            colmeias_iot_map[colmeia.id]['sparklines'] = {
+                'temperatura': [float(p['temperatura']) for p in pontos if p['temperatura'] is not None],
+                'nivel_ruido': [float(p['nivel_ruido']) for p in pontos if p['nivel_ruido'] is not None],
+                'luminosidade': [float(p['luminosidade']) for p in pontos if p['luminosidade'] is not None],
+                'umidade': [float(p['umidade']) for p in pontos if p['umidade'] is not None],
+                'pressao': [float(p['pressao']) for p in pontos if p['pressao'] is not None],
+                'peso': [float(p['peso']) for p in pontos if p['peso'] is not None],
+            }
         
         # Estatísticas de sensores
         stats['total_colmeias_iot'] = Colmeia.objects.filter(sensor_iot_ativo=True).count()
@@ -456,6 +474,128 @@ class DashboardView(APIView):
         ).count()
         
         return Response(stats)
+
+
+class DashboardComparativoView(APIView):
+    """Comparativo entre apiários por período"""
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        period_days = int(request.query_params.get('periodo_dias', 30))
+        hoje = timezone.now().date()
+        data_inicio = hoje - timedelta(days=period_days)
+
+        apiarios = Apiario.objects.all().order_by('nome')
+        ranking = []
+
+        for apiario in apiarios:
+            producao_periodo = ProducaoMel.objects.filter(
+                colmeia__apiario=apiario,
+                data_colheita__gte=data_inicio,
+                data_colheita__lte=hoje,
+            ).aggregate(total=Sum('quantidade_kg'))['total'] or 0
+
+            perdas = Colmeia.objects.filter(
+                apiario=apiario,
+                status__in=['inativa', 'morta'],
+            ).count()
+
+            tratamentos_periodo = Tratamento.objects.filter(
+                colmeia__apiario=apiario,
+                data_inicio__gte=data_inicio,
+                data_inicio__lte=hoje,
+            ).count()
+
+            custos_periodo = Custo.objects.filter(
+                Q(apiario=apiario) | Q(colmeia__apiario=apiario),
+                data__gte=data_inicio,
+                data__lte=hoje,
+            ).aggregate(total=Sum('valor'))['total'] or 0
+
+            colmeias_ativas = Colmeia.objects.filter(apiario=apiario, status='ativa').count()
+            produtividade_por_colmeia = float(producao_periodo / colmeias_ativas) if colmeias_ativas > 0 else 0
+
+            ranking.append({
+                'apiario_id': apiario.id,
+                'apiario_nome': apiario.nome,
+                'produtividade_kg': float(producao_periodo),
+                'perdas': perdas,
+                'tratamentos': tratamentos_periodo,
+                'custos': float(custos_periodo),
+                'colmeias_ativas': colmeias_ativas,
+                'produtividade_por_colmeia_kg': produtividade_por_colmeia,
+            })
+
+        ranking.sort(key=lambda item: item['produtividade_kg'], reverse=True)
+
+        return Response({
+            'periodo_dias': period_days,
+            'data_inicio': str(data_inicio),
+            'data_fim': str(hoje),
+            'ranking': ranking,
+        })
+
+
+class DashboardPrevisaoView(APIView):
+    """Previsão de produção por apiário e colmeia"""
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        lookback_days = int(request.query_params.get('base_dias', 90))
+        hoje = timezone.now().date()
+        data_inicio = hoje - timedelta(days=lookback_days)
+        horizontes = [7, 30, 90]
+
+        apiarios_data = []
+        colmeias_data = []
+
+        for apiario in Apiario.objects.all().order_by('nome'):
+            total_periodo = ProducaoMel.objects.filter(
+                colmeia__apiario=apiario,
+                data_colheita__gte=data_inicio,
+                data_colheita__lte=hoje,
+            ).aggregate(total=Sum('quantidade_kg'))['total'] or 0
+
+            media_diaria = float(total_periodo) / max(lookback_days, 1)
+            apiarios_data.append({
+                'apiario_id': apiario.id,
+                'apiario_nome': apiario.nome,
+                'media_diaria_kg': round(media_diaria, 3),
+                'projecoes': {str(dias): round(media_diaria * dias, 2) for dias in horizontes},
+            })
+
+        for colmeia in Colmeia.objects.select_related('apiario').all().order_by('identificador'):
+            total_periodo = ProducaoMel.objects.filter(
+                colmeia=colmeia,
+                data_colheita__gte=data_inicio,
+                data_colheita__lte=hoje,
+            ).aggregate(total=Sum('quantidade_kg'))['total'] or 0
+
+            media_diaria = float(total_periodo) / max(lookback_days, 1)
+            colmeias_data.append({
+                'colmeia_id': colmeia.id,
+                'colmeia_identificador': colmeia.identificador,
+                'apiario_nome': colmeia.apiario.nome,
+                'media_diaria_kg': round(media_diaria, 3),
+                'projecoes': {str(dias): round(media_diaria * dias, 2) for dias in horizontes},
+            })
+
+        apiarios_data.sort(key=lambda item: item['projecoes']['30'], reverse=True)
+        colmeias_data.sort(key=lambda item: item['projecoes']['30'], reverse=True)
+
+        resumo = {
+            str(dias): round(sum(item['projecoes'][str(dias)] for item in apiarios_data), 2)
+            for dias in horizontes
+        }
+
+        return Response({
+            'base_dias': lookback_days,
+            'data_inicio': str(data_inicio),
+            'data_fim': str(hoje),
+            'resumo_apiarios': resumo,
+            'apiarios': apiarios_data,
+            'colmeias': colmeias_data[:20],
+        })
 
 
 # New ViewSets
