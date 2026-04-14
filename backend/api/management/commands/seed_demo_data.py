@@ -8,7 +8,7 @@ from django.core.management.base import BaseCommand
 from django.contrib.auth import get_user_model
 from api.models import (
     EspecieAbelha, Apiario, Colmeia, Inspecao, ProducaoMel, Tratamento,
-    Custo, Receita, Fornecedor, Equipamento, Notificacao
+    Custo, Receita, Fornecedor, Equipamento, Notificacao, LeituraSensor
 )
 
 User = get_user_model()
@@ -22,6 +22,7 @@ class Command(BaseCommand):
         
         # Limpar dados existentes (opcional)
         self.stdout.write('Limpando dados existentes...')
+        LeituraSensor.objects.all().delete()
         Notificacao.objects.all().delete()
         Equipamento.objects.all().delete()
         Receita.objects.all().delete()
@@ -33,6 +34,7 @@ class Command(BaseCommand):
         Colmeia.objects.all().delete()
         Apiario.objects.all().delete()
         EspecieAbelha.objects.all().delete()
+        User.objects.filter(username__in=['dono', 'gestor', 'apicultor']).delete()
         
         # Criar usuários de exemplo
         self.stdout.write('Criando usuários...')
@@ -234,6 +236,119 @@ class Command(BaseCommand):
                 colmeia_num += 1
         
         self.stdout.write(f'  [OK] {len(colmeias)} colmeias criadas')
+
+        # Criar Leituras de Sensores IoT
+        self.stdout.write('Criando leituras de sensores IoT...')
+        leituras_criadas = 0
+        agora = datetime.now()
+
+        for colmeia in colmeias:
+            sensor_ativo = colmeia.status == 'ativa' and random.random() > 0.25
+
+            if not sensor_ativo:
+                colmeia.sensor_iot_ativo = False
+                colmeia.temperatura_atual = None
+                colmeia.nivel_ruido = None
+                colmeia.luminosidade = None
+                colmeia.umidade = None
+                colmeia.pressao = None
+                colmeia.peso = None
+                colmeia.data_ultima_leitura_sensor = None
+                colmeia.save(update_fields=[
+                    'sensor_iot_ativo',
+                    'temperatura_atual',
+                    'nivel_ruido',
+                    'luminosidade',
+                    'umidade',
+                    'pressao',
+                    'peso',
+                    'data_ultima_leitura_sensor',
+                ])
+                continue
+
+            quantidade_leituras = random.randint(24, 120)
+            dispositivo_id = f"ESP32-{colmeia.identificador}"
+            timestamp_base = agora - timedelta(days=random.randint(3, 30))
+            ultima_leitura = None
+            ultimo_payload = None
+
+            for indice in range(quantidade_leituras):
+                timestamp_leitura = timestamp_base + timedelta(minutes=30 * indice)
+
+                temperatura = Decimal(str(round(random.uniform(18.0, 38.0), 2)))
+                ruido = Decimal(str(round(random.uniform(38.0, 92.0), 2)))
+                luminosidade = Decimal(str(round(random.uniform(15.0, 2800.0), 2)))
+                umidade = Decimal(str(round(random.uniform(35.0, 92.0), 2)))
+                pressao = Decimal(str(round(random.uniform(980.0, 1035.0), 2)))
+                peso = Decimal(str(round(random.uniform(18.0, 55.0), 2)))
+                bateria_nivel = random.randint(25, 100)
+                sinal_rssi = random.randint(-92, -45)
+
+                leitura = LeituraSensor.objects.create(
+                    colmeia=colmeia,
+                    temperatura=temperatura,
+                    nivel_ruido=ruido,
+                    luminosidade=luminosidade,
+                    umidade=umidade,
+                    pressao=pressao,
+                    peso=peso,
+                    dispositivo_id=dispositivo_id,
+                    bateria_nivel=bateria_nivel,
+                    sinal_rssi=sinal_rssi,
+                )
+                LeituraSensor.objects.filter(id=leitura.id).update(timestamp=timestamp_leitura)
+                leituras_criadas += 1
+
+                ultima_leitura = timestamp_leitura
+                ultimo_payload = {
+                    'temperatura': temperatura,
+                    'nivel_ruido': ruido,
+                    'luminosidade': luminosidade,
+                    'umidade': umidade,
+                    'pressao': pressao,
+                    'peso': peso,
+                }
+
+            colmeia.sensor_iot_ativo = True
+            colmeia.temperatura_atual = ultimo_payload['temperatura']
+            colmeia.nivel_ruido = ultimo_payload['nivel_ruido']
+            colmeia.luminosidade = ultimo_payload['luminosidade']
+            colmeia.umidade = ultimo_payload['umidade']
+            colmeia.pressao = ultimo_payload['pressao']
+            colmeia.peso = ultimo_payload['peso']
+            colmeia.data_ultima_leitura_sensor = ultima_leitura
+            colmeia.save(update_fields=[
+                'sensor_iot_ativo',
+                'temperatura_atual',
+                'nivel_ruido',
+                'luminosidade',
+                'umidade',
+                'pressao',
+                'peso',
+                'data_ultima_leitura_sensor',
+            ])
+
+        for apiario in apiarios:
+            colmeias_com_sensor = [
+                c for c in colmeias
+                if c.apiario_id == apiario.id and c.sensor_iot_ativo and c.temperatura_atual is not None
+            ]
+
+            if not colmeias_com_sensor:
+                apiario.sensor_iot_ativo = False
+                apiario.temperatura_atual = None
+                apiario.data_ultima_leitura_sensor = None
+            else:
+                temperatura_media = sum(c.temperatura_atual for c in colmeias_com_sensor) / Decimal(len(colmeias_com_sensor))
+                ultima_leitura_apiario = max(c.data_ultima_leitura_sensor for c in colmeias_com_sensor if c.data_ultima_leitura_sensor)
+
+                apiario.sensor_iot_ativo = True
+                apiario.temperatura_atual = Decimal(str(round(float(temperatura_media), 2)))
+                apiario.data_ultima_leitura_sensor = ultima_leitura_apiario
+
+            apiario.save(update_fields=['sensor_iot_ativo', 'temperatura_atual', 'data_ultima_leitura_sensor'])
+
+        self.stdout.write(f'  [OK] {leituras_criadas} leituras IoT criadas')
 
         # Criar Inspecoes
         self.stdout.write('Criando inspecoes...')
@@ -487,6 +602,7 @@ class Command(BaseCommand):
         self.stdout.write(f'  Colmeias: {len(colmeias)}')
         self.stdout.write(f'  Inspecoes: {inspecoes_criadas}')
         self.stdout.write(f'  Producoes: {producoes_criadas}')
+        self.stdout.write(f'  Leituras IoT: {leituras_criadas}')
         self.stdout.write(f'  Tratamentos: {tratamentos_criados}')
         self.stdout.write(f'  Fornecedores: {len(fornecedores)}')
         self.stdout.write(f'  Equipamentos: {len(equipamentos)}')
