@@ -28,6 +28,7 @@ import {
     Place as PlaceIcon,
     Hive as HiveIcon,
     Search as SearchIcon,
+    GraphicEq as NoiseIcon,
     LocalFlorist as HoneyIcon,
     Healing as TreatmentIcon,
     BugReport as BugIcon,
@@ -61,6 +62,7 @@ const menuSections = [
         label: 'OPERAÇÕES',
         items: [
             { text: 'Inspeções',   icon: <SearchIcon />,    path: '/inspecoes' },
+            { text: 'Ruído',       icon: <NoiseIcon />,     path: '/historico-ruido' },
             { text: 'Produção',    icon: <HoneyIcon />,     path: '/producao' },
             { text: 'Tratamentos', icon: <TreatmentIcon />, path: '/tratamentos' },
         ],
@@ -85,6 +87,7 @@ const pageTitles = {
     '/apiarios':   'Apiários',
     '/colmeias':   'Colmeias',
     '/inspecoes':  'Inspeções',
+    '/historico-ruido': 'Histórico de Ruído',
     '/producao':   'Produção',
     '/tratamentos':'Tratamentos',
     '/especies':   'Espécies',
