@@ -1,6 +1,8 @@
 from django.contrib.auth import get_user_model
+from datetime import date
 from rest_framework import status
 from rest_framework.test import APITestCase
+from api.models import Apiario, Colmeia, Notificacao, AlertaRuidoConfig
 
 
 User = get_user_model()
@@ -46,3 +48,84 @@ class AuthLoginTests(APITestCase):
 		)
 
 		self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+
+class AlertaRuidoTests(APITestCase):
+	def setUp(self):
+		self.usuario_alerta = User.objects.create_user(
+			username='gestor1',
+			email='gestor1@smarthive.local',
+			password='SenhaForte123!',
+			role='gestor',
+		)
+		self.apiario = Apiario.objects.create(
+			nome='Apiário Teste',
+			localizacao='Zona Rural',
+			data_criacao=date.today(),
+		)
+		self.colmeia = Colmeia.objects.create(
+			apiario=self.apiario,
+			identificador='CLM-TESTE-001',
+			data_instalacao=date.today(),
+		)
+		AlertaRuidoConfig.objects.update_or_create(
+			usuario=self.usuario_alerta,
+			defaults={
+				'ativo': True,
+				'janela_media': 10,
+				'percentual_desvio': 20,
+				'cooldown_minutos': 30,
+			},
+		)
+
+	def _enviar_leitura_ruido(self, valor_ruido):
+		return self.client.post(
+			'/api/iot/colmeia/dados/',
+			{
+				'colmeia_identificador': self.colmeia.identificador,
+				'nivel_ruido': valor_ruido,
+			},
+			format='json',
+		)
+
+	def test_gera_alerta_quando_ruido_ultrapassa_media_movel(self):
+		for _ in range(10):
+			response = self._enviar_leitura_ruido(40)
+			self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+		response = self._enviar_leitura_ruido(60)
+		self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+		notificacoes = Notificacao.objects.filter(
+			usuario=self.usuario_alerta,
+			colmeia=self.colmeia,
+			tipo='alerta_ruido',
+		)
+		self.assertEqual(notificacoes.count(), 1)
+		self.assertIn('Ruído atual', notificacoes.first().mensagem)
+
+	def test_cooldown_evitar_alertas_repetidos(self):
+		for _ in range(10):
+			self._enviar_leitura_ruido(40)
+
+		self._enviar_leitura_ruido(60)
+		self._enviar_leitura_ruido(62)
+
+		notificacoes = Notificacao.objects.filter(
+			usuario=self.usuario_alerta,
+			colmeia=self.colmeia,
+			tipo='alerta_ruido',
+		)
+		self.assertEqual(notificacoes.count(), 1)
+
+	def test_usuario_pode_atualizar_janela_configuracao(self):
+		self.client.force_authenticate(user=self.usuario_alerta)
+
+		response = self.client.patch(
+			'/api/notificacoes/alerta_ruido_config/',
+			{'janela_media': 20},
+			format='json',
+		)
+
+		self.assertEqual(response.status_code, status.HTTP_200_OK)
+		self.assertEqual(response.data['janela_media'], 20)

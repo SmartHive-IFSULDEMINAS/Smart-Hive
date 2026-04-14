@@ -836,6 +836,7 @@ class Notificacao(models.Model):
         ('tratamento', 'Tratamento Necessário'),
         ('producao', 'Colheita Disponível'),
         ('alerta_saude', 'Alerta de Saúde'),
+        ('alerta_ruido', 'Alerta de Ruído'),
         ('manutencao', 'Manutenção Necessária'),
         ('outro', 'Outro'),
     ]
@@ -893,6 +894,49 @@ class Notificacao(models.Model):
     
     def __str__(self):
         return f"{self.titulo} - {self.usuario.username}"
+
+
+class AlertaRuidoConfig(models.Model):
+    """Configuração de alerta de ruído por usuário"""
+
+    JANELA_CHOICES = [
+        (10, '10 leituras anteriores'),
+        (20, '20 leituras anteriores'),
+    ]
+
+    usuario = models.OneToOneField(
+        Usuario,
+        on_delete=models.CASCADE,
+        related_name='alerta_ruido_config',
+        verbose_name='Usuário'
+    )
+    ativo = models.BooleanField(default=True, verbose_name='Ativo')
+    janela_media = models.IntegerField(
+        choices=JANELA_CHOICES,
+        default=10,
+        verbose_name='Janela de Média'
+    )
+    percentual_desvio = models.DecimalField(
+        max_digits=6,
+        decimal_places=2,
+        default=25.00,
+        validators=[MinValueValidator(1), MaxValueValidator(500)],
+        verbose_name='Percentual de Desvio para Alerta (%)'
+    )
+    cooldown_minutos = models.IntegerField(
+        default=30,
+        validators=[MinValueValidator(1), MaxValueValidator(1440)],
+        verbose_name='Cooldown entre alertas (minutos)'
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = 'Configuração de Alerta de Ruído'
+        verbose_name_plural = 'Configurações de Alerta de Ruído'
+
+    def __str__(self):
+        return f"{self.usuario.username} - janela {self.janela_media}" 
 
 
 class LeituraSensor(models.Model):

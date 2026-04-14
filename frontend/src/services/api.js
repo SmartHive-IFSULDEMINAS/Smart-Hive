@@ -104,6 +104,14 @@ export const updateTratamento = (id, data) => api.put(`/tratamentos/${id}/`, dat
 export const deleteTratamento = (id) => api.delete(`/tratamentos/${id}/`);
 export const finalizarTratamento = (id, data) => api.post(`/tratamentos/${id}/finalizar/`, data);
 
+// Notificações
+export const getNotificacoes = (params) => api.get('/notificacoes/', { params });
+export const getNotificacoesNaoLidas = () => api.get('/notificacoes/nao_lidas/');
+export const marcarNotificacaoLida = (id) => api.post(`/notificacoes/${id}/marcar_lida/`);
+export const marcarTodasNotificacoesLidas = () => api.post('/notificacoes/marcar_todas_lidas/');
+export const getAlertaRuidoConfig = () => api.get('/notificacoes/alerta_ruido_config/');
+export const updateAlertaRuidoConfig = (data) => api.patch('/notificacoes/alerta_ruido_config/', data);
+
 // IA — Classificação Espectral de Pólen
 export const classificarPolen = (data) => api.post('/ia/polen/classificar/', data);
 export const getIAStatus = () => api.get('/ia/status/');

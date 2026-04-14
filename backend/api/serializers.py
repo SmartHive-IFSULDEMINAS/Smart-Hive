@@ -3,7 +3,7 @@ from django.contrib.auth import get_user_model
 from .models import (
     EspecieAbelha, Apiario, Colmeia, Inspecao, ProducaoMel, Tratamento,
     Custo, Receita, Fornecedor, Equipamento, Notificacao, LeituraSensor,
-    ClassificacaoPolen,
+    ClassificacaoPolen, AlertaRuidoConfig,
 )
 
 User = get_user_model()
@@ -333,6 +333,15 @@ class NotificacaoSerializer(serializers.ModelSerializer):
             'id', 'titulo', 'mensagem', 'tipo', 'tipo_display',
             'prioridade', 'prioridade_display', 'usuario', 'lida', 'data_leitura',
             'colmeia', 'colmeia_identificador', 'apiario', 'apiario_nome', 'created_at'
+        ]
+
+
+class AlertaRuidoConfigSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = AlertaRuidoConfig
+        fields = [
+            'ativo', 'janela_media', 'percentual_desvio', 'cooldown_minutos',
+            'updated_at'
         ]
 
 

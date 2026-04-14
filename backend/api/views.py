@@ -11,7 +11,7 @@ from django.contrib.auth import get_user_model
 from .models import (
     EspecieAbelha, Apiario, Colmeia, Inspecao, ProducaoMel, Tratamento,
     Custo, Receita, Fornecedor, Equipamento, Notificacao, LeituraSensor,
-    ClassificacaoPolen,
+    ClassificacaoPolen, AlertaRuidoConfig,
 )
 from .serializers import (
     EspecieAbelhaSerializer,
@@ -26,6 +26,7 @@ from .serializers import (
     FornecedorSerializer,
     EquipamentoSerializer,
     NotificacaoSerializer,
+    AlertaRuidoConfigSerializer,
     LeituraSensorListSerializer,
     ClassificacaoPolenSerializer,
 )
@@ -601,6 +602,30 @@ class NotificacaoViewSet(viewsets.ModelViewSet):
         """Retorna notificações não lidas"""
         notificacoes = self.get_queryset().filter(lida=False)
         serializer = self.get_serializer(notificacoes, many=True)
+        return Response(serializer.data)
+
+    @action(detail=False, methods=['post'])
+    def marcar_todas_lidas(self, request):
+        """Marca todas notificações do usuário como lidas"""
+        agora = timezone.now()
+        atualizadas = self.get_queryset().filter(lida=False).update(
+            lida=True,
+            data_leitura=agora,
+        )
+        return Response({'status': 'ok', 'total_marcadas': atualizadas})
+
+    @action(detail=False, methods=['get', 'patch'])
+    def alerta_ruido_config(self, request):
+        """Obtém/atualiza configuração de alerta de ruído do usuário"""
+        config, _ = AlertaRuidoConfig.objects.get_or_create(usuario=request.user)
+
+        if request.method == 'PATCH':
+            serializer = AlertaRuidoConfigSerializer(config, data=request.data, partial=True)
+            serializer.is_valid(raise_exception=True)
+            serializer.save()
+            return Response(serializer.data)
+
+        serializer = AlertaRuidoConfigSerializer(config)
         return Response(serializer.data)
 
 

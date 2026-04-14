@@ -7,9 +7,89 @@ from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from django.utils import timezone
 from django.db import transaction
+from django.db.models import Q
+from datetime import timedelta
+from django.contrib.auth import get_user_model
 
-from .models import Colmeia, LeituraSensor
+from .models import Colmeia, LeituraSensor, Notificacao, AlertaRuidoConfig
 from .serializers import LeituraSensorSerializer
+
+User = get_user_model()
+
+
+def _gerar_alertas_ruido(colmeia, leitura):
+    """Gera notificações quando ruído atual foge da média das leituras anteriores"""
+    if leitura.nivel_ruido is None:
+        return
+
+    usuarios_alerta = User.objects.filter(
+        is_active=True,
+        ativo=True,
+    ).filter(
+        Q(role__in=['dono', 'gestor']) | Q(is_superuser=True)
+    ).distinct()
+
+    if not usuarios_alerta.exists():
+        return
+
+    ruido_atual = float(leitura.nivel_ruido)
+
+    for usuario in usuarios_alerta:
+        config, _ = AlertaRuidoConfig.objects.get_or_create(usuario=usuario)
+
+        if not config.ativo:
+            continue
+
+        leituras_anteriores = list(
+            LeituraSensor.objects.filter(
+                colmeia=colmeia,
+                nivel_ruido__isnull=False,
+            ).exclude(id=leitura.id).order_by('-timestamp')[:config.janela_media]
+        )
+
+        if len(leituras_anteriores) < config.janela_media:
+            continue
+
+        media_ruido = sum(float(item.nivel_ruido) for item in leituras_anteriores) / config.janela_media
+        if media_ruido <= 0:
+            continue
+
+        limite_alerta = media_ruido * (1 + float(config.percentual_desvio) / 100)
+        if ruido_atual <= limite_alerta:
+            continue
+
+        inicio_cooldown = timezone.now() - timedelta(minutes=config.cooldown_minutos)
+        alerta_recente = Notificacao.objects.filter(
+            usuario=usuario,
+            colmeia=colmeia,
+            tipo='alerta_ruido',
+            created_at__gte=inicio_cooldown,
+        ).exists()
+
+        if alerta_recente:
+            continue
+
+        desvio_percentual = ((ruido_atual - media_ruido) / media_ruido) * 100
+        if desvio_percentual >= 60:
+            prioridade = 'critica'
+        elif desvio_percentual >= 35:
+            prioridade = 'alta'
+        else:
+            prioridade = 'media'
+
+        Notificacao.objects.create(
+            titulo=f'Ruído anormal na colmeia {colmeia.identificador}',
+            mensagem=(
+                f'Ruído atual: {ruido_atual:.1f} dB. '
+                f'Média das últimas {config.janela_media} leituras: {media_ruido:.1f} dB '
+                f'({desvio_percentual:.1f}% acima).'
+            ),
+            tipo='alerta_ruido',
+            prioridade=prioridade,
+            usuario=usuario,
+            colmeia=colmeia,
+            apiario=colmeia.apiario,
+        )
 
 
 @api_view(['POST'])
@@ -110,6 +190,8 @@ def receber_dados_iot(request):
             bateria_nivel=bateria_nivel,
             sinal_rssi=sinal_rssi,
         )
+
+        _gerar_alertas_ruido(colmeia, leitura)
     
     return Response(
         {

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import {
     Box,
@@ -15,6 +15,8 @@ import {
     ListItemText,
     Avatar,
     Badge,
+    Button,
+    CircularProgress,
     Menu,
     MenuItem,
     useTheme,
@@ -22,6 +24,13 @@ import {
     alpha,
     Tooltip,
 } from '@mui/material';
+import {
+    getNotificacoes,
+    getNotificacoesNaoLidas,
+    marcarNotificacaoLida,
+    marcarTodasNotificacoesLidas,
+} from '../services/api';
+
 import {
     Menu as MenuIcon,
     Dashboard as DashboardIcon,
@@ -33,6 +42,7 @@ import {
     Healing as TreatmentIcon,
     BugReport as BugIcon,
     Biotech as BiotechIcon,
+    NotificationsActive as AlertsIcon,
     Brightness4 as DarkModeIcon,
     Brightness7 as LightModeIcon,
     ChevronLeft as ChevronLeftIcon,
@@ -63,6 +73,7 @@ const menuSections = [
         items: [
             { text: 'Inspeções',   icon: <SearchIcon />,    path: '/inspecoes' },
             { text: 'Ruído',       icon: <NoiseIcon />,     path: '/historico-ruido' },
+            { text: 'Alertas',     icon: <AlertsIcon />,    path: '/alertas' },
             { text: 'Produção',    icon: <HoneyIcon />,     path: '/producao' },
             { text: 'Tratamentos', icon: <TreatmentIcon />, path: '/tratamentos' },
         ],
@@ -88,6 +99,7 @@ const pageTitles = {
     '/colmeias':   'Colmeias',
     '/inspecoes':  'Inspeções',
     '/historico-ruido': 'Histórico de Ruído',
+    '/alertas':    'Alertas',
     '/producao':   'Produção',
     '/tratamentos':'Tratamentos',
     '/especies':   'Espécies',
@@ -102,6 +114,10 @@ export default function Layout({ children }) {
     const [mobileOpen, setMobileOpen] = useState(false);
     const [sidebarExpanded, setSidebarExpanded] = useState(true);
     const [userMenuAnchor, setUserMenuAnchor] = useState(null);
+    const [notificationsAnchor, setNotificationsAnchor] = useState(null);
+    const [notifications, setNotifications] = useState([]);
+    const [unreadCount, setUnreadCount] = useState(0);
+    const [notificationsLoading, setNotificationsLoading] = useState(false);
     const location = useLocation();
     const navigate = useNavigate();
 
@@ -121,6 +137,55 @@ export default function Layout({ children }) {
         handleUserMenuClose();
         logout();
     };
+
+    const carregarNotificacoes = async () => {
+        try {
+            setNotificationsLoading(true);
+            const [listaRes, naoLidasRes] = await Promise.all([
+                getNotificacoes(),
+                getNotificacoesNaoLidas(),
+            ]);
+            const itens = listaRes.data?.results || listaRes.data || [];
+            const naoLidas = naoLidasRes.data || [];
+            setNotifications(itens);
+            setUnreadCount(naoLidas.length);
+        } catch (error) {
+            console.error('Erro ao carregar notificações:', error);
+        } finally {
+            setNotificationsLoading(false);
+        }
+    };
+
+    const handleNotificationsOpen = async (event) => {
+        setNotificationsAnchor(event.currentTarget);
+        await carregarNotificacoes();
+    };
+
+    const handleNotificationsClose = () => setNotificationsAnchor(null);
+
+    const handleMarcarComoLida = async (id) => {
+        try {
+            await marcarNotificacaoLida(id);
+            await carregarNotificacoes();
+        } catch (error) {
+            console.error('Erro ao marcar notificação como lida:', error);
+        }
+    };
+
+    const handleMarcarTodasComoLidas = async () => {
+        try {
+            await marcarTodasNotificacoesLidas();
+            await carregarNotificacoes();
+        } catch (error) {
+            console.error('Erro ao marcar todas as notificações como lidas:', error);
+        }
+    };
+
+    useEffect(() => {
+        carregarNotificacoes();
+        const intervalId = setInterval(carregarNotificacoes, 60000);
+        return () => clearInterval(intervalId);
+    }, []);
 
     // Iniciais do usuário para o Avatar
     const userInitials = user?.username
@@ -338,8 +403,12 @@ export default function Layout({ children }) {
 
                     {/* Notifications */}
                     <Tooltip title="Notificações">
-                        <IconButton size="small" sx={{ color: 'text.secondary' }}>
-                            <Badge badgeContent={0} color="error">
+                        <IconButton
+                            size="small"
+                            sx={{ color: 'text.secondary' }}
+                            onClick={handleNotificationsOpen}
+                        >
+                            <Badge badgeContent={unreadCount} color="error">
                                 <BellIcon fontSize="small" />
                             </Badge>
                         </IconButton>
@@ -391,6 +460,67 @@ export default function Layout({ children }) {
             </AppBar>
 
             {/* User Menu */}
+            <Menu
+                anchorEl={notificationsAnchor}
+                open={Boolean(notificationsAnchor)}
+                onClose={handleNotificationsClose}
+                transformOrigin={{ horizontal: 'right', vertical: 'top' }}
+                anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
+                PaperProps={{ sx: { minWidth: 360, maxWidth: 420, mt: 0.5 } }}
+            >
+                <Box sx={{ px: 2, py: 1.5, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <Typography variant="subtitle2" fontWeight={700}>
+                        Notificações ({unreadCount} não lidas)
+                    </Typography>
+                    <Button size="small" onClick={handleMarcarTodasComoLidas} disabled={unreadCount === 0}>
+                        Marcar todas
+                    </Button>
+                </Box>
+
+                <Divider />
+
+                {notificationsLoading ? (
+                    <Box sx={{ px: 2, py: 2, display: 'flex', justifyContent: 'center' }}>
+                        <CircularProgress size={20} />
+                    </Box>
+                ) : notifications.length === 0 ? (
+                    <Box sx={{ px: 2, py: 2 }}>
+                        <Typography variant="body2" color="text.secondary">
+                            Nenhuma notificação no momento.
+                        </Typography>
+                    </Box>
+                ) : (
+                    <Box sx={{ maxHeight: 360, overflowY: 'auto', py: 0.5 }}>
+                        {notifications.slice(0, 12).map((item) => (
+                            <MenuItem
+                                key={item.id}
+                                onClick={() => !item.lida && handleMarcarComoLida(item.id)}
+                                sx={{
+                                    alignItems: 'flex-start',
+                                    whiteSpace: 'normal',
+                                    borderLeft: '3px solid',
+                                    borderLeftColor: item.lida ? 'transparent' : 'primary.main',
+                                    bgcolor: item.lida ? 'transparent' : alpha(theme.palette.primary.main, 0.08),
+                                    mb: 0.25,
+                                }}
+                            >
+                                <Box sx={{ width: '100%' }}>
+                                    <Typography variant="body2" fontWeight={item.lida ? 500 : 700}>
+                                        {item.titulo}
+                                    </Typography>
+                                    <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.25 }}>
+                                        {item.mensagem}
+                                    </Typography>
+                                    <Typography variant="caption" color="text.disabled" sx={{ display: 'block', mt: 0.5 }}>
+                                        {new Date(item.created_at).toLocaleString('pt-BR')}
+                                    </Typography>
+                                </Box>
+                            </MenuItem>
+                        ))}
+                    </Box>
+                )}
+            </Menu>
+
             <Menu
                 anchorEl={userMenuAnchor}
                 open={Boolean(userMenuAnchor)}
