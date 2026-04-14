@@ -25,6 +25,7 @@ import Especies from './pages/Especies';
 import IAPolen from './pages/IAPolen';
 import HistoricoRuido from './pages/HistoricoRuido';
 import Alertas from './pages/Alertas';
+import Analises from './pages/Analises';
 import { useMemo } from 'react';
 
 function AppContent() {
@@ -65,6 +66,7 @@ function AppContent() {
                             <Route path="/ia-polen" element={<IAPolen />} />
                             <Route path="/historico-ruido" element={<HistoricoRuido />} />
                             <Route path="/alertas" element={<Alertas />} />
+                            <Route path="/analises" element={<Analises />} />
                             <Route path="*" element={<Navigate to="/" replace />} />
                           </Routes>
                         </Layout>

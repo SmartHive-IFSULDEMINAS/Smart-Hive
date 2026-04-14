@@ -429,8 +429,6 @@ export default function Dashboard() {
                         scrollButtons="auto"
                     >
                         <Tab value="geral" label="Visão Geral" />
-                        <Tab value="comparativo" label="Comparativo entre Apiários" />
-                        <Tab value="previsao" label="Previsão de Produção" />
                     </Tabs>
                 </CardContent>
             </Card>
