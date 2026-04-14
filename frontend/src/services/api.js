@@ -111,6 +111,7 @@ export const marcarNotificacaoLida = (id) => api.post(`/notificacoes/${id}/marca
 export const marcarTodasNotificacoesLidas = () => api.post('/notificacoes/marcar_todas_lidas/');
 export const getAlertaRuidoConfig = () => api.get('/notificacoes/alerta_ruido_config/');
 export const updateAlertaRuidoConfig = (data) => api.patch('/notificacoes/alerta_ruido_config/', data);
+export const getUsuarios = (params) => api.get('/usuarios/', { params });
 
 // IA — Classificação Espectral de Pólen
 export const classificarPolen = (data) => api.post('/ia/polen/classificar/', data);

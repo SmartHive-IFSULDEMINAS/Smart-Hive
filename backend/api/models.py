@@ -910,6 +910,11 @@ class AlertaRuidoConfig(models.Model):
         (20, '20 leituras anteriores'),
     ]
 
+    DESTINO_ALERTA_CHOICES = [
+        ('geral', 'Geral (dono/gestor)'),
+        ('usuario', 'Usuário específico'),
+    ]
+
     usuario = models.OneToOneField(
         Usuario,
         on_delete=models.CASCADE,
@@ -917,6 +922,20 @@ class AlertaRuidoConfig(models.Model):
         verbose_name='Usuário'
     )
     ativo = models.BooleanField(default=True, verbose_name='Ativo')
+    destino_alerta = models.CharField(
+        max_length=20,
+        choices=DESTINO_ALERTA_CHOICES,
+        default='geral',
+        verbose_name='Destino dos Alertas'
+    )
+    usuario_destino = models.ForeignKey(
+        Usuario,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='alertas_recebimento_configurados',
+        verbose_name='Usuário Destino'
+    )
     janela_media = models.IntegerField(
         choices=JANELA_CHOICES,
         default=10,

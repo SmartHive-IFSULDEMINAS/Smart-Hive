@@ -193,13 +193,13 @@ class NotificacaoAdmin(admin.ModelAdmin):
 @admin.register(AlertaRuidoConfig)
 class AlertaRuidoConfigAdmin(admin.ModelAdmin):
     list_display = [
-        'usuario', 'ativo', 'janela_media', 'percentual_desvio',
+        'usuario', 'ativo', 'destino_alerta', 'usuario_destino', 'janela_media', 'percentual_desvio',
         'alertar_temperatura', 'alertar_luminosidade', 'alertar_umidade',
         'alertar_pressao', 'alertar_peso', 'alertar_producao',
         'cooldown_minutos', 'updated_at'
     ]
     list_filter = [
-        'ativo', 'janela_media', 'alertar_temperatura', 'alertar_luminosidade',
+        'ativo', 'destino_alerta', 'janela_media', 'alertar_temperatura', 'alertar_luminosidade',
         'alertar_umidade', 'alertar_pressao', 'alertar_peso', 'alertar_producao'
     ]
     search_fields = ['usuario__username', 'usuario__email']
@@ -208,7 +208,7 @@ class AlertaRuidoConfigAdmin(admin.ModelAdmin):
     readonly_fields = ['created_at', 'updated_at']
     fieldsets = (
         ('Vínculo', {
-            'fields': ('usuario', 'ativo')
+            'fields': ('usuario', 'ativo', 'destino_alerta', 'usuario_destino')
         }),
         ('Parâmetros Gerais', {
             'fields': ('janela_media', 'cooldown_minutos')

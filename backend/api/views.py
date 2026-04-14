@@ -627,6 +627,15 @@ class NotificacaoViewSet(viewsets.ModelViewSet):
         if request.method == 'PATCH':
             serializer = AlertaRuidoConfigSerializer(config, data=request.data, partial=True)
             serializer.is_valid(raise_exception=True)
+
+            destino_alerta = serializer.validated_data.get('destino_alerta', config.destino_alerta)
+            usuario_destino = serializer.validated_data.get('usuario_destino', config.usuario_destino)
+            if destino_alerta == 'usuario' and not usuario_destino:
+                return Response(
+                    {'error': 'Selecione um usuário destino para alertas específicos.'},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
             serializer.save()
             return Response(serializer.data)
 

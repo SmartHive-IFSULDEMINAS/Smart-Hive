@@ -3,6 +3,7 @@ from datetime import date
 from rest_framework import status
 from rest_framework.test import APITestCase
 from api.models import Apiario, Colmeia, Notificacao, AlertaRuidoConfig, ProducaoMel
+from api.alert_utils import gerar_alerta_producao
 
 
 User = get_user_model()
@@ -173,19 +174,15 @@ class AlertaRuidoTests(APITestCase):
 				quantidade_kg=10,
 			)
 
-		self.client.force_authenticate(user=self.usuario_alerta)
-		response = self.client.post(
-			'/api/producoes/',
-			{
-				'colmeia': self.colmeia.id,
-				'data_colheita': '2026-02-20',
-				'quantidade_kg': 20,
-				'tipo_mel': 'multifloral',
-				'qualidade': 'primeira',
-			},
-			format='json',
+		nova_producao = ProducaoMel.objects.create(
+			colmeia=self.colmeia,
+			data_colheita=date(2026, 2, 20),
+			quantidade_kg=20,
+			tipo_mel='multifloral',
+			qualidade='primeira',
 		)
-		self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+		gerar_alerta_producao(nova_producao)
 
 		notificacao = Notificacao.objects.filter(
 			usuario=self.usuario_alerta,

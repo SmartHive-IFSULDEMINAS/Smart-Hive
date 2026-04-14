@@ -17,10 +17,12 @@ import {
     Typography,
 } from '@mui/material';
 import { NotificationsActive as AlertsIcon } from '@mui/icons-material';
-import { getAlertaRuidoConfig, updateAlertaRuidoConfig } from '../services/api';
+import { getAlertaRuidoConfig, updateAlertaRuidoConfig, getUsuarios } from '../services/api';
 
 const initialConfig = {
     ativo: true,
+    destino_alerta: 'geral',
+    usuario_destino: '',
     janela_media: 10,
     percentual_desvio: 25,
     alertar_temperatura: false,
@@ -44,29 +46,39 @@ export default function Alertas() {
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
     const [config, setConfig] = useState(initialConfig);
+    const [usuarios, setUsuarios] = useState([]);
 
     useEffect(() => {
         const loadConfig = async () => {
             try {
                 setLoading(true);
-                const response = await getAlertaRuidoConfig();
+                const [configResponse, usuariosResponse] = await Promise.all([
+                    getAlertaRuidoConfig(),
+                    getUsuarios(),
+                ]);
+
+                const users = usuariosResponse.data?.results || usuariosResponse.data || [];
+                setUsuarios(users);
+
                 setConfig({
-                    ativo: response.data?.ativo ?? true,
-                    janela_media: response.data?.janela_media ?? 10,
-                    percentual_desvio: Number(response.data?.percentual_desvio ?? 25),
-                    alertar_temperatura: response.data?.alertar_temperatura ?? false,
-                    desvio_temperatura: Number(response.data?.desvio_temperatura ?? 20),
-                    alertar_luminosidade: response.data?.alertar_luminosidade ?? false,
-                    desvio_luminosidade: Number(response.data?.desvio_luminosidade ?? 20),
-                    alertar_umidade: response.data?.alertar_umidade ?? false,
-                    desvio_umidade: Number(response.data?.desvio_umidade ?? 20),
-                    alertar_pressao: response.data?.alertar_pressao ?? false,
-                    desvio_pressao: Number(response.data?.desvio_pressao ?? 20),
-                    alertar_peso: response.data?.alertar_peso ?? false,
-                    desvio_peso: Number(response.data?.desvio_peso ?? 20),
-                    alertar_producao: response.data?.alertar_producao ?? false,
-                    desvio_producao: Number(response.data?.desvio_producao ?? 25),
-                    cooldown_minutos: Number(response.data?.cooldown_minutos ?? 30),
+                    ativo: configResponse.data?.ativo ?? true,
+                    destino_alerta: configResponse.data?.destino_alerta ?? 'geral',
+                    usuario_destino: configResponse.data?.usuario_destino ?? '',
+                    janela_media: configResponse.data?.janela_media ?? 10,
+                    percentual_desvio: Number(configResponse.data?.percentual_desvio ?? 25),
+                    alertar_temperatura: configResponse.data?.alertar_temperatura ?? false,
+                    desvio_temperatura: Number(configResponse.data?.desvio_temperatura ?? 20),
+                    alertar_luminosidade: configResponse.data?.alertar_luminosidade ?? false,
+                    desvio_luminosidade: Number(configResponse.data?.desvio_luminosidade ?? 20),
+                    alertar_umidade: configResponse.data?.alertar_umidade ?? false,
+                    desvio_umidade: Number(configResponse.data?.desvio_umidade ?? 20),
+                    alertar_pressao: configResponse.data?.alertar_pressao ?? false,
+                    desvio_pressao: Number(configResponse.data?.desvio_pressao ?? 20),
+                    alertar_peso: configResponse.data?.alertar_peso ?? false,
+                    desvio_peso: Number(configResponse.data?.desvio_peso ?? 20),
+                    alertar_producao: configResponse.data?.alertar_producao ?? false,
+                    desvio_producao: Number(configResponse.data?.desvio_producao ?? 25),
+                    cooldown_minutos: Number(configResponse.data?.cooldown_minutos ?? 30),
                 });
                 setError('');
             } catch (err) {
@@ -88,6 +100,8 @@ export default function Alertas() {
 
             const payload = {
                 ativo: config.ativo,
+                destino_alerta: config.destino_alerta,
+                usuario_destino: config.destino_alerta === 'usuario' ? Number(config.usuario_destino) : null,
                 janela_media: Number(config.janela_media),
                 percentual_desvio: Number(config.percentual_desvio),
                 alertar_temperatura: Boolean(config.alertar_temperatura),
@@ -108,6 +122,8 @@ export default function Alertas() {
             const response = await updateAlertaRuidoConfig(payload);
             setConfig({
                 ativo: response.data?.ativo ?? payload.ativo,
+                destino_alerta: response.data?.destino_alerta ?? payload.destino_alerta,
+                usuario_destino: response.data?.usuario_destino ?? payload.usuario_destino ?? '',
                 janela_media: response.data?.janela_media ?? payload.janela_media,
                 percentual_desvio: Number(response.data?.percentual_desvio ?? payload.percentual_desvio),
                 alertar_temperatura: response.data?.alertar_temperatura ?? payload.alertar_temperatura,
@@ -183,6 +199,41 @@ export default function Alertas() {
                                 checked={Boolean(config.ativo)}
                                 onChange={(event) => setConfig((prev) => ({ ...prev, ativo: event.target.checked }))}
                             />
+                        </Grid>
+
+                        <Grid size={{ xs: 12, md: 4 }}>
+                            <FormControl fullWidth size="small">
+                                <InputLabel>Destino dos alertas</InputLabel>
+                                <Select
+                                    label="Destino dos alertas"
+                                    value={config.destino_alerta}
+                                    onChange={(event) =>
+                                        setConfig((prev) => ({ ...prev, destino_alerta: event.target.value }))
+                                    }
+                                >
+                                    <MenuItem value="geral">Geral (dono/gestor)</MenuItem>
+                                    <MenuItem value="usuario">Usuário específico</MenuItem>
+                                </Select>
+                            </FormControl>
+                        </Grid>
+
+                        <Grid size={{ xs: 12, md: 4 }}>
+                            <FormControl fullWidth size="small" disabled={config.destino_alerta !== 'usuario'}>
+                                <InputLabel>Usuário destino</InputLabel>
+                                <Select
+                                    label="Usuário destino"
+                                    value={config.usuario_destino || ''}
+                                    onChange={(event) =>
+                                        setConfig((prev) => ({ ...prev, usuario_destino: event.target.value }))
+                                    }
+                                >
+                                    {usuarios.map((usuario) => (
+                                        <MenuItem key={usuario.id} value={usuario.id}>
+                                            {usuario.username}
+                                        </MenuItem>
+                                    ))}
+                                </Select>
+                            </FormControl>
                         </Grid>
 
                         <Grid size={{ xs: 12, md: 4 }}>

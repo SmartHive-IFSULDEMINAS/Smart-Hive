@@ -341,6 +341,8 @@ class AlertaRuidoConfigSerializer(serializers.ModelSerializer):
         model = AlertaRuidoConfig
         fields = [
             'ativo',
+            'destino_alerta',
+            'usuario_destino',
             'janela_media',
             'percentual_desvio',
             'alertar_temperatura',

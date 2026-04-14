@@ -18,6 +18,16 @@ def _usuarios_alerta_ativos():
     ).distinct()
 
 
+def _destinatarios_config(config, usuarios_gerais):
+    if config.destino_alerta == 'usuario':
+        destino = config.usuario_destino
+        if destino and destino.is_active and getattr(destino, 'ativo', True):
+            return [destino]
+        return []
+
+    return list(usuarios_gerais)
+
+
 def _prioridade_por_desvio(desvio_percentual):
     if desvio_percentual >= 60:
         return 'critica'
@@ -148,6 +158,10 @@ def gerar_alertas_sensores(colmeia, leitura):
 
     for usuario in usuarios:
         config, _ = AlertaRuidoConfig.objects.get_or_create(usuario=usuario)
+        destinatarios = _destinatarios_config(config, usuarios)
+
+        if not destinatarios:
+            continue
 
         for metrica in metricas:
             if not getattr(config, metrica['flag_field'], False):
@@ -172,19 +186,20 @@ def gerar_alertas_sensores(colmeia, leitura):
                 if getattr(item, metrica['field']) is not None
             ]
 
-            _processar_alerta_media(
-                usuario=usuario,
-                config=config,
-                colmeia=colmeia,
-                apiario=colmeia.apiario,
-                tipo_notificacao=metrica['tipo'],
-                titulo=metrica['titulo'],
-                label=metrica['label'],
-                unidade=metrica['unidade'],
-                valor_atual=float(valor_atual),
-                valores_anteriores=valores_anteriores,
-                percentual_limite=float(getattr(config, metrica['percent_field'], 25)),
-            )
+            for destinatario in destinatarios:
+                _processar_alerta_media(
+                    usuario=destinatario,
+                    config=config,
+                    colmeia=colmeia,
+                    apiario=colmeia.apiario,
+                    tipo_notificacao=metrica['tipo'],
+                    titulo=metrica['titulo'],
+                    label=metrica['label'],
+                    unidade=metrica['unidade'],
+                    valor_atual=float(valor_atual),
+                    valores_anteriores=valores_anteriores,
+                    percentual_limite=float(getattr(config, metrica['percent_field'], 25)),
+                )
 
 
 def gerar_alerta_producao(producao):
@@ -198,6 +213,10 @@ def gerar_alerta_producao(producao):
 
     for usuario in usuarios:
         config, _ = AlertaRuidoConfig.objects.get_or_create(usuario=usuario)
+        destinatarios = _destinatarios_config(config, usuarios)
+
+        if not destinatarios:
+            continue
 
         if not config.alertar_producao:
             continue
@@ -210,16 +229,17 @@ def gerar_alerta_producao(producao):
 
         valores_anteriores = [float(item.quantidade_kg) for item in producoes_anteriores]
 
-        _processar_alerta_media(
-            usuario=usuario,
-            config=config,
-            colmeia=colmeia,
-            apiario=apiario,
-            tipo_notificacao='alerta_producao',
-            titulo='Produção fora do padrão',
-            label='Produção',
-            unidade='kg',
-            valor_atual=valor_atual,
-            valores_anteriores=valores_anteriores,
-            percentual_limite=float(config.desvio_producao),
-        )
+        for destinatario in destinatarios:
+            _processar_alerta_media(
+                usuario=destinatario,
+                config=config,
+                colmeia=colmeia,
+                apiario=apiario,
+                tipo_notificacao='alerta_producao',
+                titulo='Produção fora do padrão',
+                label='Produção',
+                unidade='kg',
+                valor_atual=valor_atual,
+                valores_anteriores=valores_anteriores,
+                percentual_limite=float(config.desvio_producao),
+            )
