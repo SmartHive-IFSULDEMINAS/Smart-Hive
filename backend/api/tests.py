@@ -2,7 +2,7 @@ from django.contrib.auth import get_user_model
 from datetime import date
 from rest_framework import status
 from rest_framework.test import APITestCase
-from api.models import Apiario, Colmeia, Notificacao, AlertaRuidoConfig
+from api.models import Apiario, Colmeia, Notificacao, AlertaRuidoConfig, ProducaoMel
 
 
 User = get_user_model()
@@ -74,6 +74,10 @@ class AlertaRuidoTests(APITestCase):
 				'ativo': True,
 				'janela_media': 10,
 				'percentual_desvio': 20,
+				'alertar_temperatura': True,
+				'desvio_temperatura': 20,
+				'alertar_producao': True,
+				'desvio_producao': 20,
 				'cooldown_minutos': 30,
 			},
 		)
@@ -129,3 +133,65 @@ class AlertaRuidoTests(APITestCase):
 
 		self.assertEqual(response.status_code, status.HTTP_200_OK)
 		self.assertEqual(response.data['janela_media'], 20)
+
+	def test_gera_alerta_quando_temperatura_ultrapassa_media_movel(self):
+		for _ in range(10):
+			response = self.client.post(
+				'/api/iot/colmeia/dados/',
+				{
+					'colmeia_identificador': self.colmeia.identificador,
+					'temperatura': 30,
+				},
+				format='json',
+			)
+			self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+		response = self.client.post(
+			'/api/iot/colmeia/dados/',
+			{
+				'colmeia_identificador': self.colmeia.identificador,
+				'temperatura': 40,
+			},
+			format='json',
+		)
+		self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+		notificacao = Notificacao.objects.filter(
+			usuario=self.usuario_alerta,
+			colmeia=self.colmeia,
+			tipo='alerta_temperatura',
+		).first()
+
+		self.assertIsNotNone(notificacao)
+		self.assertIn('Temperatura atual', notificacao.mensagem)
+
+	def test_gera_alerta_quando_producao_foge_da_media(self):
+		for indice in range(10):
+			ProducaoMel.objects.create(
+				colmeia=self.colmeia,
+				data_colheita=date(2026, 1, indice + 1),
+				quantidade_kg=10,
+			)
+
+		self.client.force_authenticate(user=self.usuario_alerta)
+		response = self.client.post(
+			'/api/producoes/',
+			{
+				'colmeia': self.colmeia.id,
+				'data_colheita': '2026-02-20',
+				'quantidade_kg': 20,
+				'tipo_mel': 'multifloral',
+				'qualidade': 'primeira',
+			},
+			format='json',
+		)
+		self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+		notificacao = Notificacao.objects.filter(
+			usuario=self.usuario_alerta,
+			colmeia=self.colmeia,
+			tipo='alerta_producao',
+		).first()
+
+		self.assertIsNotNone(notificacao)
+		self.assertIn('Produção atual', notificacao.mensagem)

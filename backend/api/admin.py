@@ -4,6 +4,7 @@ from .models import (
     Usuario, EspecieAbelha, Apiario, Colmeia, Inspecao,
     ProducaoMel, Tratamento, Custo, Receita, Fornecedor,
     Equipamento, Notificacao, LeituraSensor, ClassificacaoPolen,
+    AlertaRuidoConfig,
 )
 
 
@@ -187,6 +188,50 @@ class NotificacaoAdmin(admin.ModelAdmin):
     search_fields = ['titulo', 'mensagem', 'usuario__username']
     ordering = ['-created_at']
     raw_id_fields = ['usuario', 'colmeia', 'apiario']
+
+
+@admin.register(AlertaRuidoConfig)
+class AlertaRuidoConfigAdmin(admin.ModelAdmin):
+    list_display = [
+        'usuario', 'ativo', 'janela_media', 'percentual_desvio',
+        'alertar_temperatura', 'alertar_luminosidade', 'alertar_umidade',
+        'alertar_pressao', 'alertar_peso', 'alertar_producao',
+        'cooldown_minutos', 'updated_at'
+    ]
+    list_filter = [
+        'ativo', 'janela_media', 'alertar_temperatura', 'alertar_luminosidade',
+        'alertar_umidade', 'alertar_pressao', 'alertar_peso', 'alertar_producao'
+    ]
+    search_fields = ['usuario__username', 'usuario__email']
+    ordering = ['-updated_at']
+    raw_id_fields = ['usuario']
+    readonly_fields = ['created_at', 'updated_at']
+    fieldsets = (
+        ('Vínculo', {
+            'fields': ('usuario', 'ativo')
+        }),
+        ('Parâmetros Gerais', {
+            'fields': ('janela_media', 'cooldown_minutos')
+        }),
+        ('Ruído', {
+            'fields': ('percentual_desvio',)
+        }),
+        ('Sensores IoT', {
+            'fields': (
+                'alertar_temperatura', 'desvio_temperatura',
+                'alertar_luminosidade', 'desvio_luminosidade',
+                'alertar_umidade', 'desvio_umidade',
+                'alertar_pressao', 'desvio_pressao',
+                'alertar_peso', 'desvio_peso',
+            )
+        }),
+        ('Produção', {
+            'fields': ('alertar_producao', 'desvio_producao')
+        }),
+        ('Auditoria', {
+            'fields': ('created_at', 'updated_at')
+        }),
+    )
 
 
 @admin.register(ClassificacaoPolen)

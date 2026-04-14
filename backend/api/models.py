@@ -837,6 +837,12 @@ class Notificacao(models.Model):
         ('producao', 'Colheita Disponível'),
         ('alerta_saude', 'Alerta de Saúde'),
         ('alerta_ruido', 'Alerta de Ruído'),
+        ('alerta_temperatura', 'Alerta de Temperatura'),
+        ('alerta_luminosidade', 'Alerta de Luminosidade'),
+        ('alerta_umidade', 'Alerta de Umidade'),
+        ('alerta_pressao', 'Alerta de Pressão'),
+        ('alerta_peso', 'Alerta de Peso'),
+        ('alerta_producao', 'Alerta de Produção'),
         ('manutencao', 'Manutenção Necessária'),
         ('outro', 'Outro'),
     ]
@@ -897,7 +903,7 @@ class Notificacao(models.Model):
 
 
 class AlertaRuidoConfig(models.Model):
-    """Configuração de alerta de ruído por usuário"""
+    """Configuração de alertas por usuário (produção e sensores IoT)"""
 
     JANELA_CHOICES = [
         (10, '10 leituras anteriores'),
@@ -921,7 +927,55 @@ class AlertaRuidoConfig(models.Model):
         decimal_places=2,
         default=25.00,
         validators=[MinValueValidator(1), MaxValueValidator(500)],
-        verbose_name='Percentual de Desvio para Alerta (%)'
+        verbose_name='Percentual de Desvio para Ruído (%)'
+    )
+    alertar_temperatura = models.BooleanField(default=False, verbose_name='Alertar Temperatura')
+    desvio_temperatura = models.DecimalField(
+        max_digits=6,
+        decimal_places=2,
+        default=20.00,
+        validators=[MinValueValidator(1), MaxValueValidator(500)],
+        verbose_name='Desvio para Temperatura (%)'
+    )
+    alertar_luminosidade = models.BooleanField(default=False, verbose_name='Alertar Luminosidade')
+    desvio_luminosidade = models.DecimalField(
+        max_digits=6,
+        decimal_places=2,
+        default=20.00,
+        validators=[MinValueValidator(1), MaxValueValidator(500)],
+        verbose_name='Desvio para Luminosidade (%)'
+    )
+    alertar_umidade = models.BooleanField(default=False, verbose_name='Alertar Umidade')
+    desvio_umidade = models.DecimalField(
+        max_digits=6,
+        decimal_places=2,
+        default=20.00,
+        validators=[MinValueValidator(1), MaxValueValidator(500)],
+        verbose_name='Desvio para Umidade (%)'
+    )
+    alertar_pressao = models.BooleanField(default=False, verbose_name='Alertar Pressão')
+    desvio_pressao = models.DecimalField(
+        max_digits=6,
+        decimal_places=2,
+        default=20.00,
+        validators=[MinValueValidator(1), MaxValueValidator(500)],
+        verbose_name='Desvio para Pressão (%)'
+    )
+    alertar_peso = models.BooleanField(default=False, verbose_name='Alertar Peso')
+    desvio_peso = models.DecimalField(
+        max_digits=6,
+        decimal_places=2,
+        default=20.00,
+        validators=[MinValueValidator(1), MaxValueValidator(500)],
+        verbose_name='Desvio para Peso (%)'
+    )
+    alertar_producao = models.BooleanField(default=False, verbose_name='Alertar Produção')
+    desvio_producao = models.DecimalField(
+        max_digits=6,
+        decimal_places=2,
+        default=25.00,
+        validators=[MinValueValidator(1), MaxValueValidator(500)],
+        verbose_name='Desvio para Produção (%)'
     )
     cooldown_minutos = models.IntegerField(
         default=30,

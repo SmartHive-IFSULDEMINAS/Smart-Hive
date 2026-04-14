@@ -30,6 +30,7 @@ from .serializers import (
     LeituraSensorListSerializer,
     ClassificacaoPolenSerializer,
 )
+from .alert_utils import gerar_alerta_producao
 
 User = get_user_model()
 
@@ -274,6 +275,10 @@ class ProducaoMelViewSet(viewsets.ModelViewSet):
             queryset = queryset.filter(data_colheita__lte=data_fim)
             
         return queryset
+
+    def perform_create(self, serializer):
+        producao = serializer.save()
+        gerar_alerta_producao(producao)
     
     @action(detail=False, methods=['get'])
     def relatorio(self, request):

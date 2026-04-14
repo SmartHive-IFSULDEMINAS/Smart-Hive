@@ -340,7 +340,22 @@ class AlertaRuidoConfigSerializer(serializers.ModelSerializer):
     class Meta:
         model = AlertaRuidoConfig
         fields = [
-            'ativo', 'janela_media', 'percentual_desvio', 'cooldown_minutos',
+            'ativo',
+            'janela_media',
+            'percentual_desvio',
+            'alertar_temperatura',
+            'desvio_temperatura',
+            'alertar_luminosidade',
+            'desvio_luminosidade',
+            'alertar_umidade',
+            'desvio_umidade',
+            'alertar_pressao',
+            'desvio_pressao',
+            'alertar_peso',
+            'desvio_peso',
+            'alertar_producao',
+            'desvio_producao',
+            'cooldown_minutos',
             'updated_at'
         ]
 
