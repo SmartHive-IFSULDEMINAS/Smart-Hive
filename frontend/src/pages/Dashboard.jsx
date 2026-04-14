@@ -264,6 +264,14 @@ export default function Dashboard() {
                 item.status === 'quarentena' ? '#F4A100' : '#F44336',
     })) || [];
 
+    const hasSensorValue = (value) => value !== null && value !== undefined && value !== '';
+
+    const getTemperatureColor = (value) => {
+        if (value > 35) return '#EF9A9A';
+        if (value < 20) return '#64B5F6';
+        return '#81C784';
+    };
+
     return (
         <Box sx={{ position: 'relative' }}>
             {/* ─── Header ──────────────────────────────────────────────────── */}
@@ -377,13 +385,15 @@ export default function Dashboard() {
                                     <Grid size={{ xs: 12, sm: 6, md: 4 }} key={colmeia.id}>
                                         <Paper
                                             sx={{
-                                                p: 2,
+                                                p: { xs: 1.5, sm: 2 },
                                                 border: '1px solid',
                                                 borderColor: alpha('#2196F3', 0.2),
+                                                borderRadius: 2,
                                                 '&:hover': {
                                                     borderColor: alpha('#2196F3', 0.4),
+                                                    transform: 'translateY(-1px)',
                                                 },
-                                                transition: 'border-color 0.2s ease',
+                                                transition: 'border-color 0.2s ease, transform 0.2s ease',
                                             }}
                                         >
                                             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
@@ -405,84 +415,118 @@ export default function Dashboard() {
                                                 </Box>
                                             </Box>
 
-                                            {(colmeia.temperatura_atual || colmeia.nivel_ruido || colmeia.luminosidade) ? (
-                                                <Grid container spacing={1.5}>
-                                                    {colmeia.temperatura_atual && (
-                                                        <Grid size={4}>
-                                                            <Box sx={{ textAlign: 'center' }}>
-                                                                <ThermostatIcon sx={{
-                                                                    color: colmeia.temperatura_atual > 35 ? '#EF9A9A'
-                                                                        : colmeia.temperatura_atual < 20 ? '#64B5F6'
-                                                                            : '#81C784',
-                                                                    fontSize: 18, mb: 0.25,
-                                                                }} />
-                                                                <Typography variant="caption" color="text.secondary" display="block" sx={{ fontSize: '0.65rem' }}>Temp.</Typography>
-                                                                <Typography variant="body2" fontWeight={700} sx={{
-                                                                    color: colmeia.temperatura_atual > 35 ? '#EF9A9A'
-                                                                        : colmeia.temperatura_atual < 20 ? '#64B5F6'
-                                                                            : '#81C784',
-                                                                    fontSize: '0.8rem',
-                                                                }}>
-                                                                    {parseFloat(colmeia.temperatura_atual).toFixed(1)}°C
-                                                                </Typography>
-                                                            </Box>
-                                                        </Grid>
-                                                    )}
-                                                    {colmeia.nivel_ruido && (
-                                                        <Grid size={4}>
-                                                            <Box sx={{ textAlign: 'center' }}>
-                                                                <VolumeUpIcon sx={{ color: '#FFB74D', fontSize: 18, mb: 0.25 }} />
-                                                                <Typography variant="caption" color="text.secondary" display="block" sx={{ fontSize: '0.65rem' }}>Ruído</Typography>
-                                                                <Typography variant="body2" fontWeight={700} sx={{ color: '#FFB74D', fontSize: '0.8rem' }}>
-                                                                    {parseFloat(colmeia.nivel_ruido).toFixed(1)} dB
-                                                                </Typography>
-                                                            </Box>
-                                                        </Grid>
-                                                    )}
-                                                    {colmeia.luminosidade && (
-                                                        <Grid size={4}>
-                                                            <Box sx={{ textAlign: 'center' }}>
-                                                                <LightModeIcon sx={{ color: '#FFC107', fontSize: 18, mb: 0.25 }} />
-                                                                <Typography variant="caption" color="text.secondary" display="block" sx={{ fontSize: '0.65rem' }}>Luz</Typography>
-                                                                <Typography variant="body2" fontWeight={700} sx={{ color: '#FFC107', fontSize: '0.8rem' }}>
-                                                                    {parseFloat(colmeia.luminosidade).toFixed(0)}
-                                                                </Typography>
-                                                            </Box>
-                                                        </Grid>
-                                                    )}
-                                                    {colmeia.umidade && (
-                                                        <Grid size={4}>
-                                                            <Box sx={{ textAlign: 'center' }}>
-                                                                <WaterDropIcon sx={{ color: '#64B5F6', fontSize: 18, mb: 0.25 }} />
-                                                                <Typography variant="caption" color="text.secondary" display="block" sx={{ fontSize: '0.65rem' }}>Umidade</Typography>
-                                                                <Typography variant="body2" fontWeight={700} sx={{ color: '#64B5F6', fontSize: '0.8rem' }}>
-                                                                    {parseFloat(colmeia.umidade).toFixed(1)}%
-                                                                </Typography>
-                                                            </Box>
-                                                        </Grid>
-                                                    )}
-                                                    {colmeia.pressao && (
-                                                        <Grid size={4}>
-                                                            <Box sx={{ textAlign: 'center' }}>
-                                                                <CompressIcon sx={{ color: '#CE93D8', fontSize: 18, mb: 0.25 }} />
-                                                                <Typography variant="caption" color="text.secondary" display="block" sx={{ fontSize: '0.65rem' }}>Pressão</Typography>
-                                                                <Typography variant="body2" fontWeight={700} sx={{ color: '#CE93D8', fontSize: '0.8rem' }}>
-                                                                    {parseFloat(colmeia.pressao).toFixed(1)}
-                                                                </Typography>
-                                                            </Box>
-                                                        </Grid>
-                                                    )}
-                                                    {colmeia.peso && (
-                                                        <Grid size={4}>
-                                                            <Box sx={{ textAlign: 'center' }}>
-                                                                <ScaleIcon sx={{ color: '#90A4AE', fontSize: 18, mb: 0.25 }} />
-                                                                <Typography variant="caption" color="text.secondary" display="block" sx={{ fontSize: '0.65rem' }}>Peso</Typography>
-                                                                <Typography variant="body2" fontWeight={700} sx={{ color: '#90A4AE', fontSize: '0.8rem' }}>
-                                                                    {parseFloat(colmeia.peso).toFixed(1)}kg
-                                                                </Typography>
-                                                            </Box>
-                                                        </Grid>
-                                                    )}
+                                            {[
+                                                {
+                                                    key: 'temperatura_atual',
+                                                    label: 'Temperatura',
+                                                    icon: <ThermostatIcon />,
+                                                    color: getTemperatureColor(Number(colmeia.temperatura_atual)),
+                                                    format: (value) => `${Number(value).toFixed(1)}°C`,
+                                                },
+                                                {
+                                                    key: 'nivel_ruido',
+                                                    label: 'Ruído',
+                                                    icon: <VolumeUpIcon />,
+                                                    color: '#FFB74D',
+                                                    format: (value) => `${Number(value).toFixed(1)} dB`,
+                                                },
+                                                {
+                                                    key: 'luminosidade',
+                                                    label: 'Luminosidade',
+                                                    icon: <LightModeIcon />,
+                                                    color: '#FFC107',
+                                                    format: (value) => `${Number(value).toFixed(0)} lux`,
+                                                },
+                                                {
+                                                    key: 'umidade',
+                                                    label: 'Umidade',
+                                                    icon: <WaterDropIcon />,
+                                                    color: '#64B5F6',
+                                                    format: (value) => `${Number(value).toFixed(1)}%`,
+                                                },
+                                                {
+                                                    key: 'pressao',
+                                                    label: 'Pressão',
+                                                    icon: <CompressIcon />,
+                                                    color: '#CE93D8',
+                                                    format: (value) => `${Number(value).toFixed(1)} hPa`,
+                                                },
+                                                {
+                                                    key: 'peso',
+                                                    label: 'Peso',
+                                                    icon: <ScaleIcon />,
+                                                    color: '#90A4AE',
+                                                    format: (value) => `${Number(value).toFixed(1)} kg`,
+                                                },
+                                            ].some((metric) => hasSensorValue(colmeia[metric.key])) ? (
+                                                <Grid container spacing={1.2}>
+                                                    {[
+                                                        {
+                                                            key: 'temperatura_atual',
+                                                            label: 'Temperatura',
+                                                            icon: <ThermostatIcon />,
+                                                            color: getTemperatureColor(Number(colmeia.temperatura_atual)),
+                                                            format: (value) => `${Number(value).toFixed(1)}°C`,
+                                                        },
+                                                        {
+                                                            key: 'nivel_ruido',
+                                                            label: 'Ruído',
+                                                            icon: <VolumeUpIcon />,
+                                                            color: '#FFB74D',
+                                                            format: (value) => `${Number(value).toFixed(1)} dB`,
+                                                        },
+                                                        {
+                                                            key: 'luminosidade',
+                                                            label: 'Luminosidade',
+                                                            icon: <LightModeIcon />,
+                                                            color: '#FFC107',
+                                                            format: (value) => `${Number(value).toFixed(0)} lux`,
+                                                        },
+                                                        {
+                                                            key: 'umidade',
+                                                            label: 'Umidade',
+                                                            icon: <WaterDropIcon />,
+                                                            color: '#64B5F6',
+                                                            format: (value) => `${Number(value).toFixed(1)}%`,
+                                                        },
+                                                        {
+                                                            key: 'pressao',
+                                                            label: 'Pressão',
+                                                            icon: <CompressIcon />,
+                                                            color: '#CE93D8',
+                                                            format: (value) => `${Number(value).toFixed(1)} hPa`,
+                                                        },
+                                                        {
+                                                            key: 'peso',
+                                                            label: 'Peso',
+                                                            icon: <ScaleIcon />,
+                                                            color: '#90A4AE',
+                                                            format: (value) => `${Number(value).toFixed(1)} kg`,
+                                                        },
+                                                    ]
+                                                        .filter((metric) => hasSensorValue(colmeia[metric.key]))
+                                                        .map((metric) => (
+                                                            <Grid size={{ xs: 6, sm: 4 }} key={`${colmeia.id}-${metric.key}`}>
+                                                                <Box
+                                                                    sx={{
+                                                                        p: 1,
+                                                                        borderRadius: 1.5,
+                                                                        textAlign: 'center',
+                                                                        bgcolor: alpha(metric.color, 0.08),
+                                                                        border: `1px solid ${alpha(metric.color, 0.24)}`,
+                                                                        minHeight: 72,
+                                                                    }}
+                                                                >
+                                                                    {React.cloneElement(metric.icon, { sx: { color: metric.color, fontSize: 18, mb: 0.25 } })}
+                                                                    <Typography variant="caption" color="text.secondary" display="block" sx={{ fontSize: '0.65rem' }}>
+                                                                        {metric.label}
+                                                                    </Typography>
+                                                                    <Typography variant="body2" fontWeight={700} sx={{ color: metric.color, fontSize: '0.78rem' }}>
+                                                                        {metric.format(colmeia[metric.key])}
+                                                                    </Typography>
+                                                                </Box>
+                                                            </Grid>
+                                                        ))}
                                                 </Grid>
                                             ) : (
                                                 <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'center', py: 1, fontSize: '0.78rem' }}>
