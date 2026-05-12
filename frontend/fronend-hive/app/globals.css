@@ -1,0 +1,61 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+}
+
+@layer base {
+  :root {
+    --font-sans: var(--font-geist-sans);
+    --font-mono: var(--font-geist-mono);
+    /* Tema Smart-Hive — amber/honey claro */
+    --background: 40 30% 97%;
+    --foreground: 20 10% 10%;
+    --card: 0 0% 100%;
+    --card-foreground: 20 10% 10%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 20 10% 10%;
+    /* Primary: amber #F4A100 → hsl(39,100%,48%) */
+    --primary: 39 100% 48%;
+    --primary-foreground: 0 0% 100%;
+    /* Secondary: verde #2E7D32 → hsl(123,46%,34%) */
+    --secondary: 123 46% 34%;
+    --secondary-foreground: 0 0% 100%;
+    --muted: 40 20% 94%;
+    --muted-foreground: 20 5% 45%;
+    --accent: 39 100% 95%;
+    --accent-foreground: 39 100% 30%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 40 15% 88%;
+    --input: 40 15% 88%;
+    --ring: 39 100% 48%;
+    --chart-1: 39 100% 48%;
+    --chart-2: 123 46% 34%;
+    --chart-3: 197 37% 24%;
+    --chart-4: 43 74% 66%;
+    --chart-5: 27 87% 67%;
+    --radius: 0.5rem;
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 20 10% 20%;
+    --sidebar-primary: 39 100% 48%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 39 100% 95%;
+    --sidebar-accent-foreground: 39 100% 30%;
+    --sidebar-border: 40 15% 90%;
+    --sidebar-ring: 39 100% 48%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
