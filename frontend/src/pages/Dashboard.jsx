@@ -69,6 +69,8 @@ import {
 } from 'recharts';
 import { getDashboard, getDashboardComparativo, getDashboardPrevisao } from '../services/api';
 
+const DASHBOARD_REFRESH_MS = 30000;
+
 // ─── StatCard — Enterprise Dark design ────────────────────────────────────────
 const StatCard = ({ title, value, subtitle, icon, color, trend, delay = 0 }) => {
     const theme = useTheme();
@@ -230,6 +232,14 @@ export default function Dashboard() {
 
     useEffect(() => {
         fetchDashboard();
+    }, []);
+
+    useEffect(() => {
+        const intervalId = setInterval(() => {
+            fetchDashboard(true);
+        }, DASHBOARD_REFRESH_MS);
+
+        return () => clearInterval(intervalId);
     }, []);
 
     useEffect(() => {

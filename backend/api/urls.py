@@ -22,7 +22,7 @@ from .views import (
     ClassificacaoPolenViewSet,
 )
 from .auth_views import register, login, me, update_profile, UsuarioViewSet
-from .iot_views import receber_dados_iot, historico_sensores
+from .iot_views import receber_dados_iot, importar_dados_iot_json, historico_sensores
 from .apiario_iot_views import receber_dados_iot_apiario
 from .export_views import (
     export_apiarios,
@@ -64,6 +64,7 @@ urlpatterns = [
     path('dashboard/previsao/', DashboardPrevisaoView.as_view(), name='dashboard_previsao'),
     # IoT endpoints - Colmeias
     path('iot/colmeia/dados/', receber_dados_iot, name='receber_dados_iot'),
+    path('iot/colmeia/upload-json/', importar_dados_iot_json, name='importar_dados_iot_json'),
     path('iot/colmeia/historico/<str:colmeia_identificador>/', historico_sensores, name='historico_sensores'),
     # IoT endpoints - Apiários
     path('iot/apiario/dados/', receber_dados_iot_apiario, name='receber_dados_iot_apiario'),

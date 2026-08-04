@@ -34,6 +34,8 @@ import {
     Tooltip,
     Menu as MuiMenu,
     Divider,
+    Tabs,
+    Tab,
 } from '@mui/material';
 import {
     Add as AddIcon,
@@ -53,6 +55,8 @@ import {
     MoreVert as MoreVertIcon,
     FilterList as FilterListIcon,
     FileDownload as FileDownloadIcon,
+    CloudUpload as CloudUploadIcon,
+    Timeline as TimelineIcon,
 } from '@mui/icons-material';
 import {
     getColmeias,
@@ -61,7 +65,10 @@ import {
     deleteColmeia,
     getApiarios,
     getEspecies,
+    uploadColmeiaIoTJson,
+    getColmeiaHistoricoIoT,
 } from '../services/api';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Tooltip as RechartsTooltip } from 'recharts';
 
 const statusOptions = [
     { value: 'ativa',      label: 'Ativa',             color: 'success' },
@@ -116,10 +123,31 @@ export default function Colmeias() {
     const [deleteConfirm, setDeleteConfirm] = useState({ open: false, id: null, nome: '' });
     const [detailDialog, setDetailDialog] = useState({ open: false, colmeia: null });
     const [actionMenu, setActionMenu] = useState({ anchor: null, colmeia: null });
+    const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
+    const [uploadFile, setUploadFile] = useState(null);
+    const [uploading, setUploading] = useState(false);
+    const [uploadTarget, setUploadTarget] = useState('');
+    const [iotTab, setIotTab] = useState('temperature');
+    const [iotHistory, setIotHistory] = useState([]);
+    const [iotHistoryLoading, setIotHistoryLoading] = useState(false);
 
     useEffect(() => {
         fetchData();
     }, []);
+
+    useEffect(() => {
+        const intervalId = setInterval(() => {
+            fetchData();
+        }, 30000);
+
+        return () => clearInterval(intervalId);
+    }, []);
+
+    useEffect(() => {
+        if (detailDialog.open && detailDialog.colmeia?.identificador) {
+            loadIotHistory(detailDialog.colmeia.identificador);
+        }
+    }, [detailDialog.open, detailDialog.colmeia]);
 
     const fetchData = async () => {
         try {
@@ -218,6 +246,66 @@ export default function Colmeias() {
     };
 
     const handleActionMenuClose = () => setActionMenu({ anchor: null, colmeia: null });
+
+    const handleOpenUploadDialog = () => {
+        setUploadTarget('');
+        setUploadFile(null);
+        setUploadDialogOpen(true);
+    };
+
+    const handleUploadJson = async () => {
+        if (!uploadFile) {
+            setSnackbar({ open: true, message: 'Selecione um arquivo JSON.', severity: 'warning' });
+            return;
+        }
+
+        try {
+            setUploading(true);
+            const formData = new FormData();
+            formData.append('arquivo_json', uploadFile);
+            if (uploadTarget) {
+                formData.append('colmeia_identificador', uploadTarget);
+            }
+
+            await uploadColmeiaIoTJson(formData);
+            setSnackbar({ open: true, message: 'Arquivo JSON importado com sucesso!', severity: 'success' });
+            setUploadDialogOpen(false);
+            setUploadFile(null);
+            setUploadTarget('');
+            fetchData();
+        } catch (err) {
+            setSnackbar({ open: true, message: 'Erro ao importar JSON.', severity: 'error' });
+            console.error(err);
+        } finally {
+            setUploading(false);
+        }
+    };
+
+    const loadIotHistory = async (colmeiaIdentificador) => {
+        if (!colmeiaIdentificador) {
+            setIotHistory([]);
+            return;
+        }
+
+        try {
+            setIotHistoryLoading(true);
+            const response = await getColmeiaHistoricoIoT(colmeiaIdentificador, { limit: 120, offset: 0 });
+            setIotHistory(response.data?.leituras || []);
+        } catch (err) {
+            console.error(err);
+            setIotHistory([]);
+        } finally {
+            setIotHistoryLoading(false);
+        }
+    };
+
+    const selectedIotHistory = iotHistory
+        .filter((item) => item[iotTab] !== null && item[iotTab] !== undefined)
+        .map((item) => ({
+            ...item,
+            valor: Number(item[iotTab]),
+            timestampLabel: new Date(item.timestamp).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }),
+        }));
 
     const filteredColmeias = colmeias.filter(colmeia => {
         const matchesSearch = colmeia.identificador.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -339,6 +427,14 @@ export default function Colmeias() {
                     onClick={() => handleOpenDialog()}
                 >
                     Nova Colmeia
+                </Button>
+                <Button
+                    variant="outlined"
+                    startIcon={<CloudUploadIcon />}
+                    size="small"
+                    onClick={handleOpenUploadDialog}
+                >
+                    Importar JSON
                 </Button>
             </Box>
 
@@ -714,6 +810,54 @@ export default function Colmeias() {
                 </form>
             </Dialog>
 
+            <Dialog open={uploadDialogOpen} onClose={() => setUploadDialogOpen(false)} maxWidth="sm" fullWidth>
+                <DialogTitle>Importar leituras IoT em JSON</DialogTitle>
+                <DialogContent>
+                    <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                        Envie um arquivo com uma leitura ou uma lista de leituras. O sistema atualiza a última leitura e preserva o histórico.
+                    </Typography>
+                    <Grid container spacing={2} sx={{ mt: 0.5 }}>
+                        <Grid size={12}>
+                            <FormControl fullWidth>
+                                <InputLabel>Colmeia alvo</InputLabel>
+                                <Select
+                                    value={uploadTarget}
+                                    onChange={(e) => setUploadTarget(e.target.value)}
+                                    label="Colmeia alvo"
+                                >
+                                    <MenuItem value="">Usar identificador do arquivo</MenuItem>
+                                    {colmeias.map((colmeia) => (
+                                        <MenuItem key={colmeia.id} value={colmeia.identificador}>
+                                            {colmeia.identificador} {colmeia.nome ? `• ${colmeia.nome}` : ''}
+                                        </MenuItem>
+                                    ))}
+                                </Select>
+                            </FormControl>
+                        </Grid>
+                        <Grid size={12}>
+                            <Button variant="outlined" component="label" fullWidth>
+                                Selecionar arquivo JSON
+                                <input
+                                    type="file"
+                                    accept="application/json,.json"
+                                    hidden
+                                    onChange={(e) => setUploadFile(e.target.files?.[0] || null)}
+                                />
+                            </Button>
+                            <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1 }}>
+                                {uploadFile ? uploadFile.name : 'Nenhum arquivo selecionado'}
+                            </Typography>
+                        </Grid>
+                    </Grid>
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={() => setUploadDialogOpen(false)} disabled={uploading}>Cancelar</Button>
+                    <Button onClick={handleUploadJson} variant="contained" disabled={uploading}>
+                        {uploading ? <CircularProgress size={20} /> : 'Importar'}
+                    </Button>
+                </DialogActions>
+            </Dialog>
+
             {/* ─── Detail dialog ────────────────────────────────────────────── */}
             <Dialog
                 open={detailDialog.open}
@@ -814,6 +958,44 @@ export default function Colmeias() {
                                         </Box>
                                     </Grid>
                                 </>
+                            )}
+
+                            {detailDialog.colmeia.sensor_iot_ativo && (
+                                <Grid size={12}>
+                                    <Box sx={{ mt: 1.5, pt: 2, borderTop: '1px solid', borderColor: 'divider' }}>
+                                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
+                                            <TimelineIcon sx={{ color: 'primary.main', fontSize: 20 }} />
+                                            <Typography variant="subtitle2" fontWeight={700}>Histórico IoT</Typography>
+                                        </Box>
+                                        <Tabs value={iotTab} onChange={(_, value) => setIotTab(value)} sx={{ mb: 2 }} variant="scrollable" scrollButtons="auto">
+                                            <Tab value="temperatura" label="Temperatura" />
+                                            <Tab value="nivel_ruido" label="Ruído" />
+                                            <Tab value="luminosidade" label="Luminosidade" />
+                                            <Tab value="umidade" label="Umidade" />
+                                            <Tab value="pressao" label="Pressão" />
+                                            <Tab value="peso" label="Peso" />
+                                        </Tabs>
+                                        {iotHistoryLoading ? (
+                                            <Skeleton variant="rounded" height={220} />
+                                        ) : selectedIotHistory.length > 0 ? (
+                                            <Box sx={{ height: 240 }}>
+                                                <ResponsiveContainer width="100%" height="100%">
+                                                    <LineChart data={selectedIotHistory}>
+                                                        <CartesianGrid strokeDasharray="3 3" stroke={alpha(theme.palette.text.secondary, 0.2)} />
+                                                        <XAxis dataKey="timestampLabel" tick={{ fontSize: 11 }} />
+                                                        <YAxis tick={{ fontSize: 11 }} />
+                                                        <RechartsTooltip
+                                                            labelFormatter={(_, payload) => payload?.[0]?.payload?.timestamp ? new Date(payload[0].payload.timestamp).toLocaleString('pt-BR') : ''}
+                                                        />
+                                                        <Line type="monotone" dataKey="valor" stroke={theme.palette.primary.main} strokeWidth={2} dot={false} />
+                                                    </LineChart>
+                                                </ResponsiveContainer>
+                                            </Box>
+                                        ) : (
+                                            <Alert severity="info">Sem leituras suficientes para esta métrica.</Alert>
+                                        )}
+                                    </Box>
+                                </Grid>
                             )}
 
                             {detailDialog.colmeia.observacoes && (

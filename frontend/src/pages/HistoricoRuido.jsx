@@ -48,6 +48,15 @@ const PERIOD_OPTIONS = [
     { value: 'all', label: 'Todo período' },
 ];
 
+const METRIC_OPTIONS = [
+    { value: 'temperatura', label: 'Temperatura', unit: '°C' },
+    { value: 'nivel_ruido', label: 'Ruído', unit: 'dB' },
+    { value: 'luminosidade', label: 'Luminosidade', unit: 'lux' },
+    { value: 'umidade', label: 'Umidade', unit: '%' },
+    { value: 'pressao', label: 'Pressão', unit: 'hPa' },
+    { value: 'peso', label: 'Peso', unit: 'kg' },
+];
+
 const getPeriodStartDate = (period) => {
     const now = new Date();
     switch (period) {
@@ -72,6 +81,7 @@ export default function HistoricoRuido() {
     const [selectedColmeia, setSelectedColmeia] = useState('');
     const [period, setPeriod] = useState('7d');
     const [viewMode, setViewMode] = useState('grafico');
+    const [selectedMetric, setSelectedMetric] = useState('nivel_ruido');
     const [readings, setReadings] = useState([]);
 
     useEffect(() => {
@@ -107,15 +117,19 @@ export default function HistoricoRuido() {
                 setLoadingReadings(true);
                 const response = await getColmeiaLeiturasSensor(selectedColmeia, { limit: 500, offset: 0 });
                 const sensorReadings = response.data?.leituras || [];
-                const noiseOnly = sensorReadings
-                    .filter((item) => item.nivel_ruido !== null && item.nivel_ruido !== undefined)
+                const normalized = sensorReadings
                     .map((item) => ({
                         ...item,
-                        nivel_ruido: Number(item.nivel_ruido),
+                        temperatura: item.temperatura !== null && item.temperatura !== undefined ? Number(item.temperatura) : null,
+                        nivel_ruido: item.nivel_ruido !== null && item.nivel_ruido !== undefined ? Number(item.nivel_ruido) : null,
+                        luminosidade: item.luminosidade !== null && item.luminosidade !== undefined ? Number(item.luminosidade) : null,
+                        umidade: item.umidade !== null && item.umidade !== undefined ? Number(item.umidade) : null,
+                        pressao: item.pressao !== null && item.pressao !== undefined ? Number(item.pressao) : null,
+                        peso: item.peso !== null && item.peso !== undefined ? Number(item.peso) : null,
                     }))
                     .sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
 
-                setReadings(noiseOnly);
+                setReadings(normalized);
                 setError(null);
             } catch (err) {
                 setError('Erro ao carregar histórico de ruído da colmeia.');
@@ -145,18 +159,28 @@ export default function HistoricoRuido() {
                     hour: '2-digit',
                     minute: '2-digit',
                 }),
-                nivel_ruido: item.nivel_ruido,
+                valor: item[selectedMetric],
                 timestampFull: new Date(item.timestamp).toLocaleString('pt-BR'),
             })),
-        [filteredReadings]
+        [filteredReadings, selectedMetric]
     );
+
+    const selectedMetricLabel = METRIC_OPTIONS.find((option) => option.value === selectedMetric)?.label || 'Métrica';
+    const selectedMetricUnit = METRIC_OPTIONS.find((option) => option.value === selectedMetric)?.unit || '';
 
     const stats = useMemo(() => {
         if (filteredReadings.length === 0) {
             return { media: 0, maximo: 0, minimo: 0, atual: 0 };
         }
 
-        const values = filteredReadings.map((item) => item.nivel_ruido);
+        const values = filteredReadings
+            .map((item) => item[selectedMetric])
+            .filter((value) => value !== null && value !== undefined);
+
+        if (values.length === 0) {
+            return { media: 0, maximo: 0, minimo: 0, atual: 0 };
+        }
+
         const total = values.reduce((acc, value) => acc + value, 0);
 
         return {
@@ -165,7 +189,7 @@ export default function HistoricoRuido() {
             minimo: Math.min(...values),
             atual: values[values.length - 1],
         };
-    }, [filteredReadings]);
+    }, [filteredReadings, selectedMetric]);
 
     if (loading) {
         return (
@@ -183,7 +207,7 @@ export default function HistoricoRuido() {
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2.5, flexWrap: 'wrap' }}>
                 <NoiseIcon sx={{ color: 'primary.main' }} />
                 <Typography variant="h5" fontWeight={700} sx={{ flex: 1 }}>
-                    Histórico de Ruído
+                    Histórico IoT por Colmeia
                 </Typography>
                 <Chip
                     icon={<HiveIcon sx={{ fontSize: '1rem !important' }} />}
@@ -210,6 +234,17 @@ export default function HistoricoRuido() {
                         </Select>
                     </FormControl>
 
+                    <FormControl size="small" sx={{ minWidth: { xs: '100%', sm: 180 }, flex: { sm: '0 0 auto' } }}>
+                        <InputLabel>Métrica</InputLabel>
+                        <Select value={selectedMetric} label="Métrica" onChange={(event) => setSelectedMetric(event.target.value)}>
+                            {METRIC_OPTIONS.map((option) => (
+                                <MenuItem key={option.value} value={option.value}>
+                                    {option.label}
+                                </MenuItem>
+                            ))}
+                        </Select>
+                    </FormControl>
+
                     <FormControl size="small" sx={{ minWidth: { xs: '100%', sm: 220 }, flex: { sm: '0 0 auto' } }}>
                         <InputLabel>Período</InputLabel>
                         <Select value={period} label="Período" onChange={(event) => setPeriod(event.target.value)}>
@@ -224,10 +259,10 @@ export default function HistoricoRuido() {
             </Paper>
 
             <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(4, 1fr)' }, gap: 2, mb: 2.5 }}>
-                <Card><CardContent><Typography variant="caption" color="text.secondary">Ruído atual</Typography><Typography variant="h6" fontWeight={700}>{stats.atual.toFixed(1)} dB</Typography></CardContent></Card>
-                <Card><CardContent><Typography variant="caption" color="text.secondary">Média</Typography><Typography variant="h6" fontWeight={700}>{stats.media.toFixed(1)} dB</Typography></CardContent></Card>
-                <Card><CardContent><Typography variant="caption" color="text.secondary">Máximo</Typography><Typography variant="h6" fontWeight={700}>{stats.maximo.toFixed(1)} dB</Typography></CardContent></Card>
-                <Card><CardContent><Typography variant="caption" color="text.secondary">Mínimo</Typography><Typography variant="h6" fontWeight={700}>{stats.minimo.toFixed(1)} dB</Typography></CardContent></Card>
+                <Card><CardContent><Typography variant="caption" color="text.secondary">Valor atual</Typography><Typography variant="h6" fontWeight={700}>{stats.atual.toFixed(1)} {selectedMetricUnit}</Typography></CardContent></Card>
+                <Card><CardContent><Typography variant="caption" color="text.secondary">Média</Typography><Typography variant="h6" fontWeight={700}>{stats.media.toFixed(1)} {selectedMetricUnit}</Typography></CardContent></Card>
+                <Card><CardContent><Typography variant="caption" color="text.secondary">Máximo</Typography><Typography variant="h6" fontWeight={700}>{stats.maximo.toFixed(1)} {selectedMetricUnit}</Typography></CardContent></Card>
+                <Card><CardContent><Typography variant="caption" color="text.secondary">Mínimo</Typography><Typography variant="h6" fontWeight={700}>{stats.minimo.toFixed(1)} {selectedMetricUnit}</Typography></CardContent></Card>
             </Box>
 
             <Paper sx={{ border: '1px solid', borderColor: 'divider' }}>
@@ -238,7 +273,7 @@ export default function HistoricoRuido() {
                     scrollButtons="auto"
                     sx={{ px: 1.5, borderBottom: '1px solid', borderColor: 'divider' }}
                 >
-                    <Tab icon={<TimelineIcon />} iconPosition="start" value="grafico" label="Visualização em gráfico" />
+                                    <Tab icon={<TimelineIcon />} iconPosition="start" value="grafico" label="Visualização em gráfico" />
                     <Tab icon={<ListIcon />} iconPosition="start" value="lista" label="Visualização em lista" />
                 </Tabs>
 
@@ -250,17 +285,17 @@ export default function HistoricoRuido() {
                     ) : viewMode === 'grafico' ? (
                         <Box sx={{ height: { xs: 280, sm: 360 } }}>
                             <ResponsiveContainer width="100%" height="100%">
-                                <LineChart data={chartData}>
+                                        <LineChart data={chartData}>
                                     <CartesianGrid strokeDasharray="3 3" stroke={alpha(theme.palette.text.secondary, 0.2)} />
                                     <XAxis dataKey="timestamp" tick={{ fontSize: 11, fill: theme.palette.text.secondary }} />
-                                    <YAxis unit=" dB" tick={{ fontSize: 11, fill: theme.palette.text.secondary }} />
+                                    <YAxis unit={` ${selectedMetricUnit}`} tick={{ fontSize: 11, fill: theme.palette.text.secondary }} />
                                     <Tooltip
-                                        formatter={(value) => [`${Number(value).toFixed(1)} dB`, 'Ruído']}
+                                        formatter={(value) => [`${Number(value).toFixed(1)} ${selectedMetricUnit}`, selectedMetricLabel]}
                                         labelFormatter={(_, payload) => payload?.[0]?.payload?.timestampFull || ''}
                                     />
                                     <Line
                                         type="monotone"
-                                        dataKey="nivel_ruido"
+                                        dataKey="valor"
                                         stroke={theme.palette.primary.main}
                                         strokeWidth={2}
                                         dot={false}
@@ -275,7 +310,7 @@ export default function HistoricoRuido() {
                                 <TableHead>
                                     <TableRow>
                                         <TableCell>Data/Hora</TableCell>
-                                        <TableCell align="right">Nível de Ruído (dB)</TableCell>
+                                        <TableCell align="right">{selectedMetricLabel} ({selectedMetricUnit})</TableCell>
                                         <TableCell>Dispositivo</TableCell>
                                     </TableRow>
                                 </TableHead>
@@ -287,7 +322,7 @@ export default function HistoricoRuido() {
                                             <TableRow key={item.id} hover>
                                                 <TableCell>{new Date(item.timestamp).toLocaleString('pt-BR')}</TableCell>
                                                 <TableCell align="right">
-                                                    <Typography fontWeight={600}>{item.nivel_ruido.toFixed(1)} dB</Typography>
+                                                    <Typography fontWeight={600}>{Number(item[selectedMetric] || 0).toFixed(1)} {selectedMetricUnit}</Typography>
                                                 </TableCell>
                                                 <TableCell>{item.dispositivo_id || '—'}</TableCell>
                                             </TableRow>

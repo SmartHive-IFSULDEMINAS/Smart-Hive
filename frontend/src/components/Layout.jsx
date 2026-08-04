@@ -73,7 +73,7 @@ const menuSections = [
         label: 'OPERAÇÕES',
         items: [
             { text: 'Inspeções',   icon: <SearchIcon />,    path: '/inspecoes' },
-            { text: 'Ruído',       icon: <NoiseIcon />,     path: '/historico-ruido' },
+            { text: 'Histórico IoT', icon: <NoiseIcon />,   path: '/historico-ruido' },
             { text: 'Alertas',     icon: <AlertsIcon />,    path: '/alertas' },
             { text: 'Análises',    icon: <AnalyticsIcon />, path: '/analises' },
             { text: 'Produção',    icon: <HoneyIcon />,     path: '/producao' },
@@ -100,7 +100,7 @@ const pageTitles = {
     '/apiarios':   'Apiários',
     '/colmeias':   'Colmeias',
     '/inspecoes':  'Inspeções',
-    '/historico-ruido': 'Histórico de Ruído',
+    '/historico-ruido': 'Histórico IoT',
     '/alertas':    'Alertas',
     '/analises':   'Análises',
     '/producao':   'Produção',

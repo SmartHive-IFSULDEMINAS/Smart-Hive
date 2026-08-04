@@ -1,8 +1,10 @@
+import json
 from django.contrib.auth import get_user_model
 from datetime import date
+from django.core.files.uploadedfile import SimpleUploadedFile
 from rest_framework import status
 from rest_framework.test import APITestCase
-from api.models import Apiario, Colmeia, Notificacao, AlertaRuidoConfig, ProducaoMel
+from api.models import Apiario, Colmeia, Notificacao, AlertaRuidoConfig, ProducaoMel, LeituraSensor
 from api.alert_utils import gerar_alerta_producao
 
 
@@ -192,3 +194,59 @@ class AlertaRuidoTests(APITestCase):
 
 		self.assertIsNotNone(notificacao)
 		self.assertIn('Produção atual', notificacao.mensagem)
+
+
+class IoTJsonUploadTests(APITestCase):
+	def setUp(self):
+		self.apiario = Apiario.objects.create(
+			nome='Apiário Upload',
+			localizacao='Zona Rural',
+			data_criacao=date.today(),
+		)
+		self.colmeia = Colmeia.objects.create(
+			apiario=self.apiario,
+			identificador='CLM-UP-001',
+			data_instalacao=date.today(),
+		)
+
+	def test_importa_arquivo_json_com_varias_leituras(self):
+		payload = {
+			'colmeia_identificador': self.colmeia.identificador,
+			'leituras': [
+				{
+					'temperatura': 30.5,
+					'nivel_ruido': 41.2,
+					'timestamp': '2026-08-01T10:00:00-03:00',
+				},
+				{
+					'temperatura': 31.7,
+					'nivel_ruido': 43.8,
+					'umidade': 66.4,
+					'timestamp': '2026-08-01T10:05:00-03:00',
+				},
+			],
+		}
+		arquivo = SimpleUploadedFile(
+			'leituras.json',
+			json.dumps(payload).encode('utf-8'),
+			content_type='application/json',
+		)
+
+		response = self.client.post(
+			'/api/iot/colmeia/upload-json/',
+			{
+				'colmeia_identificador': self.colmeia.identificador,
+				'arquivo_json': arquivo,
+			},
+			format='multipart',
+		)
+
+		self.assertEqual(response.status_code, status.HTTP_200_OK)
+		self.assertEqual(response.data['total_processado'], 2)
+		self.assertEqual(response.data['colmeias_atualizadas'], [self.colmeia.identificador])
+		self.assertEqual(LeituraSensor.objects.filter(colmeia=self.colmeia).count(), 2)
+
+		self.colmeia.refresh_from_db()
+		self.assertEqual(float(self.colmeia.temperatura_atual), 31.7)
+		self.assertEqual(float(self.colmeia.nivel_ruido), 43.8)
+		self.assertIsNotNone(self.colmeia.data_ultima_leitura_sensor)
