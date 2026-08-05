@@ -261,7 +261,9 @@ export default function Dashboard() {
             setData(response.data);
             setError(null);
         } catch (err) {
-            setError('Erro ao carregar dados do dashboard');
+            if (!isRefresh) {
+                setError('Erro ao carregar dados do dashboard');
+            }
             console.error(err);
         } finally {
             setLoading(false);

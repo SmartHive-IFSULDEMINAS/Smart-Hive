@@ -57,6 +57,7 @@ import {
     FileDownload as FileDownloadIcon,
     CloudUpload as CloudUploadIcon,
     Timeline as TimelineIcon,
+    Refresh as RefreshIcon,
 } from '@mui/icons-material';
 import {
     getColmeias,
@@ -411,6 +412,25 @@ export default function Colmeias() {
                         ),
                     }}
                 />
+                <Tooltip title="Atualizar">
+                    <IconButton
+                        size="small"
+                        onClick={() => fetchData(true)}
+                        disabled={refreshing}
+                        sx={{ border: '1px solid', borderColor: 'divider' }}
+                    >
+                        <RefreshIcon
+                            fontSize="small"
+                            sx={{
+                                animation: refreshing ? 'spin 1s linear infinite' : 'none',
+                                '@keyframes spin': {
+                                    '0%': { transform: 'rotate(0deg)' },
+                                    '100%': { transform: 'rotate(360deg)' },
+                                },
+                            }}
+                        />
+                    </IconButton>
+                </Tooltip>
                 <Tooltip title="Filtros">
                     <IconButton
                         size="small"
