@@ -127,7 +127,7 @@ export default function Colmeias() {
     const [uploadFile, setUploadFile] = useState(null);
     const [uploading, setUploading] = useState(false);
     const [uploadTarget, setUploadTarget] = useState('');
-    const [iotTab, setIotTab] = useState('temperature');
+    const [iotTab, setIotTab] = useState('temperatura');
     const [iotHistory, setIotHistory] = useState([]);
     const [iotHistoryLoading, setIotHistoryLoading] = useState(false);
 
