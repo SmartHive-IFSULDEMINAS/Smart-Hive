@@ -108,6 +108,7 @@ export default function Colmeias() {
     const [apiarios, setApiarios] = useState([]);
     const [especies, setEspecies] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [refreshing, setRefreshing] = useState(false);
     const [error, setError] = useState(null);
     const [openDialog, setOpenDialog] = useState(false);
     const [editingId, setEditingId] = useState(null);
@@ -137,7 +138,7 @@ export default function Colmeias() {
 
     useEffect(() => {
         const intervalId = setInterval(() => {
-            fetchData();
+            fetchData(true);
         }, 30000);
 
         return () => clearInterval(intervalId);
@@ -149,9 +150,13 @@ export default function Colmeias() {
         }
     }, [detailDialog.open, detailDialog.colmeia]);
 
-    const fetchData = async () => {
+    const fetchData = async (isBackgroundRefresh = false) => {
         try {
-            setLoading(true);
+            if (isBackgroundRefresh) {
+                setRefreshing(true);
+            } else {
+                setLoading(true);
+            }
             const [colmeiasRes, apiariosRes, especiesRes] = await Promise.all([
                 getColmeias(),
                 getApiarios(),
@@ -166,6 +171,7 @@ export default function Colmeias() {
             console.error(err);
         } finally {
             setLoading(false);
+            setRefreshing(false);
         }
     };
 
