@@ -139,7 +139,7 @@ export default function Colmeias() {
     useEffect(() => {
         const intervalId = setInterval(() => {
             fetchData(true);
-        }, 30000);
+        }, 10000);
 
         return () => clearInterval(intervalId);
     }, []);

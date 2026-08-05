@@ -69,7 +69,7 @@ import {
 } from 'recharts';
 import { getDashboard, getDashboardComparativo, getDashboardPrevisao } from '../services/api';
 
-const DASHBOARD_REFRESH_MS = 30000;
+const DASHBOARD_REFRESH_MS = 10000;
 
 // ─── StatCard — Enterprise Dark design ────────────────────────────────────────
 const StatCard = ({ title, value, subtitle, icon, color, trend, delay = 0 }) => {
