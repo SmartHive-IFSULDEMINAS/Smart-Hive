@@ -47,7 +47,7 @@ def _tem_dados_sensores(payload):
     return any(payload.get(field) is not None for field in SENSOR_FIELD_MAP)
 
 
-def _registrar_leitura(colmeia, payload):
+def _registrar_leitura(colmeia, payload, gerar_alertas=True):
     dados_sensor = {}
     for source_field, target_field in SENSOR_FIELD_MAP.items():
         value = payload.get(source_field)
@@ -91,7 +91,8 @@ def _registrar_leitura(colmeia, payload):
             leitura.timestamp = timestamp
             leitura.save(update_fields=['timestamp'])
 
-        gerar_alertas_sensores(colmeia, leitura)
+        if gerar_alertas:
+            gerar_alertas_sensores(colmeia, leitura)
 
     return leitura
 
@@ -249,7 +250,7 @@ def importar_dados_iot_json(request):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        leitura = _registrar_leitura(colmeia, leitura_payload)
+        leitura = _registrar_leitura(colmeia, leitura_payload, gerar_alertas=False)
         leituras_criadas.append(leitura.id)
         colmeias_atualizadas.append(colmeia.identificador)
 
