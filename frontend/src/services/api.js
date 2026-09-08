@@ -135,7 +135,12 @@ export const marcarNotificacaoLida = (id) => api.post(`/notificacoes/${id}/marca
 export const marcarTodasNotificacoesLidas = () => api.post('/notificacoes/marcar_todas_lidas/');
 export const getAlertaRuidoConfig = () => api.get('/notificacoes/alerta_ruido_config/');
 export const updateAlertaRuidoConfig = (data) => api.patch('/notificacoes/alerta_ruido_config/', data);
+
+// Usuários (gestão, restrito a Dono/Gestor)
 export const getUsuarios = (params) => api.get('/usuarios/', { params });
+export const getUsuario = (id) => api.get(`/usuarios/${id}/`);
+export const updateUsuario = (id, data) => api.patch(`/usuarios/${id}/`, data);
+export const deleteUsuario = (id) => api.delete(`/usuarios/${id}/`);
 
 // IA — Classificação Espectral de Pólen
 export const classificarPolen = (data) => api.post('/ia/polen/classificar/', data);

@@ -53,6 +53,53 @@ class AuthLoginTests(APITestCase):
 		self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
 
+class UsuarioMeTests(APITestCase):
+	def test_me_retorna_flags_de_permissao_para_dono(self):
+		dono = User.objects.create_user(username='dono1', password='SenhaForte123!', role='dono')
+		self.client.force_authenticate(user=dono)
+
+		response = self.client.get('/api/auth/me/')
+
+		self.assertEqual(response.status_code, status.HTTP_200_OK)
+		self.assertTrue(response.data['is_dono'])
+		self.assertFalse(response.data['is_gestor'])
+		self.assertTrue(response.data['can_manage_users'])
+		self.assertTrue(response.data['can_manage_apiarios'])
+		self.assertTrue(response.data['can_view_reports'])
+
+	def test_me_retorna_flags_de_permissao_para_apicultor(self):
+		apicultor = User.objects.create_user(username='apicultor1', password='SenhaForte123!', role='apicultor')
+		self.client.force_authenticate(user=apicultor)
+
+		response = self.client.get('/api/auth/me/')
+
+		self.assertEqual(response.status_code, status.HTTP_200_OK)
+		self.assertFalse(response.data['is_dono'])
+		self.assertFalse(response.data['can_manage_users'])
+
+	def test_usuarios_viewset_lista_vazia_para_apicultor(self):
+		apicultor = User.objects.create_user(username='apicultor2', password='SenhaForte123!', role='apicultor')
+		User.objects.create_user(username='outro', password='SenhaForte123!', role='apicultor')
+		self.client.force_authenticate(user=apicultor)
+
+		response = self.client.get('/api/usuarios/')
+
+		self.assertEqual(response.status_code, status.HTTP_200_OK)
+		resultados = response.data['results'] if 'results' in response.data else response.data
+		self.assertEqual(len(resultados), 0)
+
+	def test_usuarios_viewset_lista_todos_para_dono(self):
+		dono = User.objects.create_user(username='dono2', password='SenhaForte123!', role='dono')
+		User.objects.create_user(username='outro2', password='SenhaForte123!', role='apicultor')
+		self.client.force_authenticate(user=dono)
+
+		response = self.client.get('/api/usuarios/')
+
+		self.assertEqual(response.status_code, status.HTTP_200_OK)
+		resultados = response.data['results'] if 'results' in response.data else response.data
+		self.assertEqual(len(resultados), 2)
+
+
 class AlertaRuidoTests(APITestCase):
 	def setUp(self):
 		self.usuario_alerta = User.objects.create_user(

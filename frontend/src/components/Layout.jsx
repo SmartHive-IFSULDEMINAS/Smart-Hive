@@ -48,6 +48,8 @@ import {
     NotificationsActive as AlertsIcon,
     Assessment as AnalyticsIcon,
     Summarize as ReportsIcon,
+    People as UsuariosIcon,
+    Tune as ConfigAlertaIcon,
     Brightness4 as DarkModeIcon,
     Brightness7 as LightModeIcon,
     ChevronLeft as ChevronLeftIcon,
@@ -105,6 +107,13 @@ const menuSections = [
             { text: 'Detecção de Abelhas', icon: <CameraIcon />, path: '/deteccao-abelhas' },
         ],
     },
+    {
+        label: 'SISTEMA',
+        items: [
+            { text: 'Configurações de Alerta', icon: <ConfigAlertaIcon />, path: '/configuracoes-alerta' },
+            { text: 'Usuários', icon: <UsuariosIcon />, path: '/usuarios', requiresManageUsers: true },
+        ],
+    },
 ];
 
 // Mapa de path → título para o AppBar
@@ -117,6 +126,8 @@ const pageTitles = {
     '/alertas':    'Alertas',
     '/analises':   'Análises',
     '/relatorios': 'Relatórios',
+    '/configuracoes-alerta': 'Configurações de Alerta',
+    '/usuarios': 'Usuários',
     '/producao':   'Produção',
     '/producao-polen': 'Produção de Pólen',
     '/producao-propolis': 'Produção de Própolis',
@@ -129,7 +140,7 @@ const pageTitles = {
 export default function Layout({ children }) {
     const theme = useTheme();
     const { mode, toggleTheme } = useThemeMode();
-    const { user, logout, isDono, isGestor } = useAuth();
+    const { user, logout, isDono, isGestor, canManageUsers } = useAuth();
     const isMobile = useMediaQuery(theme.breakpoints.down('md'));
     const isSmallMobile = useMediaQuery(theme.breakpoints.down('sm'));
     const [mobileOpen, setMobileOpen] = useState(false);
@@ -299,7 +310,7 @@ export default function Layout({ children }) {
                             {section.label}
                         </Typography>
 
-                        {section.items.map((item) => {
+                        {section.items.filter((item) => !item.requiresManageUsers || canManageUsers).map((item) => {
                             const isSelected = location.pathname === item.path;
                             return (
                                 <ListItem key={item.text} disablePadding sx={{ mb: 0.25 }}>

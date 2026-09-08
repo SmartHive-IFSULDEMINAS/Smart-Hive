@@ -263,16 +263,33 @@ class DashboardStatsSerializer(serializers.Serializer):
 # User Serializers
 class UsuarioSerializer(serializers.ModelSerializer):
     role_display = serializers.CharField(source='get_role_display', read_only=True)
-    
+    is_dono = serializers.BooleanField(read_only=True)
+    is_gestor = serializers.BooleanField(read_only=True)
+    is_apicultor = serializers.BooleanField(read_only=True)
+    can_manage_users = serializers.SerializerMethodField()
+    can_manage_apiarios = serializers.SerializerMethodField()
+    can_view_reports = serializers.SerializerMethodField()
+
     class Meta:
         model = User
         fields = [
             'id', 'username', 'email', 'first_name', 'last_name',
             'role', 'role_display', 'telefone', 'cpf', 'data_nascimento',
             'endereco', 'foto', 'ativo', 'is_staff', 'is_superuser',
-            'data_cadastro', 'ultimo_acesso'
+            'data_cadastro', 'ultimo_acesso',
+            'is_dono', 'is_gestor', 'is_apicultor',
+            'can_manage_users', 'can_manage_apiarios', 'can_view_reports',
         ]
         read_only_fields = ['id', 'data_cadastro', 'ultimo_acesso']
+
+    def get_can_manage_users(self, obj):
+        return obj.can_manage_users()
+
+    def get_can_manage_apiarios(self, obj):
+        return obj.can_manage_apiarios()
+
+    def get_can_view_reports(self, obj):
+        return obj.can_view_reports()
 
 
 class UsuarioListSerializer(serializers.ModelSerializer):
