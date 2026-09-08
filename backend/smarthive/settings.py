@@ -154,6 +154,13 @@ REST_FRAMEWORK = {
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
     'PAGE_SIZE': 20,
     'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
+    # Desabilita o parâmetro de query "format" reservado pelo DRF pra
+    # negociação de conteúdo (?format=json etc). As views de exportação
+    # (export_views.py) usam esse mesmo nome de parâmetro pra escolher
+    # entre Excel/PDF, e sem isso o DRF intercepta o valor antes da view
+    # rodar e responde 404 pra qualquer valor que não seja um renderer
+    # registrado.
+    'URL_FORMAT_OVERRIDE': None,
 }
 
 # JWT Settings

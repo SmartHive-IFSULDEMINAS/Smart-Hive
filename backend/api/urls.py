@@ -31,6 +31,7 @@ from .export_views import (
     export_apiarios,
     export_colmeias,
     export_producao,
+    export_coletas_produto,
     export_financeiro,
 )
 from .ia_views import classificar_polen, status_modelos
@@ -82,5 +83,6 @@ urlpatterns = [
     path('export/apiarios/', export_apiarios, name='export_apiarios'),
     path('export/colmeias/', export_colmeias, name='export_colmeias'),
     path('export/producao/', export_producao, name='export_producao'),
+    path('export/coletas-produto/', export_coletas_produto, name='export_coletas_produto'),
     path('export/financeiro/', export_financeiro, name='export_financeiro'),
 ]

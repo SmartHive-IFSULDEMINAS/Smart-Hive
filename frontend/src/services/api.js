@@ -110,6 +110,7 @@ export const getColetaProduto = (id) => api.get(`/coletas-produto/${id}/`);
 export const createColetaProduto = (data) => api.post('/coletas-produto/', data);
 export const updateColetaProduto = (id, data) => api.put(`/coletas-produto/${id}/`, data);
 export const deleteColetaProduto = (id) => api.delete(`/coletas-produto/${id}/`);
+export const exportColetasProduto = (params) => api.get('/export/coletas-produto/', { params, responseType: 'blob' });
 
 // Tratamentos
 export const getTratamentos = (params) => api.get('/tratamentos/', { params });

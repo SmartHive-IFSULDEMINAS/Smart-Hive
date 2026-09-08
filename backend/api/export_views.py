@@ -8,7 +8,7 @@ from django.db.models import Q
 from datetime import datetime
 
 from .models import (
-    Apiario, Colmeia, Inspecao, ProducaoMel, 
+    Apiario, Colmeia, Inspecao, ProducaoMel, ColetaProduto,
     Tratamento, Custo, Receita
 )
 from .export_utils import export_to_excel, export_to_pdf
@@ -159,6 +159,59 @@ def export_producao(request):
         filename=f'producao_{datetime.now().strftime("%Y%m%d")}.xlsx',
         columns=columns,
         sheet_name='Produção'
+    )
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def export_coletas_produto(request):
+    """Exporta coletas de pólen/própolis para Excel ou PDF"""
+    format_type = request.GET.get('format', 'excel')
+    tipo_produto = request.GET.get('tipo_produto')
+
+    queryset = ColetaProduto.objects.select_related('colmeia', 'colmeia__apiario').all()
+
+    if tipo_produto:
+        queryset = queryset.filter(tipo_produto=tipo_produto)
+    if request.GET.get('data_inicio'):
+        queryset = queryset.filter(data_coleta__gte=request.GET.get('data_inicio'))
+    if request.GET.get('data_fim'):
+        queryset = queryset.filter(data_coleta__lte=request.GET.get('data_fim'))
+
+    titulo_produto = dict(ColetaProduto.TIPO_PRODUTO_CHOICES).get(tipo_produto, 'Coletas')
+
+    columns = [
+        ('colmeia.identificador', 'Colmeia'),
+        ('colmeia.apiario.nome', 'Apiário'),
+        ('data_coleta', 'Data'),
+        ('quantidade_g', 'Quantidade (g)'),
+        ('observacoes', 'Observações'),
+    ]
+
+    if format_type == 'pdf':
+        data = [
+            {
+                'colmeia.identificador': c.colmeia.identificador,
+                'colmeia.apiario.nome': c.colmeia.apiario.nome,
+                'data_coleta': c.data_coleta.strftime('%d/%m/%Y'),
+                'quantidade_g': f'{c.quantidade_g:.2f}',
+                'observacoes': c.observacoes,
+            }
+            for c in queryset
+        ]
+        return export_to_pdf(
+            data=data,
+            filename=f'coletas_{tipo_produto or "produto"}_{datetime.now().strftime("%Y%m%d")}.pdf',
+            title=f'Relatório de Produção de {titulo_produto}',
+            columns=columns,
+            orientation='landscape'
+        )
+
+    return export_to_excel(
+        queryset=queryset,
+        filename=f'coletas_{tipo_produto or "produto"}_{datetime.now().strftime("%Y%m%d")}.xlsx',
+        columns=columns,
+        sheet_name=titulo_produto
     )
 
 

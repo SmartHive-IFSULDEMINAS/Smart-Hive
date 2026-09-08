@@ -337,3 +337,23 @@ class ColetaProdutoTests(APITestCase):
 		self.assertEqual(response.status_code, status.HTTP_200_OK)
 		self.assertEqual(float(response.data['producao_polen_mes_g']), 150.0)
 		self.assertEqual(float(response.data['producao_propolis_mes_g']), 25.0)
+
+	def test_export_excel_retorna_arquivo_xlsx(self):
+		ColetaProduto.objects.create(
+			colmeia=self.colmeia, tipo_produto='polen', data_coleta=date.today(), quantidade_g=100,
+		)
+
+		response = self.client.get('/api/export/coletas-produto/?tipo_produto=polen&format=excel')
+
+		self.assertEqual(response.status_code, status.HTTP_200_OK)
+		self.assertIn('spreadsheetml', response['Content-Type'])
+
+	def test_export_pdf_retorna_arquivo_pdf(self):
+		ColetaProduto.objects.create(
+			colmeia=self.colmeia, tipo_produto='propolis', data_coleta=date.today(), quantidade_g=30,
+		)
+
+		response = self.client.get('/api/export/coletas-produto/?tipo_produto=propolis&format=pdf')
+
+		self.assertEqual(response.status_code, status.HTTP_200_OK)
+		self.assertEqual(response['Content-Type'], 'application/pdf')

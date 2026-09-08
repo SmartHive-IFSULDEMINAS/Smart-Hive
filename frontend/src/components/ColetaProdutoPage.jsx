@@ -42,14 +42,32 @@ import {
     Search as SearchIcon,
     TrendingUp as TrendingIcon,
     MoreVert as MoreVertIcon,
+    FileDownload as FileDownloadIcon,
 } from '@mui/icons-material';
+import {
+    BarChart,
+    Bar,
+    XAxis,
+    YAxis,
+    CartesianGrid,
+    Tooltip as RechartsTooltip,
+    ResponsiveContainer,
+} from 'recharts';
 import {
     getColetasProduto,
     createColetaProduto,
     updateColetaProduto,
     deleteColetaProduto,
+    exportColetasProduto,
     getColmeias,
 } from '../services/api';
+
+const darkTooltipStyle = {
+    background: '#1A1D27',
+    border: '1px solid rgba(255,255,255,0.12)',
+    borderRadius: 10,
+    fontSize: 13,
+};
 
 const buildInitialFormData = () => ({
     colmeia: '',
@@ -74,6 +92,8 @@ export default function ColetaProdutoPage({ tipoProduto, titulo, icone }) {
     const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
     const [deleteConfirm, setDeleteConfirm] = useState({ open: false, id: null });
     const [actionMenu, setActionMenu] = useState({ anchor: null, coleta: null });
+    const [exportMenuAnchor, setExportMenuAnchor] = useState(null);
+    const [exporting, setExporting] = useState(false);
 
     useEffect(() => {
         fetchData();
@@ -160,12 +180,51 @@ export default function ColetaProdutoPage({ tipoProduto, titulo, icone }) {
         }
     };
 
+    const handleExport = async (format) => {
+        setExportMenuAnchor(null);
+        try {
+            setExporting(true);
+            const response = await exportColetasProduto({ tipo_produto: tipoProduto, format });
+            const blob = new Blob([response.data]);
+            const url = window.URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            const extensao = format === 'pdf' ? 'pdf' : 'xlsx';
+            link.href = url;
+            link.download = `coletas_${tipoProduto}_${new Date().toISOString().split('T')[0]}.${extensao}`;
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            window.URL.revokeObjectURL(url);
+        } catch (err) {
+            setSnackbar({ open: true, message: 'Erro ao gerar relatório', severity: 'error' });
+            console.error(err);
+        } finally {
+            setExporting(false);
+        }
+    };
+
     const filteredColetas = coletas.filter(coleta => {
         const identificador = coleta.colmeia_identificador || '';
         const apiario = coleta.apiario_nome || '';
         return identificador.toLowerCase().includes(searchTerm.toLowerCase()) ||
             apiario.toLowerCase().includes(searchTerm.toLowerCase());
     });
+
+    const porMesData = Object.values(
+        coletas.reduce((acc, item) => {
+            const data = new Date(item.data_coleta);
+            const chave = `${data.getFullYear()}-${String(data.getMonth() + 1).padStart(2, '0')}`;
+            if (!acc[chave]) {
+                acc[chave] = {
+                    chave,
+                    mes: data.toLocaleDateString('pt-BR', { month: 'short', year: '2-digit' }),
+                    quantidade: 0,
+                };
+            }
+            acc[chave].quantidade += parseFloat(item.quantidade_g || 0);
+            return acc;
+        }, {})
+    ).sort((a, b) => a.chave.localeCompare(b.chave));
 
     const closeActionMenu = () => setActionMenu({ anchor: null, coleta: null });
 
@@ -189,6 +248,20 @@ export default function ColetaProdutoPage({ tipoProduto, titulo, icone }) {
                     sx={{ width: { xs: '100%', sm: 240 } }}
                     InputProps={{ startAdornment: <InputAdornment position="start"><SearchIcon sx={{ fontSize: 18, color: 'text.disabled' }} /></InputAdornment> }}
                 />
+                <Tooltip title="Exportar relatório">
+                    <IconButton
+                        size="small"
+                        onClick={(e) => setExportMenuAnchor(e.currentTarget)}
+                        disabled={exporting}
+                        sx={{ border: '1px solid', borderColor: 'divider' }}
+                    >
+                        <FileDownloadIcon fontSize="small" />
+                    </IconButton>
+                </Tooltip>
+                <MuiMenu anchorEl={exportMenuAnchor} open={Boolean(exportMenuAnchor)} onClose={() => setExportMenuAnchor(null)}>
+                    <MenuItem onClick={() => handleExport('excel')}>Exportar Excel</MenuItem>
+                    <MenuItem onClick={() => handleExport('pdf')}>Exportar PDF</MenuItem>
+                </MuiMenu>
                 <Button variant="contained" startIcon={<AddIcon />} size="small" onClick={() => handleOpenDialog()}>
                     Registrar Coleta
                 </Button>
@@ -221,6 +294,37 @@ export default function ColetaProdutoPage({ tipoProduto, titulo, icone }) {
                     </Grid>
                 ))}
             </Grid>
+
+            {/* Chart: coletas por mês */}
+            <Card sx={{ mb: 3 }}>
+                <CardContent>
+                    <Typography variant="subtitle1" fontWeight={600} gutterBottom>Coletas por Mês</Typography>
+                    <Box sx={{ height: 220 }}>
+                        {loading ? (
+                            <Skeleton variant="rectangular" height="100%" sx={{ borderRadius: 1 }} />
+                        ) : porMesData.length > 0 ? (
+                            <ResponsiveContainer width="100%" height="100%">
+                                <BarChart data={porMesData}>
+                                    <CartesianGrid stroke="rgba(255,255,255,0.05)" strokeDasharray="0" vertical={false} />
+                                    <XAxis dataKey="mes" tick={{ fill: 'rgba(232,234,237,0.55)', fontSize: 11 }} axisLine={false} tickLine={false} />
+                                    <YAxis unit=" g" tick={{ fill: 'rgba(232,234,237,0.55)', fontSize: 11 }} axisLine={false} tickLine={false} />
+                                    <RechartsTooltip
+                                        formatter={(v) => [`${v.toFixed(1)} g`, 'Quantidade']}
+                                        contentStyle={darkTooltipStyle}
+                                        labelStyle={{ color: '#E8EAED', fontWeight: 600 }}
+                                        itemStyle={{ color: 'rgba(232,234,237,0.75)' }}
+                                    />
+                                    <Bar dataKey="quantidade" fill={theme.palette.primary.main} radius={[4, 4, 0, 0]} />
+                                </BarChart>
+                            </ResponsiveContainer>
+                        ) : (
+                            <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
+                                <Typography variant="body2" color="text.secondary">Nenhum dado disponível</Typography>
+                            </Box>
+                        )}
+                    </Box>
+                </CardContent>
+            </Card>
 
             {/* Active filter chips */}
             {searchTerm && (
