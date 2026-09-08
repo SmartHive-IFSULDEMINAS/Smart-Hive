@@ -116,6 +116,10 @@ export const exportColmeias = (params) => api.get('/export/colmeias/', { params,
 export const exportProducao = (params) => api.get('/export/producao/', { params, responseType: 'blob' });
 export const exportFinanceiro = (params) => api.get('/export/financeiro/', { params, responseType: 'blob' });
 
+// Custos e Receitas (usados na tela de Relatórios)
+export const getCustos = (params) => api.get('/custos/', { params });
+export const getReceitas = (params) => api.get('/receitas/', { params });
+
 // Tratamentos
 export const getTratamentos = (params) => api.get('/tratamentos/', { params });
 export const getTratamento = (id) => api.get(`/tratamentos/${id}/`);
