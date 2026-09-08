@@ -476,11 +476,21 @@ class DashboardView(APIView):
                 data_colheita__lt=mes_fim
             ).aggregate(total=Sum('quantidade_kg'))['total'] or 0
             
+            polen_mes = ColetaProduto.objects.filter(
+                tipo_produto='polen', data_coleta__gte=mes_inicio, data_coleta__lt=mes_fim
+            ).aggregate(total=Sum('quantidade_g'))['total'] or 0
+
+            propolis_mes = ColetaProduto.objects.filter(
+                tipo_produto='propolis', data_coleta__gte=mes_inicio, data_coleta__lt=mes_fim
+            ).aggregate(total=Sum('quantidade_g'))['total'] or 0
+
             producao_por_mes.append({
                 'mes': mes_inicio.strftime('%b/%Y'),
-                'producao_kg': float(producao)
+                'producao_kg': float(producao),
+                'polen_g': float(polen_mes),
+                'propolis_g': float(propolis_mes),
             })
-        
+
         stats['producao_por_mes'] = producao_por_mes
         
         # Colmeias por status

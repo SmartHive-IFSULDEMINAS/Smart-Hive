@@ -47,6 +47,7 @@ import {
     CameraAlt as CameraIcon,
     NotificationsActive as AlertsIcon,
     Assessment as AnalyticsIcon,
+    Summarize as ReportsIcon,
     Brightness4 as DarkModeIcon,
     Brightness7 as LightModeIcon,
     ChevronLeft as ChevronLeftIcon,
@@ -86,6 +87,12 @@ const menuSections = [
         ],
     },
     {
+        label: 'RELATÓRIOS',
+        items: [
+            { text: 'Relatórios', icon: <ReportsIcon />, path: '/relatorios' },
+        ],
+    },
+    {
         label: 'REFERÊNCIA',
         items: [
             { text: 'Espécies', icon: <BugIcon />, path: '/especies' },
@@ -109,6 +116,7 @@ const pageTitles = {
     '/historico-ruido': 'Histórico IoT',
     '/alertas':    'Alertas',
     '/analises':   'Análises',
+    '/relatorios': 'Relatórios',
     '/producao':   'Produção',
     '/producao-polen': 'Produção de Pólen',
     '/producao-propolis': 'Produção de Própolis',

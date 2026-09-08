@@ -585,6 +585,45 @@ export default function Dashboard() {
                 </Grid>
             </Grid>
 
+            {/* ─── Chart: Pólen e Própolis ──────────────────────────────────── */}
+            <Grid container spacing={3} sx={{ mb: 4 }}>
+                <Grid size={12}>
+                    <Fade in timeout={1050}>
+                        <Card>
+                            <CardContent sx={{ p: 3 }}>
+                                <SectionHeader
+                                    title="Evolução de Pólen e Própolis"
+                                    icon={<PolenIcon />}
+                                    badge={<Chip label="12 meses" size="small" variant="outlined" />}
+                                />
+                                <Box sx={{ height: 320 }}>
+                                    <ResponsiveContainer width="100%" height="100%">
+                                        <LineChart data={data?.producao_por_mes || []}>
+                                            <CartesianGrid stroke="rgba(255,255,255,0.05)" strokeDasharray="0" vertical={false} />
+                                            <XAxis dataKey="mes" tick={{ fontSize: 11, fill: theme.palette.text.secondary }} stroke="rgba(255,255,255,0.08)" />
+                                            <YAxis tick={{ fontSize: 11, fill: theme.palette.text.secondary }} stroke="rgba(255,255,255,0.08)" unit=" g" />
+                                            <RechartsTooltip
+                                                contentStyle={darkTooltipStyle}
+                                                labelStyle={{ color: '#E8EAED', fontWeight: 600 }}
+                                                itemStyle={{ color: 'rgba(232,234,237,0.75)' }}
+                                                formatter={(value, name) => [`${parseFloat(value).toFixed(1)} g`, name]}
+                                            />
+                                            <Legend
+                                                formatter={(value) => (
+                                                    <span style={{ color: 'rgba(232,234,237,0.75)', fontSize: 12 }}>{value}</span>
+                                                )}
+                                            />
+                                            <Line type="monotone" dataKey="polen_g" name="Pólen" stroke="#8D6E63" strokeWidth={2} dot={{ r: 3, strokeWidth: 0 }} activeDot={{ r: 5 }} />
+                                            <Line type="monotone" dataKey="propolis_g" name="Própolis" stroke="#6D4C41" strokeWidth={2} dot={{ r: 3, strokeWidth: 0 }} activeDot={{ r: 5 }} />
+                                        </LineChart>
+                                    </ResponsiveContainer>
+                                </Box>
+                            </CardContent>
+                        </Card>
+                    </Fade>
+                </Grid>
+            </Grid>
+
             {/* ─── Tables ───────────────────────────────────────────────────── */}
             <Grid container spacing={3}>
                 <Grid size={{ xs: 12, md: 6 }}>

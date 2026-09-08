@@ -29,6 +29,7 @@ import DeteccaoAbelhas from './pages/DeteccaoAbelhas';
 import HistoricoRuido from './pages/HistoricoRuido';
 import Alertas from './pages/Alertas';
 import Analises from './pages/Analises';
+import Relatorios from './pages/Relatorios';
 import { useMemo } from 'react';
 
 function AppContent() {
@@ -73,6 +74,7 @@ function AppContent() {
                             <Route path="/historico-ruido" element={<HistoricoRuido />} />
                             <Route path="/alertas" element={<Alertas />} />
                             <Route path="/analises" element={<Analises />} />
+                            <Route path="/relatorios" element={<Relatorios />} />
                             <Route path="*" element={<Navigate to="/" replace />} />
                           </Routes>
                         </Layout>

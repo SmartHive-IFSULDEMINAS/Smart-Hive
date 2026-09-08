@@ -75,22 +75,22 @@ def export_colmeias(request):
         queryset = queryset.filter(status=request.GET.get('status'))
     
     columns = [
-        ('codigo', 'Código'),
+        ('identificador', 'Identificador'),
         ('apiario.nome', 'Apiário'),
         ('especie.nome', 'Espécie'),
         ('status', 'Status'),
-        ('quantidade_abelhas', 'Qtd. Abelhas'),
+        ('quantidade_abelhas_estimada', 'Qtd. Abelhas'),
         ('data_instalacao', 'Data Instalação'),
     ]
-    
+
     if format_type == 'pdf':
         data = [
             {
-                'codigo': c.codigo,
+                'identificador': c.identificador,
                 'apiario.nome': c.apiario.nome,
                 'especie.nome': c.especie.nome if c.especie else '',
                 'status': c.get_status_display(),
-                'quantidade_abelhas': c.quantidade_abelhas or 0,
+                'quantidade_abelhas_estimada': c.quantidade_abelhas_estimada or 0,
                 'data_instalacao': c.data_instalacao.strftime('%d/%m/%Y') if c.data_instalacao else '',
             }
             for c in queryset
@@ -126,18 +126,18 @@ def export_producao(request):
         queryset = queryset.filter(data_colheita__lte=request.GET.get('data_fim'))
     
     columns = [
-        ('colmeia.codigo', 'Colmeia'),
+        ('colmeia.identificador', 'Colmeia'),
         ('colmeia.apiario.nome', 'Apiário'),
         ('data_colheita', 'Data Colheita'),
         ('quantidade_kg', 'Quantidade (kg)'),
         ('tipo_mel', 'Tipo de Mel'),
         ('qualidade', 'Qualidade'),
     ]
-    
+
     if format_type == 'pdf':
         data = [
             {
-                'colmeia.codigo': p.colmeia.codigo,
+                'colmeia.identificador': p.colmeia.identificador,
                 'colmeia.apiario.nome': p.colmeia.apiario.nome,
                 'data_colheita': p.data_colheita.strftime('%d/%m/%Y'),
                 'quantidade_kg': f'{p.quantidade_kg:.2f}',
@@ -243,17 +243,17 @@ def export_financeiro(request):
                 'tipo': 'Custo',
                 'descricao': c.descricao,
                 'data': c.data.strftime('%d/%m/%Y'),
-                'categoria': c.get_tipo_display(),
+                'categoria': c.get_tipo_custo_display(),
                 'valor': f'R$ -{c.valor:.2f}',
             })
-        
+
         # Adiciona receitas
         for r in receitas:
             data.append({
                 'tipo': 'Receita',
                 'descricao': r.descricao,
                 'data': r.data.strftime('%d/%m/%Y'),
-                'categoria': r.get_tipo_display(),
+                'categoria': r.get_tipo_receita_display(),
                 'valor': f'R$ {r.valor:.2f}',
             })
         
@@ -278,23 +278,69 @@ def export_financeiro(request):
     
     # Excel com múltiplas abas
     from openpyxl import Workbook
+    from openpyxl.styles import Font, Alignment, PatternFill, Border, Side
     from django.http import HttpResponse
-    
+
+    header_fill = PatternFill(start_color='F4A100', end_color='F4A100', fill_type='solid')
+    header_font = Font(bold=True, color='FFFFFF', size=12)
+    border = Border(
+        left=Side(style='thin'), right=Side(style='thin'),
+        top=Side(style='thin'), bottom=Side(style='thin'),
+    )
+
+    def preencher_aba(ws, titulo, linhas, colunas):
+        for col_num, (_, titulo_coluna) in enumerate(colunas, 1):
+            cell = ws.cell(row=1, column=col_num)
+            cell.value = titulo_coluna
+            cell.fill = header_fill
+            cell.font = header_font
+            cell.alignment = Alignment(horizontal='center', vertical='center')
+            cell.border = border
+        for row_num, linha in enumerate(linhas, 2):
+            for col_num, (chave, _) in enumerate(colunas, 1):
+                cell = ws.cell(row=row_num, column=col_num)
+                cell.value = linha.get(chave, '')
+                cell.border = border
+
     wb = Workbook()
-    
-    # Aba de custos
+
+    colunas_custos = [
+        ('descricao', 'Descrição'), ('categoria', 'Categoria'),
+        ('data', 'Data'), ('valor', 'Valor (R$)'),
+    ]
+    linhas_custos = [
+        {
+            'descricao': c.descricao,
+            'categoria': c.get_tipo_custo_display(),
+            'data': c.data.strftime('%d/%m/%Y'),
+            'valor': float(c.valor),
+        }
+        for c in custos
+    ]
     ws_custos = wb.active
     ws_custos.title = 'Custos'
-    # ... (implementação similar ao export_to_excel)
-    
-    # Aba de receitas
+    preencher_aba(ws_custos, 'Custos', linhas_custos, colunas_custos)
+
+    colunas_receitas = [
+        ('descricao', 'Descrição'), ('categoria', 'Categoria'),
+        ('data', 'Data'), ('valor', 'Valor (R$)'),
+    ]
+    linhas_receitas = [
+        {
+            'descricao': r.descricao,
+            'categoria': r.get_tipo_receita_display(),
+            'data': r.data.strftime('%d/%m/%Y'),
+            'valor': float(r.valor),
+        }
+        for r in receitas
+    ]
     ws_receitas = wb.create_sheet('Receitas')
-    # ... (implementação similar ao export_to_excel)
-    
+    preencher_aba(ws_receitas, 'Receitas', linhas_receitas, colunas_receitas)
+
     response = HttpResponse(
         content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
     )
     response['Content-Disposition'] = f'attachment; filename="financeiro_{datetime.now().strftime("%Y%m%d")}.xlsx"'
     wb.save(response)
-    
+
     return response
