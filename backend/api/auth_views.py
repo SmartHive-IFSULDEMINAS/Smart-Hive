@@ -7,7 +7,7 @@ from django.contrib.auth import authenticate
 from django.utils import timezone
 from django.contrib.auth import get_user_model
 
-from .serializers import UsuarioSerializer, UsuarioListSerializer
+from .serializers import UsuarioSerializer, UsuarioListSerializer, UsuarioProfileSerializer, UsuarioCreateSerializer
 
 User = get_user_model()
 
@@ -113,14 +113,23 @@ def me(request):
 @api_view(['PUT', 'PATCH'])
 @permission_classes([IsAuthenticated])
 def update_profile(request):
-    """Atualiza perfil do usuário"""
+    """Atualiza perfil do usuário logado.
+
+    Usa UsuarioProfileSerializer (não UsuarioSerializer) de propósito: só
+    autoatendimento de dados pessoais é permitido aqui. role, ativo,
+    is_staff e is_superuser não podem ser alterados por este endpoint --
+    mesmo que venham no payload, são ignorados silenciosamente (não fazem
+    parte dos fields do serializer, então nunca chegam em validated_data).
+    """
     user = request.user
-    serializer = UsuarioSerializer(user, data=request.data, partial=True)
-    
+    serializer = UsuarioProfileSerializer(user, data=request.data, partial=True)
+
     if serializer.is_valid():
         serializer.save()
-        return Response(serializer.data)
-    
+        # Retorna a representação completa (papel, permissões etc.) para o
+        # frontend manter o AuthContext consistente após o update.
+        return Response(UsuarioSerializer(user).data)
+
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
@@ -134,9 +143,23 @@ class UsuarioViewSet(viewsets.ModelViewSet):
         if user.can_manage_users():
             return User.objects.all()
         return User.objects.none()
-    
+
     def get_serializer_class(self):
+        if self.action == 'create':
+            return UsuarioCreateSerializer
         if self.action == 'list':
             return UsuarioListSerializer
         return UsuarioSerializer
+
+    def create(self, request, *args, **kwargs):
+        # get_queryset() só protege list/retrieve/update/destroy (todos
+        # passam por get_object(), que filtra pelo queryset). create() não
+        # usa get_queryset() -- sem este check, qualquer usuário autenticado
+        # poderia criar contas via POST /usuarios/, papel incluído.
+        if not request.user.can_manage_users():
+            return Response(
+                {'error': 'Sem permissão para criar usuários'},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+        return super().create(request, *args, **kwargs)
 

@@ -35,9 +35,10 @@ import {
     Delete as DeleteIcon,
     MoreVert as MoreVertIcon,
     Lock as LockIcon,
+    Add as AddIcon,
 } from '@mui/icons-material';
 import { useAuth } from '../contexts/AuthContext';
-import { getUsuarios, updateUsuario, deleteUsuario } from '../services/api';
+import { getUsuarios, createUsuario, updateUsuario, deleteUsuario } from '../services/api';
 
 const ROLE_OPTIONS = [
     { value: 'dono', label: 'Dono/Proprietário' },
@@ -47,6 +48,10 @@ const ROLE_OPTIONS = [
 
 const roleColor = (role) => ({ dono: 'error', gestor: 'warning', apicultor: 'default' }[role] || 'default');
 
+const buildInitialFormData = () => ({
+    username: '', email: '', password: '', role: 'apicultor', ativo: true, telefone: '',
+});
+
 export default function Usuarios() {
     const { canManageUsers, user: usuarioAtual } = useAuth();
     const [usuarios, setUsuarios] = useState([]);
@@ -54,7 +59,7 @@ export default function Usuarios() {
     const [erro, setErro] = useState(null);
     const [openDialog, setOpenDialog] = useState(false);
     const [editingId, setEditingId] = useState(null);
-    const [formData, setFormData] = useState({ role: 'apicultor', ativo: true, telefone: '' });
+    const [formData, setFormData] = useState(buildInitialFormData());
     const [saving, setSaving] = useState(false);
     const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
     const [deleteConfirm, setDeleteConfirm] = useState({ open: false, id: null });
@@ -79,9 +84,14 @@ export default function Usuarios() {
         }
     };
 
-    const handleOpenDialog = (usuario) => {
-        setEditingId(usuario.id);
-        setFormData({ role: usuario.role, ativo: usuario.ativo, telefone: usuario.telefone || '' });
+    const handleOpenDialog = (usuario = null) => {
+        if (usuario) {
+            setEditingId(usuario.id);
+            setFormData({ ...buildInitialFormData(), role: usuario.role, ativo: usuario.ativo, telefone: usuario.telefone || '' });
+        } else {
+            setEditingId(null);
+            setFormData(buildInitialFormData());
+        }
         setOpenDialog(true);
     };
 
@@ -94,12 +104,19 @@ export default function Usuarios() {
         e.preventDefault();
         try {
             setSaving(true);
-            await updateUsuario(editingId, formData);
-            setSnackbar({ open: true, message: 'Usuário atualizado com sucesso!', severity: 'success' });
+            if (editingId) {
+                await updateUsuario(editingId, { role: formData.role, ativo: formData.ativo, telefone: formData.telefone });
+                setSnackbar({ open: true, message: 'Usuário atualizado com sucesso!', severity: 'success' });
+            } else {
+                await createUsuario(formData);
+                setSnackbar({ open: true, message: 'Usuário criado com sucesso!', severity: 'success' });
+            }
             handleCloseDialog();
             fetchData();
         } catch (err) {
-            setSnackbar({ open: true, message: err.response?.data?.error || 'Erro ao salvar usuário', severity: 'error' });
+            const dados = err.response?.data;
+            const mensagem = dados?.error || dados?.username?.[0] || dados?.email?.[0] || dados?.password?.[0] || 'Erro ao salvar usuário';
+            setSnackbar({ open: true, message: mensagem, severity: 'error' });
             console.error(err);
         } finally {
             setSaving(false);
@@ -136,10 +153,13 @@ export default function Usuarios() {
 
     return (
         <Box>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2.5 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2.5, flexWrap: 'wrap' }}>
                 <UsuariosIcon sx={{ color: 'primary.main' }} />
-                <Typography variant="h5" fontWeight={700}>Usuários</Typography>
-                <Chip label={`${usuarios.length} cadastrados`} size="small" variant="outlined" sx={{ ml: 1 }} />
+                <Typography variant="h5" fontWeight={700} sx={{ flex: 1, minWidth: 120 }}>Usuários</Typography>
+                <Chip label={`${usuarios.length} cadastrados`} size="small" variant="outlined" sx={{ mr: 1 }} />
+                <Button variant="contained" startIcon={<AddIcon />} size="small" onClick={() => handleOpenDialog()}>
+                    Criar Usuário
+                </Button>
             </Box>
 
             {erro && <Alert severity="error" sx={{ mb: 2 }}>{erro}</Alert>}
@@ -215,11 +235,30 @@ export default function Usuarios() {
                 </MenuItem>
             </MuiMenu>
 
-            {/* Dialog de edição */}
+            {/* Dialog de criação/edição */}
             <Dialog open={openDialog} onClose={handleCloseDialog} maxWidth="xs" fullWidth>
                 <form onSubmit={handleSubmit}>
-                    <DialogTitle>Editar Usuário</DialogTitle>
+                    <DialogTitle>{editingId ? 'Editar Usuário' : 'Criar Usuário'}</DialogTitle>
                     <DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
+                        {!editingId && (
+                            <>
+                                <TextField
+                                    fullWidth required label="Usuário" value={formData.username}
+                                    onChange={(e) => setFormData((prev) => ({ ...prev, username: e.target.value }))}
+                                    autoComplete="off"
+                                />
+                                <TextField
+                                    fullWidth required type="email" label="E-mail" value={formData.email}
+                                    onChange={(e) => setFormData((prev) => ({ ...prev, email: e.target.value }))}
+                                />
+                                <TextField
+                                    fullWidth required type="password" label="Senha" value={formData.password}
+                                    onChange={(e) => setFormData((prev) => ({ ...prev, password: e.target.value }))}
+                                    helperText="Mínimo 8 caracteres"
+                                    autoComplete="new-password"
+                                />
+                            </>
+                        )}
                         <FormControl fullWidth>
                             <InputLabel>Papel</InputLabel>
                             <Select

@@ -139,6 +139,7 @@ export const updateAlertaRuidoConfig = (data) => api.patch('/notificacoes/alerta
 // Usuários (gestão, restrito a Dono/Gestor)
 export const getUsuarios = (params) => api.get('/usuarios/', { params });
 export const getUsuario = (id) => api.get(`/usuarios/${id}/`);
+export const createUsuario = (data) => api.post('/usuarios/', data);
 export const updateUsuario = (id, data) => api.patch(`/usuarios/${id}/`, data);
 export const deleteUsuario = (id) => api.delete(`/usuarios/${id}/`);
 

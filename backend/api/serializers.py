@@ -280,7 +280,11 @@ class UsuarioSerializer(serializers.ModelSerializer):
             'is_dono', 'is_gestor', 'is_apicultor',
             'can_manage_users', 'can_manage_apiarios', 'can_view_reports',
         ]
-        read_only_fields = ['id', 'data_cadastro', 'ultimo_acesso']
+        # is_staff/is_superuser dão acesso ao Django Admin (fora do sistema de
+        # papéis do app) e nunca devem ser graváveis via API -- nem por um
+        # usuário editando o próprio perfil, nem por um Dono/Gestor editando
+        # outro usuário. Só ajustáveis via `manage.py` ou Django Admin direto.
+        read_only_fields = ['id', 'data_cadastro', 'ultimo_acesso', 'is_staff', 'is_superuser']
 
     def get_can_manage_users(self, obj):
         return obj.can_manage_users()
@@ -290,6 +294,44 @@ class UsuarioSerializer(serializers.ModelSerializer):
 
     def get_can_view_reports(self, obj):
         return obj.can_view_reports()
+
+
+class UsuarioProfileSerializer(serializers.ModelSerializer):
+    """Serializer para autoatendimento (PUT/PATCH /auth/profile/) -- expõe só
+    os campos que o próprio usuário pode alterar sobre si mesmo. Nunca inclui
+    role, ativo, is_staff ou is_superuser: essas são decisões administrativas,
+    não de autoatendimento."""
+
+    class Meta:
+        model = User
+        fields = [
+            'first_name', 'last_name', 'email',
+            'telefone', 'cpf', 'data_nascimento', 'endereco', 'foto',
+        ]
+
+
+class UsuarioCreateSerializer(serializers.ModelSerializer):
+    """Serializer para criação de usuário via /usuarios/ (Dono/Gestor).
+    Usa create_user() para garantir que a senha seja hasheada corretamente --
+    UsuarioSerializer não tem campo de senha e não deve ganhar um, pois é
+    usado também para leitura/edição sem re-expor a senha."""
+
+    password = serializers.CharField(write_only=True, required=True, min_length=8)
+    role_display = serializers.CharField(source='get_role_display', read_only=True)
+
+    class Meta:
+        model = User
+        fields = [
+            'id', 'username', 'email', 'password', 'first_name', 'last_name',
+            'role', 'role_display', 'telefone', 'ativo',
+        ]
+
+    def create(self, validated_data):
+        password = validated_data.pop('password')
+        user = User(**validated_data)
+        user.set_password(password)
+        user.save()
+        return user
 
 
 class UsuarioListSerializer(serializers.ModelSerializer):

@@ -99,6 +99,77 @@ class UsuarioMeTests(APITestCase):
 		resultados = response.data['results'] if 'results' in response.data else response.data
 		self.assertEqual(len(resultados), 2)
 
+	def test_apicultor_nao_pode_criar_usuario_via_api(self):
+		apicultor = User.objects.create_user(username='apic_create', password='SenhaForte123!', role='apicultor')
+		self.client.force_authenticate(user=apicultor)
+
+		response = self.client.post(
+			'/api/usuarios/',
+			{'username': 'tentativa', 'email': 'x@x.com', 'password': 'SenhaForte123!', 'role': 'dono'},
+			format='json',
+		)
+
+		self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+		self.assertFalse(User.objects.filter(username='tentativa').exists())
+
+	def test_dono_pode_criar_usuario_com_senha_utilizavel(self):
+		dono = User.objects.create_user(username='dono_create', password='SenhaForte123!', role='dono')
+		self.client.force_authenticate(user=dono)
+
+		response = self.client.post(
+			'/api/usuarios/',
+			{'username': 'gestor_criado', 'email': 'gestor@x.com', 'password': 'SenhaForte123!', 'role': 'gestor'},
+			format='json',
+		)
+
+		self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+		self.assertNotIn('password', response.data)
+
+		novo_usuario = User.objects.get(username='gestor_criado')
+		self.assertEqual(novo_usuario.role, 'gestor')
+		self.assertTrue(novo_usuario.check_password('SenhaForte123!'))
+
+		login_response = self.client.post(
+			'/api/auth/login/',
+			{'username': 'gestor_criado', 'password': 'SenhaForte123!'},
+			format='json',
+		)
+		self.assertEqual(login_response.status_code, status.HTTP_200_OK)
+
+	def test_apicultor_nao_consegue_se_autopromover_via_profile(self):
+		apicultor = User.objects.create_user(username='apic_escalar', password='SenhaForte123!', role='apicultor')
+		self.client.force_authenticate(user=apicultor)
+
+		response = self.client.patch(
+			'/api/auth/profile/',
+			{'is_superuser': True, 'is_staff': True, 'role': 'dono', 'first_name': 'Nome Legítimo'},
+			format='json',
+		)
+
+		self.assertEqual(response.status_code, status.HTTP_200_OK)
+		apicultor.refresh_from_db()
+		self.assertFalse(apicultor.is_superuser)
+		self.assertFalse(apicultor.is_staff)
+		self.assertEqual(apicultor.role, 'apicultor')
+		# A edição legítima (campo de perfil de verdade) continua funcionando
+		self.assertEqual(apicultor.first_name, 'Nome Legítimo')
+
+	def test_dono_nao_consegue_alterar_is_superuser_via_usuarios_viewset(self):
+		dono = User.objects.create_user(username='dono_naoescala', password='SenhaForte123!', role='dono')
+		outro = User.objects.create_user(username='alvo', password='SenhaForte123!', role='apicultor')
+		self.client.force_authenticate(user=dono)
+
+		response = self.client.patch(
+			f'/api/usuarios/{outro.id}/',
+			{'is_superuser': True, 'is_staff': True},
+			format='json',
+		)
+
+		self.assertEqual(response.status_code, status.HTTP_200_OK)
+		outro.refresh_from_db()
+		self.assertFalse(outro.is_superuser)
+		self.assertFalse(outro.is_staff)
+
 
 class AlertaRuidoTests(APITestCase):
 	def setUp(self):
