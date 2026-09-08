@@ -12,30 +12,31 @@ class AuditMiddleware(MiddlewareMixin):
     """
     
     AUDITABLE_METHODS = ['POST', 'PUT', 'PATCH', 'DELETE']
-    AUDITABLE_PATHS = [
-        '/api/apiarios/',
-        '/api/colmeias/',
-        '/api/inspecoes/',
-        '/api/producoes/',
-        '/api/tratamentos/',
-        '/api/custos/',
-        '/api/receitas/',
-        '/api/usuarios/',
+    # Prefixos fora do escopo de auditoria de dados: autenticação (não é
+    # mutação de um registro do domínio), o próprio endpoint de log de
+    # navegação (evitaria logar o log), e IoT (dispositivo, não usuário --
+    # já cai fora por não ter request.user autenticado, mas fica explícito).
+    EXCLUDED_PATH_PREFIXES = [
+        '/api/auth/',
+        '/api/log-navegacao/',
+        '/api/iot/',
     ]
-    
+
     def process_response(self, request, response):
         # Só audita se usuário estiver autenticado
         if not hasattr(request, 'user') or not request.user.is_authenticated:
             return response
-        
+
         # Só audita métodos específicos
         if request.method not in self.AUDITABLE_METHODS:
             return response
-        
-        # Só audita paths específicos
-        if not any(request.path.startswith(path) for path in self.AUDITABLE_PATHS):
+
+        # Só audita chamadas de API, fora dos prefixos excluídos
+        if not request.path.startswith('/api/'):
             return response
-        
+        if any(request.path.startswith(prefix) for prefix in self.EXCLUDED_PATH_PREFIXES):
+            return response
+
         # Só audita se a resposta for bem-sucedida
         if not (200 <= response.status_code < 300):
             return response

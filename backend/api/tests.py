@@ -4,7 +4,7 @@ from datetime import date
 from django.core.files.uploadedfile import SimpleUploadedFile
 from rest_framework import status
 from rest_framework.test import APITestCase
-from api.models import Apiario, Colmeia, Notificacao, AlertaRuidoConfig, ProducaoMel, LeituraSensor, ColetaProduto
+from api.models import Apiario, Colmeia, Notificacao, AlertaRuidoConfig, ProducaoMel, LeituraSensor, ColetaProduto, AuditLog
 from api.alert_utils import gerar_alerta_producao
 
 
@@ -404,3 +404,79 @@ class ColetaProdutoTests(APITestCase):
 
 		self.assertEqual(response.status_code, status.HTTP_200_OK)
 		self.assertEqual(response['Content-Type'], 'application/pdf')
+
+
+class AuditLogTests(APITestCase):
+	def setUp(self):
+		self.dono = User.objects.create_user(username='dono_audit', password='SenhaForte123!', role='dono')
+		self.apicultor = User.objects.create_user(username='apicultor_audit', password='SenhaForte123!', role='apicultor')
+		self.apiario = Apiario.objects.create(
+			nome='Apiário Audit', localizacao='Zona Rural', data_criacao=date.today(),
+		)
+
+	def test_registrar_navegacao_cria_log_view(self):
+		self.client.force_authenticate(user=self.apicultor)
+
+		response = self.client.post(
+			'/api/log-navegacao/',
+			{'pagina': '/relatorios', 'titulo': 'Relatórios'},
+			format='json',
+		)
+
+		self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+		log = AuditLog.objects.filter(user=self.apicultor, action='VIEW').first()
+		self.assertIsNotNone(log)
+		self.assertEqual(log.model_name, '/relatorios')
+
+	def test_mutacao_em_qualquer_endpoint_de_api_gera_log(self):
+		"""Antes, só 8 caminhos fixos eram auditados; agora cobre qualquer endpoint da API."""
+		self.client.force_authenticate(user=self.dono)
+
+		response = self.client.post(
+			'/api/apiarios/',
+			{'nome': 'Novo Apiário', 'localizacao': 'Zona Rural', 'data_criacao': str(date.today())},
+			format='json',
+		)
+
+		self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+		log = AuditLog.objects.filter(user=self.dono, action='CREATE', model_name='apiarios').first()
+		self.assertIsNotNone(log)
+
+	def test_endpoint_de_navegacao_nao_gera_log_recursivo(self):
+		self.client.force_authenticate(user=self.dono)
+		self.client.post('/api/log-navegacao/', {'pagina': '/colmeias', 'titulo': 'Colmeias'}, format='json')
+
+		logs_para_log_navegacao = AuditLog.objects.filter(model_name='log-navegacao')
+		self.assertEqual(logs_para_log_navegacao.count(), 0)
+
+	def test_logs_viewset_vazio_para_apicultor(self):
+		AuditLog.log_action(user=self.dono, action='VIEW', model_name='/colmeias')
+		self.client.force_authenticate(user=self.apicultor)
+
+		response = self.client.get('/api/logs/')
+
+		self.assertEqual(response.status_code, status.HTTP_200_OK)
+		resultados = response.data['results'] if 'results' in response.data else response.data
+		self.assertEqual(len(resultados), 0)
+
+	def test_logs_viewset_lista_para_dono(self):
+		AuditLog.log_action(user=self.dono, action='VIEW', model_name='/colmeias')
+		AuditLog.log_action(user=self.apicultor, action='VIEW', model_name='/apiarios')
+		self.client.force_authenticate(user=self.dono)
+
+		response = self.client.get('/api/logs/')
+
+		self.assertEqual(response.status_code, status.HTTP_200_OK)
+		resultados = response.data['results'] if 'results' in response.data else response.data
+		self.assertEqual(len(resultados), 2)
+
+	def test_logs_viewset_filtra_por_usuario(self):
+		AuditLog.log_action(user=self.dono, action='VIEW', model_name='/colmeias')
+		AuditLog.log_action(user=self.apicultor, action='VIEW', model_name='/apiarios')
+		self.client.force_authenticate(user=self.dono)
+
+		response = self.client.get(f'/api/logs/?usuario={self.apicultor.id}')
+
+		resultados = response.data['results'] if 'results' in response.data else response.data
+		self.assertEqual(len(resultados), 1)
+		self.assertEqual(resultados[0]['usuario_username'], 'apicultor_audit')

@@ -32,6 +32,7 @@ import Analises from './pages/Analises';
 import Relatorios from './pages/Relatorios';
 import Usuarios from './pages/Usuarios';
 import ConfiguracoesAlerta from './pages/ConfiguracoesAlerta';
+import LogsAtividade from './pages/LogsAtividade';
 import { useMemo } from 'react';
 
 function AppContent() {
@@ -79,6 +80,7 @@ function AppContent() {
                             <Route path="/relatorios" element={<Relatorios />} />
                             <Route path="/usuarios" element={<Usuarios />} />
                             <Route path="/configuracoes-alerta" element={<ConfiguracoesAlerta />} />
+                            <Route path="/logs-atividade" element={<LogsAtividade />} />
                             <Route path="*" element={<Navigate to="/" replace />} />
                           </Routes>
                         </Layout>

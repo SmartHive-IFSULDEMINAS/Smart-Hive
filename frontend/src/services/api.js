@@ -154,4 +154,8 @@ export const deleteDeteccaoAbelha = (id) => api.delete(`/deteccoes-abelha/${id}/
 export const getClassificacaoEstatisticas = (params) => api.get('/ia/classificacoes/estatisticas/', { params });
 export const deleteClassificacao = (id) => api.delete(`/ia/classificacoes/${id}/`);
 
+// Log de atividade (navegação + mutações de API)
+export const logNavegacao = (pagina, titulo) => api.post('/log-navegacao/', { pagina, titulo });
+export const getLogsAtividade = (params) => api.get('/logs/', { params });
+
 export default api;

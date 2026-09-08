@@ -1249,3 +1249,10 @@ class ClassificacaoPolen(models.Model):
 
     def __str__(self):
         return f"Pólen TIPO:{self.knn_classe} CLUSTER:{self.kmeans_cluster} — {self.timestamp.strftime('%d/%m/%Y %H:%M')}"
+
+
+# Registra AuditLog (definido em audit_models.py, usado por audit_middleware.py)
+# no módulo de models "oficial" do app -- sem isso, comandos que não
+# carregam o middleware (makemigrations, tests, shell) não enxergam o
+# model, e o Django propõe apagar a tabela por engano.
+from .audit_models import AuditLog  # noqa: E402,F401

@@ -3,7 +3,7 @@ from django.contrib.auth import get_user_model
 from .models import (
     EspecieAbelha, Apiario, Colmeia, Inspecao, ProducaoMel, ColetaProduto, Tratamento,
     Custo, Receita, Fornecedor, Equipamento, Notificacao, LeituraSensor,
-    ClassificacaoPolen, AlertaRuidoConfig, ContagemAbelha,
+    ClassificacaoPolen, AlertaRuidoConfig, ContagemAbelha, AuditLog,
 )
 
 User = get_user_model()
@@ -466,4 +466,18 @@ class ClassificacaoPolenSerializer(serializers.ModelSerializer):
             'dispositivo_id', 'notas', 'requisicao_raw', 'timestamp',
         ]
         read_only_fields = ['timestamp']
+
+
+class AuditLogSerializer(serializers.ModelSerializer):
+    usuario_username = serializers.CharField(source='user.username', read_only=True, default='')
+    action_display = serializers.CharField(source='get_action_display', read_only=True)
+    severity_display = serializers.CharField(source='get_severity_display', read_only=True)
+
+    class Meta:
+        model = AuditLog
+        fields = [
+            'id', 'usuario_username', 'action', 'action_display',
+            'model_name', 'object_id', 'object_repr', 'description',
+            'severity', 'severity_display', 'ip_address', 'timestamp',
+        ]
 

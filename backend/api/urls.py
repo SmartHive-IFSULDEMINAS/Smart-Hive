@@ -27,6 +27,7 @@ from .auth_views import register, login, me, update_profile, UsuarioViewSet
 from .iot_views import receber_dados_iot, importar_dados_iot_json, historico_sensores
 from .apiario_iot_views import receber_dados_iot_apiario
 from .deteccao_views import receber_deteccao_abelhas
+from .log_views import registrar_navegacao, AuditLogViewSet
 from .export_views import (
     export_apiarios,
     export_colmeias,
@@ -43,6 +44,7 @@ router.register(r'colmeias', ColmeiaViewSet, basename='colmeias')
 router.register(r'inspecoes', InspecaoViewSet, basename='inspecoes')
 router.register(r'producoes', ProducaoMelViewSet, basename='producoes')
 router.register(r'coletas-produto', ColetaProdutoViewSet, basename='coletas-produto')
+router.register(r'logs', AuditLogViewSet, basename='logs')
 router.register(r'tratamentos', TratamentoViewSet, basename='tratamentos')
 router.register(r'custos', CustoViewSet, basename='custos')
 router.register(r'receitas', ReceitaViewSet, basename='receitas')
@@ -85,4 +87,6 @@ urlpatterns = [
     path('export/producao/', export_producao, name='export_producao'),
     path('export/coletas-produto/', export_coletas_produto, name='export_coletas_produto'),
     path('export/financeiro/', export_financeiro, name='export_financeiro'),
+    # Log de navegação (evento explícito de troca de tela pelo frontend)
+    path('log-navegacao/', registrar_navegacao, name='registrar_navegacao'),
 ]

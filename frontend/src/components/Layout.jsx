@@ -29,6 +29,7 @@ import {
     getNotificacoesNaoLidas,
     marcarNotificacaoLida,
     marcarTodasNotificacoesLidas,
+    logNavegacao,
 } from '../services/api';
 
 import {
@@ -50,6 +51,7 @@ import {
     Summarize as ReportsIcon,
     People as UsuariosIcon,
     Tune as ConfigAlertaIcon,
+    History as LogsIcon,
     Brightness4 as DarkModeIcon,
     Brightness7 as LightModeIcon,
     ChevronLeft as ChevronLeftIcon,
@@ -112,6 +114,7 @@ const menuSections = [
         items: [
             { text: 'Configurações de Alerta', icon: <ConfigAlertaIcon />, path: '/configuracoes-alerta' },
             { text: 'Usuários', icon: <UsuariosIcon />, path: '/usuarios', requiresManageUsers: true },
+            { text: 'Logs de Atividade', icon: <LogsIcon />, path: '/logs-atividade', requiresManageUsers: true },
         ],
     },
 ];
@@ -128,6 +131,7 @@ const pageTitles = {
     '/relatorios': 'Relatórios',
     '/configuracoes-alerta': 'Configurações de Alerta',
     '/usuarios': 'Usuários',
+    '/logs-atividade': 'Logs de Atividade',
     '/producao':   'Produção',
     '/producao-polen': 'Produção de Pólen',
     '/producao-propolis': 'Produção de Própolis',
@@ -152,6 +156,10 @@ export default function Layout({ children }) {
     const [notificationsLoading, setNotificationsLoading] = useState(false);
     const location = useLocation();
     const navigate = useNavigate();
+
+    useEffect(() => {
+        logNavegacao(location.pathname, pageTitles[location.pathname] || location.pathname).catch(() => {});
+    }, [location.pathname]);
 
     const drawerWidth = sidebarExpanded ? DRAWER_EXPANDED : DRAWER_COLLAPSED;
 
