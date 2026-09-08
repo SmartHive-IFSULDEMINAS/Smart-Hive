@@ -1,9 +1,9 @@
 from rest_framework import serializers
 from django.contrib.auth import get_user_model
 from .models import (
-    EspecieAbelha, Apiario, Colmeia, Inspecao, ProducaoMel, Tratamento,
+    EspecieAbelha, Apiario, Colmeia, Inspecao, ProducaoMel, ColetaProduto, Tratamento,
     Custo, Receita, Fornecedor, Equipamento, Notificacao, LeituraSensor,
-    ClassificacaoPolen, AlertaRuidoConfig,
+    ClassificacaoPolen, AlertaRuidoConfig, ContagemAbelha,
 )
 
 User = get_user_model()
@@ -77,9 +77,14 @@ class ColmeiaSerializer(serializers.ModelSerializer):
             'sensor_iot_ativo', 'temperatura_atual', 'nivel_ruido', 'luminosidade',
             'umidade', 'pressao', 'peso',
             'data_ultima_leitura_sensor', 'token_iot',
+            # Campos de detecção de abelhas (visão computacional)
+            'ultima_contagem_abelhas', 'ultima_contagem_polen', 'data_ultima_deteccao',
             'created_at', 'updated_at'
         ]
-        read_only_fields = ['token_iot', 'data_ultima_leitura_sensor']
+        read_only_fields = [
+            'token_iot', 'data_ultima_leitura_sensor',
+            'ultima_contagem_abelhas', 'ultima_contagem_polen', 'data_ultima_deteccao',
+        ]
 
 
 class ColmeiaListSerializer(serializers.ModelSerializer):
@@ -95,9 +100,11 @@ class ColmeiaListSerializer(serializers.ModelSerializer):
             'especie_nome', 'status', 'status_display',
             'quantidade_abelhas_estimada', 'data_ultima_inspecao',
             # Campos IoT
-            'sensor_iot_ativo', 'temperatura_atual', 'nivel_ruido', 
+            'sensor_iot_ativo', 'temperatura_atual', 'nivel_ruido',
             'luminosidade', 'umidade', 'pressao', 'peso',
-            'data_ultima_leitura_sensor'
+            'data_ultima_leitura_sensor',
+            # Campos de detecção de abelhas (visão computacional)
+            'ultima_contagem_abelhas', 'ultima_contagem_polen', 'data_ultima_deteccao',
         ]
 
 
@@ -169,6 +176,34 @@ class ProducaoMelListSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'colmeia', 'colmeia_identificador', 'apiario_nome',
             'data_colheita', 'quantidade_kg', 'tipo_mel', 'qualidade'
+        ]
+
+
+class ColetaProdutoSerializer(serializers.ModelSerializer):
+    colmeia_identificador = serializers.CharField(source='colmeia.identificador', read_only=True)
+    apiario_nome = serializers.CharField(source='colmeia.apiario.nome', read_only=True)
+    tipo_produto_display = serializers.CharField(source='get_tipo_produto_display', read_only=True)
+
+    class Meta:
+        model = ColetaProduto
+        fields = [
+            'id', 'colmeia', 'colmeia_identificador', 'apiario_nome',
+            'tipo_produto', 'tipo_produto_display', 'data_coleta',
+            'quantidade_g', 'observacoes',
+            'created_at', 'updated_at'
+        ]
+
+
+class ColetaProdutoListSerializer(serializers.ModelSerializer):
+    """Serializer simplificado para listagens"""
+    colmeia_identificador = serializers.CharField(source='colmeia.identificador', read_only=True)
+    apiario_nome = serializers.CharField(source='colmeia.apiario.nome', read_only=True)
+
+    class Meta:
+        model = ColetaProduto
+        fields = [
+            'id', 'colmeia', 'colmeia_identificador', 'apiario_nome',
+            'tipo_produto', 'data_coleta', 'quantidade_g'
         ]
 
 
@@ -388,6 +423,19 @@ class LeituraSensorListSerializer(serializers.ModelSerializer):
             'luminosidade', 'umidade', 'pressao', 'peso',
             'timestamp', 'dispositivo_id'
         ]
+
+
+class ContagemAbelhaSerializer(serializers.ModelSerializer):
+    colmeia_identificador = serializers.CharField(source='colmeia.identificador', read_only=True)
+    apiario_nome = serializers.CharField(source='colmeia.apiario.nome', read_only=True)
+
+    class Meta:
+        model = ContagemAbelha
+        fields = [
+            'id', 'colmeia', 'colmeia_identificador', 'apiario_nome',
+            'bee_count', 'pollen_count', 'captured_at', 'timestamp',
+        ]
+        read_only_fields = ['timestamp']
 
 
 class ClassificacaoPolenSerializer(serializers.ModelSerializer):

@@ -104,6 +104,13 @@ export const updateProducao = (id, data) => api.put(`/producoes/${id}/`, data);
 export const deleteProducao = (id) => api.delete(`/producoes/${id}/`);
 export const getProducaoRelatorio = (params) => api.get('/producoes/relatorio/', { params });
 
+// Coletas de Produto (Pólen / Própolis)
+export const getColetasProduto = (params) => api.get('/coletas-produto/', { params });
+export const getColetaProduto = (id) => api.get(`/coletas-produto/${id}/`);
+export const createColetaProduto = (data) => api.post('/coletas-produto/', data);
+export const updateColetaProduto = (id, data) => api.put(`/coletas-produto/${id}/`, data);
+export const deleteColetaProduto = (id) => api.delete(`/coletas-produto/${id}/`);
+
 // Tratamentos
 export const getTratamentos = (params) => api.get('/tratamentos/', { params });
 export const getTratamento = (id) => api.get(`/tratamentos/${id}/`);
@@ -125,6 +132,11 @@ export const getUsuarios = (params) => api.get('/usuarios/', { params });
 export const classificarPolen = (data) => api.post('/ia/polen/classificar/', data);
 export const getIAStatus = () => api.get('/ia/status/');
 export const getClassificacoes = (params) => api.get('/ia/classificacoes/', { params });
+
+// Deteccoes de abelhas (pipeline de visao computacional - SmartHive)
+export const getDeteccoesAbelha = (params) => api.get('/deteccoes-abelha/', { params });
+export const getDeteccaoAbelhaEstatisticas = (params) => api.get('/deteccoes-abelha/estatisticas/', { params });
+export const deleteDeteccaoAbelha = (id) => api.delete(`/deteccoes-abelha/${id}/`);
 export const getClassificacaoEstatisticas = (params) => api.get('/ia/classificacoes/estatisticas/', { params });
 export const deleteClassificacao = (id) => api.delete(`/ia/classificacoes/${id}/`);
 

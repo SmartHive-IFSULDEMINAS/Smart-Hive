@@ -7,6 +7,7 @@ from .views import (
     ColmeiaViewSet,
     InspecaoViewSet,
     ProducaoMelViewSet,
+    ColetaProdutoViewSet,
     TratamentoViewSet,
     DashboardView,
     CustoViewSet,
@@ -20,10 +21,12 @@ from .views import (
     DashboardComparativoView,
     DashboardPrevisaoView,
     ClassificacaoPolenViewSet,
+    ContagemAbelhaViewSet,
 )
 from .auth_views import register, login, me, update_profile, UsuarioViewSet
 from .iot_views import receber_dados_iot, importar_dados_iot_json, historico_sensores
 from .apiario_iot_views import receber_dados_iot_apiario
+from .deteccao_views import receber_deteccao_abelhas
 from .export_views import (
     export_apiarios,
     export_colmeias,
@@ -38,6 +41,7 @@ router.register(r'apiarios', ApiarioViewSet, basename='apiarios')
 router.register(r'colmeias', ColmeiaViewSet, basename='colmeias')
 router.register(r'inspecoes', InspecaoViewSet, basename='inspecoes')
 router.register(r'producoes', ProducaoMelViewSet, basename='producoes')
+router.register(r'coletas-produto', ColetaProdutoViewSet, basename='coletas-produto')
 router.register(r'tratamentos', TratamentoViewSet, basename='tratamentos')
 router.register(r'custos', CustoViewSet, basename='custos')
 router.register(r'receitas', ReceitaViewSet, basename='receitas')
@@ -46,6 +50,7 @@ router.register(r'equipamentos', EquipamentoViewSet, basename='equipamentos')
 router.register(r'notificacoes', NotificacaoViewSet, basename='notificacoes')
 router.register(r'usuarios', UsuarioViewSet, basename='usuarios')
 router.register(r'ia/classificacoes', ClassificacaoPolenViewSet, basename='ia-classificacoes')
+router.register(r'deteccoes-abelha', ContagemAbelhaViewSet, basename='deteccoes-abelha')
 
 urlpatterns = [
     path('', include(router.urls)),
@@ -68,6 +73,8 @@ urlpatterns = [
     path('iot/colmeia/historico/<str:colmeia_identificador>/', historico_sensores, name='historico_sensores'),
     # IoT endpoints - Apiários
     path('iot/apiario/dados/', receber_dados_iot_apiario, name='receber_dados_iot_apiario'),
+    # Pipeline de visão computacional (SmartHive, repo separado) - contagem de abelhas/pólen
+    path('iot/colmeia/deteccoes/', receber_deteccao_abelhas, name='receber_deteccao_abelhas'),
     # IA endpoints — classificação espectral de pólen
     path('ia/polen/classificar/', classificar_polen, name='ia_classificar_polen'),
     path('ia/status/', status_modelos, name='ia_status_modelos'),

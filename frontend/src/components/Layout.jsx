@@ -39,9 +39,12 @@ import {
     Search as SearchIcon,
     GraphicEq as NoiseIcon,
     LocalFlorist as HoneyIcon,
+    Grain as PolenIcon,
+    Opacity as PropolisIcon,
     Healing as TreatmentIcon,
     BugReport as BugIcon,
     Biotech as BiotechIcon,
+    CameraAlt as CameraIcon,
     NotificationsActive as AlertsIcon,
     Assessment as AnalyticsIcon,
     Brightness4 as DarkModeIcon,
@@ -77,6 +80,8 @@ const menuSections = [
             { text: 'Alertas',     icon: <AlertsIcon />,    path: '/alertas' },
             { text: 'Análises',    icon: <AnalyticsIcon />, path: '/analises' },
             { text: 'Produção',    icon: <HoneyIcon />,     path: '/producao' },
+            { text: 'Produção de Pólen',    icon: <PolenIcon />,     path: '/producao-polen' },
+            { text: 'Produção de Própolis', icon: <PropolisIcon />,  path: '/producao-propolis' },
             { text: 'Tratamentos', icon: <TreatmentIcon />, path: '/tratamentos' },
         ],
     },
@@ -90,6 +95,7 @@ const menuSections = [
         label: 'INTELIGÊNCIA ARTIFICIAL',
         items: [
             { text: 'Análise de Pólen', icon: <BiotechIcon />, path: '/ia-polen' },
+            { text: 'Detecção de Abelhas', icon: <CameraIcon />, path: '/deteccao-abelhas' },
         ],
     },
 ];
@@ -104,9 +110,12 @@ const pageTitles = {
     '/alertas':    'Alertas',
     '/analises':   'Análises',
     '/producao':   'Produção',
+    '/producao-polen': 'Produção de Pólen',
+    '/producao-propolis': 'Produção de Própolis',
     '/tratamentos':'Tratamentos',
     '/especies':   'Espécies',
     '/ia-polen':   'IA — Análise de Pólen',
+    '/deteccao-abelhas': 'Detecção de Abelhas',
 };
 
 export default function Layout({ children }) {

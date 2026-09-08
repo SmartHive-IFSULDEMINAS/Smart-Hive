@@ -4,7 +4,7 @@ from .models import (
     Usuario, EspecieAbelha, Apiario, Colmeia, Inspecao,
     ProducaoMel, Tratamento, Custo, Receita, Fornecedor,
     Equipamento, Notificacao, LeituraSensor, ClassificacaoPolen,
-    AlertaRuidoConfig,
+    AlertaRuidoConfig, ContagemAbelha,
 )
 
 
@@ -96,6 +96,17 @@ class LeituraSensorAdmin(admin.ModelAdmin):
     search_fields = ['colmeia__identificador', 'dispositivo_id']
     ordering = ['-timestamp']
     date_hierarchy = 'timestamp'
+    raw_id_fields = ['colmeia']
+    readonly_fields = ['timestamp']
+
+
+@admin.register(ContagemAbelha)
+class ContagemAbelhaAdmin(admin.ModelAdmin):
+    list_display = ['colmeia', 'bee_count', 'pollen_count', 'captured_at', 'timestamp']
+    list_filter = ['captured_at', 'colmeia', 'colmeia__apiario']
+    search_fields = ['colmeia__identificador']
+    ordering = ['-captured_at']
+    date_hierarchy = 'captured_at'
     raw_id_fields = ['colmeia']
     readonly_fields = ['timestamp']
 

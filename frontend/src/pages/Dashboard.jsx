@@ -33,6 +33,8 @@ import {
     Hive as HiveIcon,
     Place as PlaceIcon,
     LocalFlorist as HoneyIcon,
+    Grain as PolenIcon,
+    Opacity as PropolisIcon,
     Healing as TreatmentIcon,
     Warning as WarningIcon,
     Search as InspectionIcon,
@@ -428,6 +430,32 @@ export default function Dashboard() {
                         icon={<WarningIcon />}
                         color={theme.palette.error.main}
                         delay={300}
+                    />
+                </Grid>
+            </Grid>
+
+            {/* ─── KPI Cards — Pólen e Própolis ────────────────────────────────── */}
+            <Grid container spacing={3} sx={{ mb: 4 }}>
+                <Grid size={{ xs: 12, sm: 6 }}>
+                    <StatCard
+                        title="Produção de Pólen (ano)"
+                        value={`${parseFloat(data?.producao_polen_ano_g || 0).toFixed(1)} g`}
+                        subtitle={`${parseFloat(data?.producao_polen_mes_g || 0).toFixed(1)} g este mês`}
+                        icon={<PolenIcon />}
+                        color="#8D6E63"
+                        trend
+                        delay={350}
+                    />
+                </Grid>
+                <Grid size={{ xs: 12, sm: 6 }}>
+                    <StatCard
+                        title="Produção de Própolis (ano)"
+                        value={`${parseFloat(data?.producao_propolis_ano_g || 0).toFixed(1)} g`}
+                        subtitle={`${parseFloat(data?.producao_propolis_mes_g || 0).toFixed(1)} g este mês`}
+                        icon={<PropolisIcon />}
+                        color="#6D4C41"
+                        trend
+                        delay={400}
                     />
                 </Grid>
             </Grid>

@@ -20,9 +20,12 @@ import Apiarios from './pages/Apiarios';
 import Colmeias from './pages/Colmeias';
 import Inspecoes from './pages/Inspecoes';
 import Producao from './pages/Producao';
+import ProducaoPolen from './pages/ProducaoPolen';
+import ProducaoPropolis from './pages/ProducaoPropolis';
 import Tratamentos from './pages/Tratamentos';
 import Especies from './pages/Especies';
 import IAPolen from './pages/IAPolen';
+import DeteccaoAbelhas from './pages/DeteccaoAbelhas';
 import HistoricoRuido from './pages/HistoricoRuido';
 import Alertas from './pages/Alertas';
 import Analises from './pages/Analises';
@@ -61,9 +64,12 @@ function AppContent() {
                             <Route path="/colmeias" element={<Colmeias />} />
                             <Route path="/inspecoes" element={<Inspecoes />} />
                             <Route path="/producao" element={<Producao />} />
+                            <Route path="/producao-polen" element={<ProducaoPolen />} />
+                            <Route path="/producao-propolis" element={<ProducaoPropolis />} />
                             <Route path="/tratamentos" element={<Tratamentos />} />
                             <Route path="/especies" element={<Especies />} />
                             <Route path="/ia-polen" element={<IAPolen />} />
+                            <Route path="/deteccao-abelhas" element={<DeteccaoAbelhas />} />
                             <Route path="/historico-ruido" element={<HistoricoRuido />} />
                             <Route path="/alertas" element={<Alertas />} />
                             <Route path="/analises" element={<Analises />} />

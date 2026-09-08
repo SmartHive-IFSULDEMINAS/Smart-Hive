@@ -9,9 +9,9 @@ from datetime import timedelta
 from django.contrib.auth import get_user_model
 
 from .models import (
-    EspecieAbelha, Apiario, Colmeia, Inspecao, ProducaoMel, Tratamento,
+    EspecieAbelha, Apiario, Colmeia, Inspecao, ProducaoMel, ColetaProduto, Tratamento,
     Custo, Receita, Fornecedor, Equipamento, Notificacao, LeituraSensor,
-    ClassificacaoPolen, AlertaRuidoConfig,
+    ClassificacaoPolen, AlertaRuidoConfig, ContagemAbelha,
 )
 from .serializers import (
     EspecieAbelhaSerializer,
@@ -19,6 +19,7 @@ from .serializers import (
     ColmeiaSerializer, ColmeiaListSerializer,
     InspecaoSerializer, InspecaoListSerializer,
     ProducaoMelSerializer, ProducaoMelListSerializer,
+    ColetaProdutoSerializer, ColetaProdutoListSerializer,
     TratamentoSerializer, TratamentoListSerializer,
     DashboardStatsSerializer,
     CustoSerializer, CustoListSerializer,
@@ -29,6 +30,7 @@ from .serializers import (
     AlertaRuidoConfigSerializer,
     LeituraSensorListSerializer,
     ClassificacaoPolenSerializer,
+    ContagemAbelhaSerializer,
 )
 from .alert_utils import gerar_alerta_producao
 
@@ -313,6 +315,44 @@ class ProducaoMelViewSet(viewsets.ModelViewSet):
         })
 
 
+class ColetaProdutoViewSet(viewsets.ModelViewSet):
+    """ViewSet para coletas de produtos derivados (pólen, própolis)"""
+    queryset = ColetaProduto.objects.select_related('colmeia', 'colmeia__apiario').all()
+    permission_classes = [IsAuthenticated]
+    filter_backends = [filters.SearchFilter, filters.OrderingFilter]
+    search_fields = ['colmeia__identificador']
+    ordering_fields = ['data_coleta', 'quantidade_g']
+    ordering = ['-data_coleta']
+
+    def get_serializer_class(self):
+        if self.action == 'list':
+            return ColetaProdutoListSerializer
+        return ColetaProdutoSerializer
+
+    def get_queryset(self):
+        queryset = ColetaProduto.objects.select_related('colmeia', 'colmeia__apiario').all()
+
+        # Filtros
+        tipo_produto = self.request.query_params.get('tipo_produto', None)
+        colmeia_id = self.request.query_params.get('colmeia', None)
+        apiario_id = self.request.query_params.get('apiario', None)
+        data_inicio = self.request.query_params.get('data_inicio', None)
+        data_fim = self.request.query_params.get('data_fim', None)
+
+        if tipo_produto:
+            queryset = queryset.filter(tipo_produto=tipo_produto)
+        if colmeia_id:
+            queryset = queryset.filter(colmeia_id=colmeia_id)
+        if apiario_id:
+            queryset = queryset.filter(colmeia__apiario_id=apiario_id)
+        if data_inicio:
+            queryset = queryset.filter(data_coleta__gte=data_inicio)
+        if data_fim:
+            queryset = queryset.filter(data_coleta__lte=data_fim)
+
+        return queryset
+
+
 class TratamentoViewSet(viewsets.ModelViewSet):
     """ViewSet para tratamentos"""
     queryset = Tratamento.objects.select_related('colmeia', 'colmeia__apiario').all()
@@ -386,6 +426,18 @@ class DashboardView(APIView):
             'producao_ano_kg': ProducaoMel.objects.filter(
                 data_colheita__gte=inicio_ano
             ).aggregate(total=Sum('quantidade_kg'))['total'] or 0,
+            'producao_polen_mes_g': ColetaProduto.objects.filter(
+                tipo_produto='polen', data_coleta__gte=inicio_mes
+            ).aggregate(total=Sum('quantidade_g'))['total'] or 0,
+            'producao_polen_ano_g': ColetaProduto.objects.filter(
+                tipo_produto='polen', data_coleta__gte=inicio_ano
+            ).aggregate(total=Sum('quantidade_g'))['total'] or 0,
+            'producao_propolis_mes_g': ColetaProduto.objects.filter(
+                tipo_produto='propolis', data_coleta__gte=inicio_mes
+            ).aggregate(total=Sum('quantidade_g'))['total'] or 0,
+            'producao_propolis_ano_g': ColetaProduto.objects.filter(
+                tipo_produto='propolis', data_coleta__gte=inicio_ano
+            ).aggregate(total=Sum('quantidade_g'))['total'] or 0,
             'tratamentos_em_andamento': Tratamento.objects.filter(status='em_andamento').count(),
             'colmeias_com_problemas': Colmeia.objects.filter(
                 Q(status='quarentena') | 
@@ -1076,4 +1128,56 @@ class ClassificacaoPolenViewSet(viewsets.ModelViewSet):
             'distribuicao_knn': list(knn_dist),
             'distribuicao_clusters': list(cluster_dist),
             'ultima_classificacao': ClassificacaoPolenSerializer(ultima).data if ultima else None,
+        })
+
+
+class ContagemAbelhaViewSet(viewsets.ModelViewSet):
+    """ViewSet para histórico de detecções do pipeline de visão computacional (SmartHive)"""
+    queryset = ContagemAbelha.objects.select_related('colmeia', 'colmeia__apiario').all()
+    serializer_class = ContagemAbelhaSerializer
+    permission_classes = [IsAuthenticated]
+    filter_backends = [filters.OrderingFilter]
+    ordering_fields = ['captured_at', 'timestamp', 'bee_count', 'pollen_count']
+    ordering = ['-captured_at']
+    http_method_names = ['get', 'delete', 'head', 'options']  # somente leitura + delete
+
+    def get_queryset(self):
+        queryset = ContagemAbelha.objects.select_related('colmeia', 'colmeia__apiario').all()
+        colmeia_id = self.request.query_params.get('colmeia')
+        data_inicio = self.request.query_params.get('data_inicio')
+        data_fim = self.request.query_params.get('data_fim')
+
+        if colmeia_id:
+            queryset = queryset.filter(colmeia_id=colmeia_id)
+        if data_inicio:
+            queryset = queryset.filter(captured_at__date__gte=data_inicio)
+        if data_fim:
+            queryset = queryset.filter(captured_at__date__lte=data_fim)
+
+        return queryset
+
+    @action(detail=False, methods=['get'])
+    def estatisticas(self, request):
+        """Retorna totais agregados e a colmeia com mais abelhas detectadas"""
+        qs = self.get_queryset()
+        total_deteccoes = qs.count()
+        agregados = qs.aggregate(
+            total_abelhas=Sum('bee_count'),
+            total_polen=Sum('pollen_count'),
+        )
+
+        por_colmeia = (
+            qs.values('colmeia_id', 'colmeia__identificador')
+            .annotate(total_abelhas=Sum('bee_count'), total_polen=Sum('pollen_count'))
+            .order_by('-total_abelhas')
+        )
+
+        ultima = qs.first()
+
+        return Response({
+            'total_deteccoes': total_deteccoes,
+            'total_abelhas': agregados['total_abelhas'] or 0,
+            'total_polen': agregados['total_polen'] or 0,
+            'por_colmeia': list(por_colmeia),
+            'ultima_deteccao': ContagemAbelhaSerializer(ultima).data if ultima else None,
         })

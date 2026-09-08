@@ -4,7 +4,7 @@ from datetime import date
 from django.core.files.uploadedfile import SimpleUploadedFile
 from rest_framework import status
 from rest_framework.test import APITestCase
-from api.models import Apiario, Colmeia, Notificacao, AlertaRuidoConfig, ProducaoMel, LeituraSensor
+from api.models import Apiario, Colmeia, Notificacao, AlertaRuidoConfig, ProducaoMel, LeituraSensor, ColetaProduto
 from api.alert_utils import gerar_alerta_producao
 
 
@@ -250,3 +250,90 @@ class IoTJsonUploadTests(APITestCase):
 		self.assertEqual(float(self.colmeia.temperatura_atual), 31.7)
 		self.assertEqual(float(self.colmeia.nivel_ruido), 43.8)
 		self.assertIsNotNone(self.colmeia.data_ultima_leitura_sensor)
+
+
+class ColetaProdutoTests(APITestCase):
+	def setUp(self):
+		self.usuario = User.objects.create_user(
+			username='apicultor1',
+			email='apicultor1@smarthive.local',
+			password='SenhaForte123!',
+			role='apicultor',
+		)
+		self.apiario = Apiario.objects.create(
+			nome='Apiário Coleta',
+			localizacao='Zona Rural',
+			data_criacao=date.today(),
+		)
+		self.colmeia = Colmeia.objects.create(
+			apiario=self.apiario,
+			identificador='CLM-COLETA-001',
+			data_instalacao=date.today(),
+		)
+		self.client.force_authenticate(user=self.usuario)
+
+	def test_cria_coleta_de_polen(self):
+		response = self.client.post(
+			'/api/coletas-produto/',
+			{
+				'colmeia': self.colmeia.id,
+				'tipo_produto': 'polen',
+				'data_coleta': '2026-09-01',
+				'quantidade_g': '150.50',
+			},
+			format='json',
+		)
+
+		self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+		self.assertEqual(response.data['tipo_produto'], 'polen')
+		self.assertEqual(response.data['colmeia_identificador'], self.colmeia.identificador)
+		self.assertEqual(ColetaProduto.objects.filter(tipo_produto='polen').count(), 1)
+
+	def test_cria_coleta_de_propolis(self):
+		response = self.client.post(
+			'/api/coletas-produto/',
+			{
+				'colmeia': self.colmeia.id,
+				'tipo_produto': 'propolis',
+				'data_coleta': '2026-09-01',
+				'quantidade_g': '30.00',
+			},
+			format='json',
+		)
+
+		self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+		self.assertEqual(response.data['tipo_produto'], 'propolis')
+		self.assertEqual(ColetaProduto.objects.filter(tipo_produto='propolis').count(), 1)
+
+	def test_listagem_filtra_por_tipo_produto(self):
+		ColetaProduto.objects.create(
+			colmeia=self.colmeia, tipo_produto='polen', data_coleta=date(2026, 9, 1), quantidade_g=100,
+		)
+		ColetaProduto.objects.create(
+			colmeia=self.colmeia, tipo_produto='propolis', data_coleta=date(2026, 9, 1), quantidade_g=40,
+		)
+
+		response = self.client.get('/api/coletas-produto/?tipo_produto=polen')
+
+		self.assertEqual(response.status_code, status.HTTP_200_OK)
+		resultados = response.data['results'] if 'results' in response.data else response.data
+		self.assertEqual(len(resultados), 1)
+		self.assertEqual(resultados[0]['tipo_produto'], 'polen')
+
+	def test_dashboard_reflete_totais_de_polen_e_propolis(self):
+		hoje = date.today()
+		ColetaProduto.objects.create(
+			colmeia=self.colmeia, tipo_produto='polen', data_coleta=hoje, quantidade_g=100,
+		)
+		ColetaProduto.objects.create(
+			colmeia=self.colmeia, tipo_produto='polen', data_coleta=hoje, quantidade_g=50,
+		)
+		ColetaProduto.objects.create(
+			colmeia=self.colmeia, tipo_produto='propolis', data_coleta=hoje, quantidade_g=25,
+		)
+
+		response = self.client.get('/api/dashboard/')
+
+		self.assertEqual(response.status_code, status.HTTP_200_OK)
+		self.assertEqual(float(response.data['producao_polen_mes_g']), 150.0)
+		self.assertEqual(float(response.data['producao_propolis_mes_g']), 25.0)

@@ -333,7 +333,28 @@ class Colmeia(models.Model):
         verbose_name='Token IoT',
         help_text='Token único para autenticação do dispositivo IoT'
     )
-    
+
+    # Campos de Detecção de Abelhas (pipeline de visão computacional —
+    # SmartHive, repo separado em C:\Users\Gabriel\Desktop\abelhas\hive)
+    ultima_contagem_abelhas = models.IntegerField(
+        null=True,
+        blank=True,
+        verbose_name='Última Contagem de Abelhas',
+        help_text='Última contagem de abelhas detectada pelo pipeline de visão computacional'
+    )
+    ultima_contagem_polen = models.IntegerField(
+        null=True,
+        blank=True,
+        verbose_name='Última Contagem de Abelhas com Pólen',
+        help_text='Última contagem de abelhas carregando pólen detectada pelo pipeline de visão computacional'
+    )
+    data_ultima_deteccao = models.DateTimeField(
+        null=True,
+        blank=True,
+        verbose_name='Data Última Detecção',
+        help_text='Timestamp da última detecção recebida do pipeline de visão computacional'
+    )
+
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     
@@ -520,6 +541,45 @@ class ProducaoMel(models.Model):
     
     def __str__(self):
         return f"{self.quantidade_kg}kg - {self.colmeia.identificador} - {self.data_colheita.strftime('%d/%m/%Y')}"
+
+
+class ColetaProduto(models.Model):
+    """Modelo para registro de coleta de produtos derivados (pólen, própolis)"""
+
+    TIPO_PRODUTO_CHOICES = [
+        ('propolis', 'Própolis'),
+        ('polen', 'Pólen'),
+    ]
+
+    colmeia = models.ForeignKey(
+        Colmeia,
+        on_delete=models.CASCADE,
+        related_name='coletas_produto',
+        verbose_name='Colmeia'
+    )
+    tipo_produto = models.CharField(
+        max_length=20,
+        choices=TIPO_PRODUTO_CHOICES,
+        verbose_name='Tipo de Produto'
+    )
+    data_coleta = models.DateField(verbose_name='Data da Coleta')
+    quantidade_g = models.DecimalField(
+        max_digits=8,
+        decimal_places=2,
+        validators=[MinValueValidator(0)],
+        verbose_name='Quantidade (g)'
+    )
+    observacoes = models.TextField(blank=True, verbose_name='Observações')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = 'Coleta de Produto'
+        verbose_name_plural = 'Coletas de Produto'
+        ordering = ['-data_coleta']
+
+    def __str__(self):
+        return f"{self.quantidade_g}g de {self.get_tipo_produto_display()} - {self.colmeia.identificador} - {self.data_coleta.strftime('%d/%m/%Y')}"
 
 
 class Tratamento(models.Model):
@@ -1099,6 +1159,50 @@ class LeituraSensor(models.Model):
     
     def __str__(self):
         return f"Leitura {self.colmeia.identificador} - {self.timestamp.strftime('%d/%m/%Y %H:%M')}"
+
+
+class ContagemAbelha(models.Model):
+    """
+    Histórico de detecções do pipeline de visão computacional (SmartHive,
+    repo separado): contagem de abelhas e de abelhas com pólen extraída de
+    uma imagem da entrada da colmeia via modelo YOLO.
+    """
+
+    colmeia = models.ForeignKey(
+        Colmeia,
+        on_delete=models.CASCADE,
+        related_name='deteccoes_abelha',
+        verbose_name='Colmeia'
+    )
+    bee_count = models.IntegerField(
+        validators=[MinValueValidator(0)],
+        verbose_name='Contagem de Abelhas'
+    )
+    pollen_count = models.IntegerField(
+        validators=[MinValueValidator(0)],
+        verbose_name='Contagem de Abelhas com Pólen'
+    )
+    captured_at = models.DateTimeField(
+        verbose_name='Capturada em',
+        help_text='Momento em que a imagem foi capturada na colmeia'
+    )
+    timestamp = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name='Recebida em',
+        db_index=True
+    )
+
+    class Meta:
+        verbose_name = 'Contagem de Abelhas'
+        verbose_name_plural = 'Contagens de Abelhas'
+        ordering = ['-captured_at']
+        indexes = [
+            models.Index(fields=['-captured_at', 'colmeia']),
+            models.Index(fields=['colmeia', '-captured_at']),
+        ]
+
+    def __str__(self):
+        return f"Detecção {self.colmeia.identificador} - {self.captured_at.strftime('%d/%m/%Y %H:%M')}"
 
 
 class ClassificacaoPolen(models.Model):

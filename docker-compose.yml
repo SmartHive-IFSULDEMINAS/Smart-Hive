@@ -21,6 +21,7 @@ services:
       - IA_MODELS_DIR=/app/ia_models
     networks:
       - smarthive-network
+      - smarthive-integration
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/api/dashboard/"]
       interval: 30s
@@ -68,3 +69,9 @@ volumes:
 networks:
   smarthive-network:
     driver: bridge
+  # Rede compartilhada com o docker-compose do pipeline de visao computacional
+  # (repo separado, C:\Users\Gabriel\Desktop\abelhas\hive), so pra o worker
+  # de la conseguir chamar esse backend. Precisa existir antes:
+  # docker network create smarthive-integration
+  smarthive-integration:
+    external: true
