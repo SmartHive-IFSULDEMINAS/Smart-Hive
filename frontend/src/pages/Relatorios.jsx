@@ -48,6 +48,7 @@ import {
     ResponsiveContainer,
     Legend,
 } from 'recharts';
+import { useAuth } from '../contexts/AuthContext';
 import {
     getApiarios,
     getColmeias,
@@ -125,6 +126,7 @@ const agruparPorMes = (itens, campoData, campoValor) => {
 
 export default function Relatorios() {
     const theme = useTheme();
+    const { canViewReports } = useAuth();
     const [aba, setAba] = useState('apiarios');
     const [apiarios, setApiarios] = useState([]);
     const [colmeias, setColmeias] = useState([]);
@@ -332,7 +334,7 @@ export default function Relatorios() {
                     <Tab icon={<HoneyIcon fontSize="small" />} iconPosition="start" value="mel" label="Produção de Mel" />
                     <Tab icon={<PolenIcon fontSize="small" />} iconPosition="start" value="polen" label="Produção de Pólen" />
                     <Tab icon={<PropolisIcon fontSize="small" />} iconPosition="start" value="propolis" label="Produção de Própolis" />
-                    <Tab icon={<FinanceiroIcon fontSize="small" />} iconPosition="start" value="financeiro" label="Financeiro" />
+                    {canViewReports && <Tab icon={<FinanceiroIcon fontSize="small" />} iconPosition="start" value="financeiro" label="Financeiro" />}
                 </Tabs>
             </Paper>
 

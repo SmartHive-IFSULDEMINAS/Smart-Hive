@@ -52,6 +52,7 @@ import {
     People as UsuariosIcon,
     Tune as ConfigAlertaIcon,
     History as LogsIcon,
+    AttachMoney as FinanceiroIcon,
     Brightness4 as DarkModeIcon,
     Brightness7 as LightModeIcon,
     ChevronLeft as ChevronLeftIcon,
@@ -87,6 +88,7 @@ const menuSections = [
             { text: 'Produção',    icon: <HoneyIcon />,     path: '/producao' },
             { text: 'Produção de Pólen',    icon: <PolenIcon />,     path: '/producao-polen' },
             { text: 'Produção de Própolis', icon: <PropolisIcon />,  path: '/producao-propolis' },
+            { text: 'Financeiro', icon: <FinanceiroIcon />, path: '/financeiro', requiresViewReports: true },
             { text: 'Tratamentos', icon: <TreatmentIcon />, path: '/tratamentos' },
         ],
     },
@@ -135,6 +137,7 @@ const pageTitles = {
     '/producao':   'Produção',
     '/producao-polen': 'Produção de Pólen',
     '/producao-propolis': 'Produção de Própolis',
+    '/financeiro': 'Financeiro',
     '/tratamentos':'Tratamentos',
     '/especies':   'Espécies',
     '/ia-polen':   'IA — Análise de Pólen',
@@ -144,7 +147,7 @@ const pageTitles = {
 export default function Layout({ children }) {
     const theme = useTheme();
     const { mode, toggleTheme } = useThemeMode();
-    const { user, logout, isDono, isGestor, canManageUsers } = useAuth();
+    const { user, logout, isDono, isGestor, canManageUsers, canViewReports } = useAuth();
     const isMobile = useMediaQuery(theme.breakpoints.down('md'));
     const isSmallMobile = useMediaQuery(theme.breakpoints.down('sm'));
     const [mobileOpen, setMobileOpen] = useState(false);
@@ -318,7 +321,7 @@ export default function Layout({ children }) {
                             {section.label}
                         </Typography>
 
-                        {section.items.filter((item) => !item.requiresManageUsers || canManageUsers).map((item) => {
+                        {section.items.filter((item) => (!item.requiresManageUsers || canManageUsers) && (!item.requiresViewReports || canViewReports)).map((item) => {
                             const isSelected = location.pathname === item.path;
                             return (
                                 <ListItem key={item.text} disablePadding sx={{ mb: 0.25 }}>

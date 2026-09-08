@@ -4,7 +4,7 @@ from datetime import date
 from django.core.files.uploadedfile import SimpleUploadedFile
 from rest_framework import status
 from rest_framework.test import APITestCase
-from api.models import Apiario, Colmeia, Notificacao, AlertaRuidoConfig, ProducaoMel, LeituraSensor, ColetaProduto, AuditLog
+from api.models import Apiario, Colmeia, Notificacao, AlertaRuidoConfig, ProducaoMel, LeituraSensor, ColetaProduto, AuditLog, Custo, Receita
 from api.alert_utils import gerar_alerta_producao
 
 
@@ -551,3 +551,64 @@ class AuditLogTests(APITestCase):
 		resultados = response.data['results'] if 'results' in response.data else response.data
 		self.assertEqual(len(resultados), 1)
 		self.assertEqual(resultados[0]['usuario_username'], 'apicultor_audit')
+
+
+class FinanceiroPermissionTests(APITestCase):
+	def setUp(self):
+		self.dono = User.objects.create_user(username='dono_fin', password='SenhaForte123!', role='dono')
+		self.apicultor = User.objects.create_user(username='apicultor_fin', password='SenhaForte123!', role='apicultor')
+		Custo.objects.create(descricao='Custo existente', tipo_custo='outro', valor=50, data=date.today())
+		Receita.objects.create(descricao='Receita existente', tipo_receita='outro', valor=100, data=date.today())
+
+	def test_apicultor_nao_ve_custos(self):
+		self.client.force_authenticate(user=self.apicultor)
+
+		response = self.client.get('/api/custos/')
+
+		resultados = response.data['results'] if 'results' in response.data else response.data
+		self.assertEqual(len(resultados), 0)
+
+	def test_apicultor_nao_pode_criar_custo(self):
+		self.client.force_authenticate(user=self.apicultor)
+
+		response = self.client.post(
+			'/api/custos/',
+			{'descricao': 'Tentativa', 'tipo_custo': 'outro', 'valor': 10, 'data': str(date.today())},
+			format='json',
+		)
+
+		self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+		self.assertFalse(Custo.objects.filter(descricao='Tentativa').exists())
+
+	def test_apicultor_nao_pode_criar_receita(self):
+		self.client.force_authenticate(user=self.apicultor)
+
+		response = self.client.post(
+			'/api/receitas/',
+			{'descricao': 'Tentativa', 'tipo_receita': 'outro', 'valor': 10, 'data': str(date.today())},
+			format='json',
+		)
+
+		self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+	def test_dono_ve_e_cria_custos_e_receitas(self):
+		self.client.force_authenticate(user=self.dono)
+
+		list_response = self.client.get('/api/custos/')
+		resultados = list_response.data['results'] if 'results' in list_response.data else list_response.data
+		self.assertEqual(len(resultados), 1)
+
+		create_response = self.client.post(
+			'/api/receitas/',
+			{'descricao': 'Nova receita', 'tipo_receita': 'venda_mel', 'valor': 250, 'data': str(date.today())},
+			format='json',
+		)
+		self.assertEqual(create_response.status_code, status.HTTP_201_CREATED)
+		self.assertEqual(create_response.data['created_by_username'], 'dono_fin')
+
+	def test_apicultor_nao_pode_exportar_financeiro(self):
+		self.client.force_authenticate(user=self.apicultor)
+
+		response = self.client.get('/api/export/financeiro/?format=excel')
+
+		self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)

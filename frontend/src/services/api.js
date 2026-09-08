@@ -116,9 +116,18 @@ export const exportColmeias = (params) => api.get('/export/colmeias/', { params,
 export const exportProducao = (params) => api.get('/export/producao/', { params, responseType: 'blob' });
 export const exportFinanceiro = (params) => api.get('/export/financeiro/', { params, responseType: 'blob' });
 
-// Custos e Receitas (usados na tela de Relatórios)
+// Custos e Receitas
 export const getCustos = (params) => api.get('/custos/', { params });
+export const getCusto = (id) => api.get(`/custos/${id}/`);
+export const createCusto = (data) => api.post('/custos/', data);
+export const updateCusto = (id, data) => api.put(`/custos/${id}/`, data);
+export const deleteCusto = (id) => api.delete(`/custos/${id}/`);
+
 export const getReceitas = (params) => api.get('/receitas/', { params });
+export const getReceita = (id) => api.get(`/receitas/${id}/`);
+export const createReceita = (data) => api.post('/receitas/', data);
+export const updateReceita = (id, data) => api.put(`/receitas/${id}/`, data);
+export const deleteReceita = (id) => api.delete(`/receitas/${id}/`);
 
 // Tratamentos
 export const getTratamentos = (params) => api.get('/tratamentos/', { params });

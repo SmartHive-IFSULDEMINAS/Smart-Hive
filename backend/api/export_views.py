@@ -1,6 +1,7 @@
 """
 Views para exportação de dados
 """
+from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
@@ -219,8 +220,11 @@ def export_coletas_produto(request):
 @permission_classes([IsAuthenticated])
 def export_financeiro(request):
     """Exporta relatório financeiro (custos e receitas) para Excel ou PDF"""
+    if not request.user.can_view_reports():
+        return Response({'error': 'Sem permissão para exportar dados financeiros'}, status=status.HTTP_403_FORBIDDEN)
+
     format_type = request.GET.get('format', 'excel')
-    
+
     # Busca custos e receitas
     custos = Custo.objects.all()
     receitas = Receita.objects.all()

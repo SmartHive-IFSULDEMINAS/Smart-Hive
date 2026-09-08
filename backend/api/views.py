@@ -662,23 +662,34 @@ class DashboardPrevisaoView(APIView):
 
 # New ViewSets
 class CustoViewSet(viewsets.ModelViewSet):
-    """ViewSet para custos"""
+    """ViewSet para custos. Dados financeiros -- restrito a quem can_view_reports()
+    (Dono/Gestor), mesma regra já aplicada em DashboardFinanceiroView."""
     queryset = Custo.objects.all()
     permission_classes = [IsAuthenticated]
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
     search_fields = ['descricao', 'fornecedor']
     ordering_fields = ['data', 'valor']
     ordering = ['-data']
-    
+
     def get_serializer_class(self):
         if self.action == 'list':
             return CustoListSerializer
         return CustoSerializer
-    
+
     def perform_create(self, serializer):
         serializer.save(created_by=self.request.user)
-    
+
+    def create(self, request, *args, **kwargs):
+        # get_queryset() (abaixo) só protege list/retrieve/update/destroy,
+        # que passam por get_object(). create() não usa get_queryset().
+        if not request.user.can_view_reports():
+            return Response({'error': 'Sem permissão para lançar custos'}, status=status.HTTP_403_FORBIDDEN)
+        return super().create(request, *args, **kwargs)
+
     def get_queryset(self):
+        if not self.request.user.can_view_reports():
+            return Custo.objects.none()
+
         queryset = Custo.objects.all()
         apiario_id = self.request.query_params.get('apiario', None)
         colmeia_id = self.request.query_params.get('colmeia', None)
@@ -701,23 +712,32 @@ class CustoViewSet(viewsets.ModelViewSet):
 
 
 class ReceitaViewSet(viewsets.ModelViewSet):
-    """ViewSet para receitas"""
+    """ViewSet para receitas. Dados financeiros -- restrito a quem can_view_reports()
+    (Dono/Gestor), mesma regra já aplicada em DashboardFinanceiroView."""
     queryset = Receita.objects.all()
     permission_classes = [IsAuthenticated]
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
     search_fields = ['descricao', 'cliente']
     ordering_fields = ['data', 'valor']
     ordering = ['-data']
-    
+
     def get_serializer_class(self):
         if self.action == 'list':
             return ReceitaListSerializer
         return ReceitaSerializer
-    
+
     def perform_create(self, serializer):
         serializer.save(created_by=self.request.user)
-    
+
+    def create(self, request, *args, **kwargs):
+        if not request.user.can_view_reports():
+            return Response({'error': 'Sem permissão para lançar receitas'}, status=status.HTTP_403_FORBIDDEN)
+        return super().create(request, *args, **kwargs)
+
     def get_queryset(self):
+        if not self.request.user.can_view_reports():
+            return Receita.objects.none()
+
         queryset = Receita.objects.all()
         tipo = self.request.query_params.get('tipo', None)
         data_inicio = self.request.query_params.get('data_inicio', None)
