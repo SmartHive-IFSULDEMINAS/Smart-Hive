@@ -156,6 +156,11 @@ export const deleteUsuario = (id) => api.delete(`/usuarios/${id}/`);
 export const classificarPolen = (data) => api.post('/ia/polen/classificar/', data);
 export const getIAStatus = () => api.get('/ia/status/');
 export const getClassificacoes = (params) => api.get('/ia/classificacoes/', { params });
+export const importarCsvPolen = (formData) => api.post('/ia/polen/upload-csv/', formData, {
+    headers: {
+        'Content-Type': 'multipart/form-data',
+    },
+});
 
 // Deteccoes de abelhas (pipeline de visao computacional - SmartHive)
 export const getDeteccoesAbelha = (params) => api.get('/deteccoes-abelha/', { params });

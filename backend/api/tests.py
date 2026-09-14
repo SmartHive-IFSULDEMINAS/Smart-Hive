@@ -662,3 +662,99 @@ class ClassificacaoPolenPayloadIdTests(APITestCase):
 
 		resultados = response.data['results'] if 'results' in response.data else response.data
 		self.assertEqual(resultados[0]['payload_id'], 'amostra-lista')
+
+
+class ImportarCsvPolenTests(APITestCase):
+	CABECALHO = 'DATA,ID,TIPO,ESPECIE,NOTAS,F1,F2,F3,F4,F5,F6,F7,F8,NIR,CLEAR'
+	LINHA_VALIDA = '2026-01-10 08:00:00,amostra-csv-1,eucalipto,Eucalyptus sp.,coleta manhã,2,8,5,13,23,20,21,5,61,2'
+
+	def setUp(self):
+		self.dono = User.objects.create_user(username='dono_csv', password='SenhaForte123!', role='dono')
+
+	def _upload(self, conteudo, nome='dados.csv'):
+		arquivo = SimpleUploadedFile(nome, conteudo.encode('utf-8'), content_type='text/csv')
+		return self.client.post('/api/ia/polen/upload-csv/', {'arquivo_csv': arquivo}, format='multipart')
+
+	def test_requer_autenticacao(self):
+		response = self._upload(self.CABECALHO + '\n' + self.LINHA_VALIDA)
+
+		self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+	def test_csv_valido_cria_registro_com_origem_csv_e_payload_id(self):
+		self.client.force_authenticate(user=self.dono)
+
+		response = self._upload(self.CABECALHO + '\n' + self.LINHA_VALIDA)
+
+		self.assertEqual(response.status_code, status.HTTP_200_OK)
+		self.assertEqual(response.data['total_processado'], 1)
+		self.assertEqual(response.data['total_ignorado'], 0)
+
+		classificacao = ClassificacaoPolen.objects.get(id=response.data['ids_criados'][0])
+		self.assertEqual(classificacao.origem, 'csv')
+		self.assertEqual(classificacao.payload_id, 'amostra-csv-1')
+		self.assertEqual(classificacao.timestamp.year, 2026)
+		self.assertEqual(classificacao.timestamp.month, 1)
+		self.assertEqual(classificacao.timestamp.day, 10)
+		self.assertIn('eucalipto', classificacao.notas)
+		self.assertIn('Eucalyptus sp.', classificacao.notas)
+		self.assertIn('coleta manhã', classificacao.notas)
+		self.assertIsNotNone(classificacao.knn_classe)
+		self.assertIsNotNone(classificacao.kmeans_cluster)
+
+	def test_colunas_obrigatorias_ausentes_retorna_400(self):
+		self.client.force_authenticate(user=self.dono)
+
+		response = self._upload('DATA,ID,F1,F2,F3\n2026-01-10,amostra-1,2,8,5')
+
+		self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+		self.assertFalse(response.data['success'])
+
+	def test_csv_minimo_sem_colunas_opcionais_funciona(self):
+		self.client.force_authenticate(user=self.dono)
+
+		cabecalho = 'F1,F2,F3,F4,F5,F6,F7,F8,NIR,CLEAR'
+		linha = '2,8,5,13,23,20,21,5,61,2'
+
+		response = self._upload(cabecalho + '\n' + linha)
+
+		self.assertEqual(response.status_code, status.HTTP_200_OK)
+		self.assertEqual(response.data['total_processado'], 1)
+
+		classificacao = ClassificacaoPolen.objects.get(id=response.data['ids_criados'][0])
+		self.assertEqual(classificacao.origem, 'csv')
+		self.assertEqual(classificacao.payload_id, '')
+
+	def test_linha_invalida_e_ignorada_sem_abortar_o_restante(self):
+		self.client.force_authenticate(user=self.dono)
+
+		linha_invalida = '2026-01-10,amostra-ruim,ruim,,,abc,8,5,13,23,20,21,5,61,2'
+		conteudo = '\n'.join([self.CABECALHO, linha_invalida, self.LINHA_VALIDA])
+
+		response = self._upload(conteudo)
+
+		self.assertEqual(response.status_code, status.HTTP_200_OK)
+		self.assertEqual(response.data['total_linhas'], 2)
+		self.assertEqual(response.data['total_processado'], 1)
+		self.assertEqual(response.data['total_ignorado'], 1)
+		self.assertEqual(response.data['ignoradas'][0]['linha'], 2)
+
+	def test_filtro_origem_na_listagem(self):
+		self.client.force_authenticate(user=self.dono)
+
+		self._upload(self.CABECALHO + '\n' + self.LINHA_VALIDA)
+		self.client.post(
+			'/api/ia/polen/classificar/',
+			{'F1': 2, 'F2': 8, 'F3': 5, 'F4': 13, 'F5': 23, 'F6': 20, 'F7': 21, 'F8': 5, 'NIR': 61, 'CLEAR': 2},
+			format='json',
+		)
+
+		resp_csv = self.client.get('/api/ia/classificacoes/?origem=csv')
+		resp_ao_vivo = self.client.get('/api/ia/classificacoes/?origem=ao_vivo')
+
+		resultados_csv = resp_csv.data['results'] if 'results' in resp_csv.data else resp_csv.data
+		resultados_ao_vivo = resp_ao_vivo.data['results'] if 'results' in resp_ao_vivo.data else resp_ao_vivo.data
+
+		self.assertEqual(len(resultados_csv), 1)
+		self.assertEqual(resultados_csv[0]['origem'], 'csv')
+		self.assertEqual(len(resultados_ao_vivo), 1)
+		self.assertEqual(resultados_ao_vivo[0]['origem'], 'ao_vivo')

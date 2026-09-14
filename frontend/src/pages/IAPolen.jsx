@@ -1,10 +1,10 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import {
     Box, Grid, Card, CardContent, Typography, Chip, Table, TableBody,
     TableCell, TableContainer, TableHead, TableRow, Paper, Skeleton, Alert,
     useTheme, alpha, Fade, Grow, IconButton, Tooltip, Button, Dialog,
     DialogTitle, DialogContent, DialogActions, TextField, Divider,
-    CircularProgress,
+    CircularProgress, Tabs, Tab,
 } from '@mui/material';
 import {
     Biotech as BiotechIcon,
@@ -16,6 +16,7 @@ import {
     QueryStats as StatsIcon,
     ScatterPlot as ClusterIcon,
     Hub as KnnIcon,
+    UploadFile as UploadFileIcon,
 } from '@mui/icons-material';
 import {
     BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip,
@@ -23,7 +24,7 @@ import {
 } from 'recharts';
 import {
     getClassificacoes, getClassificacaoEstatisticas,
-    classificarPolen, deleteClassificacao, getIAStatus,
+    classificarPolen, deleteClassificacao, getIAStatus, importarCsvPolen,
 } from '../services/api';
 
 // ── Paleta de cores para classes/clusters ─────────────────────────────────────
@@ -245,6 +246,123 @@ function TestDialog({ open, onClose, onSuccess }) {
     );
 }
 
+// ── Upload de CSV (amostras gravadas localmente/offline) ──────────────────────
+function UploadCsvDialog({ open, onClose, onSuccess }) {
+    const fileInputRef = useRef(null);
+    const [fileName, setFileName] = useState('');
+    const [result, setResult] = useState(null);
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState(null);
+
+    const handleClose = () => {
+        setFileName('');
+        setResult(null);
+        setError(null);
+        if (fileInputRef.current) fileInputRef.current.value = '';
+        onClose();
+    };
+
+    const handleFileChange = (e) => {
+        const file = e.target.files?.[0];
+        setFileName(file ? file.name : '');
+    };
+
+    const handleSubmit = async () => {
+        const file = fileInputRef.current?.files?.[0];
+        if (!file) { setError('Selecione um arquivo CSV.'); return; }
+
+        setLoading(true);
+        setError(null);
+        setResult(null);
+        try {
+            const formData = new FormData();
+            formData.append('arquivo_csv', file);
+            const res = await importarCsvPolen(formData);
+            setResult(res.data);
+            onSuccess();
+        } catch (err) {
+            const data = err.response?.data;
+            setError(data?.error || data?.detail || JSON.stringify(data) || 'Erro ao importar o CSV. Verifique os logs do backend.');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    return (
+        <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
+            <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <UploadFileIcon color="primary" />
+                Importar CSV — Amostras Gravadas Localmente
+            </DialogTitle>
+            <DialogContent dividers>
+                {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
+
+                {result ? (
+                    <Box>
+                        <Alert severity={result.total_processado > 0 ? 'success' : 'warning'} sx={{ mb: 2 }}>
+                            {result.total_processado} de {result.total_linhas} linha(s) importada(s) com sucesso.
+                        </Alert>
+                        <Box sx={{ display: 'flex', gap: 1, mb: 2, flexWrap: 'wrap' }}>
+                            <Chip label={`Processadas: ${result.total_processado}`} color="success" size="small" />
+                            <Chip label={`Ignoradas: ${result.total_ignorado}`} color={result.total_ignorado > 0 ? 'warning' : 'default'} size="small" />
+                        </Box>
+                        {result.ignoradas?.length > 0 && (
+                            <Box>
+                                <Typography variant="caption" color="text.secondary" sx={{ mb: 1, display: 'block' }}>
+                                    Linhas ignoradas:
+                                </Typography>
+                                <Box sx={{ maxHeight: 180, overflowY: 'auto' }}>
+                                    {result.ignoradas.map((item, i) => (
+                                        <Typography key={i} variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
+                                            Linha {item.linha}: {item.motivo}
+                                        </Typography>
+                                    ))}
+                                </Box>
+                            </Box>
+                        )}
+                    </Box>
+                ) : (
+                    <Box>
+                        <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                            Envie um CSV com as colunas <code>F1,F2,F3,F4,F5,F6,F7,F8,NIR,CLEAR</code> (obrigatórias)
+                            e, opcionalmente, <code>DATA,ID,TIPO,ESPECIE,NOTAS</code>. A classificação (KNN/KMeans)
+                            é calculada na importação; os registros ficam marcados como "Importado via CSV".
+                        </Typography>
+                        <Button
+                            variant="outlined"
+                            component="label"
+                            startIcon={<UploadFileIcon />}
+                            fullWidth
+                        >
+                            {fileName || 'Selecionar arquivo CSV'}
+                            <input
+                                ref={fileInputRef}
+                                type="file"
+                                accept=".csv,text/csv"
+                                hidden
+                                onChange={handleFileChange}
+                            />
+                        </Button>
+                    </Box>
+                )}
+            </DialogContent>
+            <DialogActions>
+                <Button onClick={handleClose}>Fechar</Button>
+                {!result && (
+                    <Button
+                        variant="contained"
+                        onClick={handleSubmit}
+                        disabled={loading || !fileName}
+                        startIcon={loading ? <CircularProgress size={16} /> : <UploadFileIcon />}
+                    >
+                        Importar
+                    </Button>
+                )}
+            </DialogActions>
+        </Dialog>
+    );
+}
+
 // ── Página principal ──────────────────────────────────────────────────────────
 export default function IAPolen() {
     const theme = useTheme();
@@ -254,16 +372,20 @@ export default function IAPolen() {
     const [loading, setLoading] = useState(true);
     const [iaOnline, setIaOnline] = useState(null);
     const [testOpen, setTestOpen] = useState(false);
+    const [uploadOpen, setUploadOpen] = useState(false);
     const [page, setPage] = useState(1);
     const [hasMore, setHasMore] = useState(false);
+    const [origemTab, setOrigemTab] = useState('todas');
 
     const fetchData = useCallback(async () => {
         setLoading(true);
         try {
+            const params = { limit: 20, ordering: '-timestamp' };
+            if (origemTab !== 'todas') params.origem = origemTab;
             const [statusRes, statsRes, listRes] = await Promise.all([
                 getIAStatus().catch(() => ({ data: { modelos_carregados: false } })),
                 getClassificacaoEstatisticas(),
-                getClassificacoes({ limit: 20, ordering: '-timestamp' }),
+                getClassificacoes(params),
             ]);
             setIaOnline(statusRes.data.modelos_carregados);
             setStats(statsRes.data);
@@ -275,7 +397,7 @@ export default function IAPolen() {
         } finally {
             setLoading(false);
         }
-    }, []);
+    }, [origemTab]);
 
     useEffect(() => { fetchData(); }, [fetchData]);
 
@@ -322,6 +444,16 @@ export default function IAPolen() {
                                 size="small"
                             />
                         )}
+                        <Tooltip title="Importar CSV de amostras gravadas localmente">
+                            <Button
+                                variant="outlined"
+                                size="small"
+                                startIcon={<UploadFileIcon />}
+                                onClick={() => setUploadOpen(true)}
+                            >
+                                Importar CSV
+                            </Button>
+                        </Tooltip>
                         <Tooltip title="Testar manualmente">
                             <Button
                                 variant="contained"
@@ -459,10 +591,19 @@ export default function IAPolen() {
             <Fade in timeout={1000}>
                 <Card>
                     <CardContent sx={{ p: 3 }}>
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
                             <BiotechIcon sx={{ color: 'primary.main' }} />
                             <Typography variant="h6" fontWeight={600}>Histórico de Classificações</Typography>
                         </Box>
+                        <Tabs
+                            value={origemTab}
+                            onChange={(_, v) => setOrigemTab(v)}
+                            sx={{ mb: 2, minHeight: 36, '& .MuiTab-root': { minHeight: 36, py: 0.5 } }}
+                        >
+                            <Tab value="todas" label="Todas" />
+                            <Tab value="ao_vivo" label="Ao Vivo" />
+                            <Tab value="csv" label="Importado (CSV)" />
+                        </Tabs>
                         {loading ? (
                             [...Array(5)].map((_, i) => <Skeleton key={i} height={48} sx={{ mb: 0.5 }} />)
                         ) : classificacoes.length === 0 ? (
@@ -479,6 +620,7 @@ export default function IAPolen() {
                                             <TableCell align="center"><b>KMeans Cluster</b></TableCell>
                                             <TableCell><b>Dispositivo</b></TableCell>
                                             <TableCell><b>ID do Payload</b></TableCell>
+                                            <TableCell align="center"><b>Origem</b></TableCell>
                                             <TableCell align="center">F1</TableCell>
                                             <TableCell align="center">F4</TableCell>
                                             <TableCell align="center">NIR</TableCell>
@@ -524,6 +666,14 @@ export default function IAPolen() {
                                                         {c.payload_id || '—'}
                                                     </Typography>
                                                 </TableCell>
+                                                <TableCell align="center">
+                                                    <Chip
+                                                        label={c.origem_display || (c.origem === 'csv' ? 'Importado (CSV)' : 'Ao Vivo')}
+                                                        size="small"
+                                                        variant={c.origem === 'csv' ? 'filled' : 'outlined'}
+                                                        color={c.origem === 'csv' ? 'info' : 'default'}
+                                                    />
+                                                </TableCell>
                                                 <TableCell align="center"><Typography variant="body2">{c.canal_f1}</Typography></TableCell>
                                                 <TableCell align="center"><Typography variant="body2">{c.canal_f4}</Typography></TableCell>
                                                 <TableCell align="center"><Typography variant="body2">{c.canal_nir}</Typography></TableCell>
@@ -549,6 +699,11 @@ export default function IAPolen() {
             <TestDialog
                 open={testOpen}
                 onClose={() => setTestOpen(false)}
+                onSuccess={fetchData}
+            />
+            <UploadCsvDialog
+                open={uploadOpen}
+                onClose={() => setUploadOpen(false)}
                 onSuccess={fetchData}
             />
         </Box>

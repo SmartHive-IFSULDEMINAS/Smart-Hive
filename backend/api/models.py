@@ -1232,6 +1232,15 @@ class ClassificacaoPolen(models.Model):
         max_length=100, blank=True, verbose_name='ID recebido no payload',
         help_text='Campo "id" enviado pelo dispositivo na requisição (não é a chave primária deste registro)',
     )
+    ORIGEM_CHOICES = [
+        ('ao_vivo', 'Ao Vivo'),
+        ('csv', 'Importado via CSV'),
+    ]
+    origem = models.CharField(
+        max_length=10, choices=ORIGEM_CHOICES, default='ao_vivo',
+        verbose_name='Origem',
+        help_text='Se a classificação veio de uma requisição em tempo real ou de um CSV importado (dados gravados localmente)',
+    )
     notas = models.TextField(blank=True, verbose_name='Notas')
     requisicao_raw = models.JSONField(
         blank=True, null=True, verbose_name='Requisição Raw (JSON)',

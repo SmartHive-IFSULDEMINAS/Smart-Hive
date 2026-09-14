@@ -35,7 +35,7 @@ from .export_views import (
     export_coletas_produto,
     export_financeiro,
 )
-from .ia_views import classificar_polen, status_modelos
+from .ia_views import classificar_polen, status_modelos, importar_csv_polen
 
 router = DefaultRouter()
 router.register(r'especies', EspecieAbelhaViewSet, basename='especies')
@@ -80,6 +80,7 @@ urlpatterns = [
     path('iot/colmeia/deteccoes/', receber_deteccao_abelhas, name='receber_deteccao_abelhas'),
     # IA endpoints — classificação espectral de pólen
     path('ia/polen/classificar/', classificar_polen, name='ia_classificar_polen'),
+    path('ia/polen/upload-csv/', importar_csv_polen, name='ia_importar_csv_polen'),
     path('ia/status/', status_modelos, name='ia_status_modelos'),
     # Export endpoints
     path('export/apiarios/', export_apiarios, name='export_apiarios'),

@@ -1122,6 +1122,7 @@ class ClassificacaoPolenViewSet(viewsets.ModelViewSet):
         cluster = self.request.query_params.get('kmeans_cluster')
         data_inicio = self.request.query_params.get('data_inicio')
         data_fim = self.request.query_params.get('data_fim')
+        origem = self.request.query_params.get('origem')
 
         if knn:
             queryset = queryset.filter(knn_classe=knn)
@@ -1131,6 +1132,8 @@ class ClassificacaoPolenViewSet(viewsets.ModelViewSet):
             queryset = queryset.filter(timestamp__date__gte=data_inicio)
         if data_fim:
             queryset = queryset.filter(timestamp__date__lte=data_fim)
+        if origem:
+            queryset = queryset.filter(origem=origem)
 
         return queryset
 
