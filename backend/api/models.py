@@ -1228,6 +1228,10 @@ class ClassificacaoPolen(models.Model):
     dispositivo_id = models.CharField(
         max_length=100, blank=True, verbose_name='ID do Dispositivo'
     )
+    payload_id = models.CharField(
+        max_length=100, blank=True, verbose_name='ID recebido no payload',
+        help_text='Campo "id" enviado pelo dispositivo na requisição (não é a chave primária deste registro)',
+    )
     notas = models.TextField(blank=True, verbose_name='Notas')
     requisicao_raw = models.JSONField(
         blank=True, null=True, verbose_name='Requisição Raw (JSON)',

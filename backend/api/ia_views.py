@@ -180,7 +180,12 @@ def classificar_polen(request):
     # ── Salvar no banco ────────────────────────────────────────────────────
     dispositivo_id = data.get('dispositivo_id', '')
     notas = data.get('notas', '')
-    ClassificacaoPolen.objects.create(
+    # "id" enviado pelo dispositivo no payload -- não confundir com a chave
+    # primária do registro (ClassificacaoPolen.id, gerada pelo Django).
+    payload_id_raw = data.get('id')
+    payload_id = str(payload_id_raw) if payload_id_raw is not None else ''
+
+    classificacao = ClassificacaoPolen.objects.create(
         requisicao_raw=dict(data),
         canal_f1=raw_values[0],
         canal_f2=raw_values[1],
@@ -195,12 +200,15 @@ def classificar_polen(request):
         knn_classe=knn_pred,
         kmeans_cluster=kmeans_pred,
         dispositivo_id=dispositivo_id,
+        payload_id=payload_id,
         notas=notas,
     )
 
     return Response(
         {
             'success': True,
+            'id': classificacao.id,
+            'payload_id': payload_id,
             'knn': {
                 'classe': knn_pred,
                 'label': f'TIPO: {knn_pred}',

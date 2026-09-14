@@ -96,6 +96,7 @@ function TestDialog({ open, onClose, onSuccess }) {
     const theme = useTheme();
     const [channels, setChannels] = useState(initialChannels);
     const [dispositivo, setDispositivo] = useState('');
+    const [amostraId, setAmostraId] = useState('');
     const [result, setResult] = useState(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
@@ -103,6 +104,7 @@ function TestDialog({ open, onClose, onSuccess }) {
     const handleClose = () => {
         setChannels(initialChannels);
         setDispositivo('');
+        setAmostraId('');
         setResult(null);
         setError(null);
         onClose();
@@ -120,6 +122,7 @@ function TestDialog({ open, onClose, onSuccess }) {
                 payload[key] = v;
             }
             if (dispositivo) payload.dispositivo_id = dispositivo;
+            if (amostraId) payload.id = amostraId;
             const res = await classificarPolen(payload);
             setResult(res.data);
             onSuccess();
@@ -143,6 +146,14 @@ function TestDialog({ open, onClose, onSuccess }) {
                 {result ? (
                     <Box>
                         <Alert severity="success" sx={{ mb: 2 }}>Classificação realizada e salva!</Alert>
+                        <Box sx={{ display: 'flex', gap: 1, mb: 2, flexWrap: 'wrap' }}>
+                            <Chip label={`ID do registro: ${result.id}`} size="small" />
+                            <Chip
+                                label={`ID do payload: ${result.payload_id || '— (não enviado)'}`}
+                                size="small"
+                                variant="outlined"
+                            />
+                        </Box>
                         <Grid container spacing={2}>
                             <Grid size={{ xs: 6 }}>
                                 <Card sx={{ border: `2px solid ${theme.palette.primary.main}` }}>
@@ -193,14 +204,27 @@ function TestDialog({ open, onClose, onSuccess }) {
                                 </Grid>
                             ))}
                         </Grid>
-                        <TextField
-                            label="ID do Dispositivo (opcional)"
-                            size="small"
-                            fullWidth
-                            sx={{ mt: 2 }}
-                            value={dispositivo}
-                            onChange={e => setDispositivo(e.target.value)}
-                        />
+                        <Grid container spacing={1.5} sx={{ mt: 0.5 }}>
+                            <Grid size={{ xs: 6 }}>
+                                <TextField
+                                    label="ID do Dispositivo (opcional)"
+                                    size="small"
+                                    fullWidth
+                                    value={dispositivo}
+                                    onChange={e => setDispositivo(e.target.value)}
+                                />
+                            </Grid>
+                            <Grid size={{ xs: 6 }}>
+                                <TextField
+                                    label="ID da Amostra (opcional)"
+                                    size="small"
+                                    fullWidth
+                                    value={amostraId}
+                                    onChange={e => setAmostraId(e.target.value)}
+                                    helperText='Enviado como "id" no payload'
+                                />
+                            </Grid>
+                        </Grid>
                     </Box>
                 )}
             </DialogContent>
@@ -454,6 +478,7 @@ export default function IAPolen() {
                                             <TableCell align="center"><b>KNN Espécie</b></TableCell>
                                             <TableCell align="center"><b>KMeans Cluster</b></TableCell>
                                             <TableCell><b>Dispositivo</b></TableCell>
+                                            <TableCell><b>ID do Payload</b></TableCell>
                                             <TableCell align="center">F1</TableCell>
                                             <TableCell align="center">F4</TableCell>
                                             <TableCell align="center">NIR</TableCell>
@@ -492,6 +517,11 @@ export default function IAPolen() {
                                                 <TableCell>
                                                     <Typography variant="body2" color="text.secondary">
                                                         {c.dispositivo_id || '—'}
+                                                    </Typography>
+                                                </TableCell>
+                                                <TableCell>
+                                                    <Typography variant="body2" color="text.secondary">
+                                                        {c.payload_id || '—'}
                                                     </Typography>
                                                 </TableCell>
                                                 <TableCell align="center"><Typography variant="body2">{c.canal_f1}</Typography></TableCell>

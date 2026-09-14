@@ -4,7 +4,7 @@ from datetime import date
 from django.core.files.uploadedfile import SimpleUploadedFile
 from rest_framework import status
 from rest_framework.test import APITestCase
-from api.models import Apiario, Colmeia, Notificacao, AlertaRuidoConfig, ProducaoMel, LeituraSensor, ColetaProduto, AuditLog, Custo, Receita
+from api.models import Apiario, Colmeia, Notificacao, AlertaRuidoConfig, ProducaoMel, LeituraSensor, ColetaProduto, AuditLog, Custo, Receita, ClassificacaoPolen
 from api.alert_utils import gerar_alerta_producao
 
 
@@ -612,3 +612,53 @@ class FinanceiroPermissionTests(APITestCase):
 		response = self.client.get('/api/export/financeiro/?format=excel')
 
 		self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+
+class ClassificacaoPolenPayloadIdTests(APITestCase):
+	AMOSTRA = {
+		'F1': 2, 'F2': 8, 'F3': 5, 'F4': 13, 'F5': 23,
+		'F6': 20, 'F7': 21, 'F8': 5, 'NIR': 61, 'CLEAR': 2,
+	}
+
+	def test_id_do_payload_e_salvo_e_retornado(self):
+		response = self.client.post(
+			'/api/ia/polen/classificar/',
+			{**self.AMOSTRA, 'id': 'amostra-42'},
+			format='json',
+		)
+
+		self.assertEqual(response.status_code, status.HTTP_200_OK)
+		self.assertEqual(response.data['payload_id'], 'amostra-42')
+
+		classificacao = ClassificacaoPolen.objects.get(id=response.data['id'])
+		self.assertEqual(classificacao.payload_id, 'amostra-42')
+
+	def test_payload_sem_id_salva_payload_id_vazio(self):
+		response = self.client.post('/api/ia/polen/classificar/', self.AMOSTRA, format='json')
+
+		self.assertEqual(response.status_code, status.HTTP_200_OK)
+		self.assertEqual(response.data['payload_id'], '')
+
+		classificacao = ClassificacaoPolen.objects.get(id=response.data['id'])
+		self.assertEqual(classificacao.payload_id, '')
+
+	def test_id_numerico_no_payload_e_convertido_para_string(self):
+		response = self.client.post(
+			'/api/ia/polen/classificar/',
+			{**self.AMOSTRA, 'id': 12345},
+			format='json',
+		)
+
+		self.assertEqual(response.status_code, status.HTTP_200_OK)
+		self.assertEqual(response.data['payload_id'], '12345')
+
+	def test_payload_id_aparece_na_listagem(self):
+		self.client.post('/api/ia/polen/classificar/', {**self.AMOSTRA, 'id': 'amostra-lista'}, format='json')
+
+		dono = User.objects.create_user(username='dono_polen', password='SenhaForte123!', role='dono')
+		self.client.force_authenticate(user=dono)
+
+		response = self.client.get('/api/ia/classificacoes/')
+
+		resultados = response.data['results'] if 'results' in response.data else response.data
+		self.assertEqual(resultados[0]['payload_id'], 'amostra-lista')
