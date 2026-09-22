@@ -34,9 +34,7 @@ import {
     Place as PlaceIcon,
     LocalFlorist as HoneyIcon,
     Grain as PolenIcon,
-    Opacity as PropolisIcon,
     Healing as TreatmentIcon,
-    Warning as WarningIcon,
     Search as InspectionIcon,
     TrendingUp as TrendingUpIcon,
     TrendingDown as TrendingDownIcon,
@@ -70,98 +68,9 @@ import {
     Line,
 } from 'recharts';
 import { getDashboard, getDashboardComparativo, getDashboardPrevisao } from '../services/api';
+import StatFavo from '../components/StatFavo';
 
 const DASHBOARD_REFRESH_MS = 10000;
-
-// ─── StatCard — Enterprise Dark design ────────────────────────────────────────
-const StatCard = ({ title, value, subtitle, icon, color, trend, delay = 0 }) => {
-    const theme = useTheme();
-
-    return (
-        <Grow in timeout={500 + delay}>
-            <Card
-                sx={{
-                    height: '100%',
-                    position: 'relative',
-                    overflow: 'hidden',
-                    // Accent bar on top
-                    '&::before': {
-                        content: '""',
-                        position: 'absolute',
-                        top: 0, left: 0, right: 0,
-                        height: '2px',
-                        background: color,
-                        borderRadius: '12px 12px 0 0',
-                    },
-                }}
-            >
-                <CardContent sx={{ p: 2.5 }}>
-                    {/* Top row: label + icon badge */}
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
-                        <Typography
-                            variant="overline"
-                            sx={{ color: 'text.secondary', letterSpacing: '0.08em', lineHeight: 1.3 }}
-                        >
-                            {title}
-                        </Typography>
-                        <Box
-                            sx={{
-                                width: 34,
-                                height: 34,
-                                borderRadius: '9px',
-                                backgroundColor: alpha(color, 0.15),
-                                border: `1px solid ${alpha(color, 0.25)}`,
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                flexShrink: 0,
-                            }}
-                        >
-                            {React.cloneElement(icon, { sx: { fontSize: 18, color } })}
-                        </Box>
-                    </Box>
-
-                    {/* Value */}
-                    <Typography
-                        variant="h3"
-                        sx={{
-                            fontWeight: 800,
-                            fontSize: { xs: '1.65rem', sm: '1.9rem' },
-                            color: 'text.primary',
-                            lineHeight: 1.1,
-                            mb: 1.5,
-                            whiteSpace: 'nowrap',
-                            overflow: 'hidden',
-                            textOverflow: 'ellipsis',
-                        }}
-                    >
-                        {value}
-                    </Typography>
-
-                    {/* Bottom row: subtitle + trend */}
-                    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 1 }}>
-                        {subtitle && (
-                            <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.78rem' }}>
-                                {subtitle}
-                            </Typography>
-                        )}
-                        {trend && (
-                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.25, flexShrink: 0 }}>
-                                <TrendingUpIcon sx={{ fontSize: 14, color: theme.palette.success.main }} />
-                                <Typography
-                                    variant="caption"
-                                    sx={{ color: theme.palette.success.main, fontWeight: 600, fontSize: '0.7rem' }}
-                                >
-                                    Atualizado
-                                </Typography>
-                            </Box>
-                        )}
-                    </Box>
-                </CardContent>
-            </Card>
-        </Grow>
-    );
-};
 
 // ─── Section header ───────────────────────────────────────────────────────────
 const SectionHeader = ({ title, icon, badge }) => (
@@ -387,78 +296,71 @@ export default function Dashboard() {
                 </Tooltip>
             </Box>
 
-            {/* ─── KPI Cards ────────────────────────────────────────────────── */}
-            <Grid container spacing={3} sx={{ mb: 4 }}>
-                <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                    <StatCard
-                        title="Apiários"
+            {/* ─── Favo — os 4 números que mais importam ───────────────────────── */}
+            <Grid container spacing={{ xs: 1.25, md: 0.75 }} sx={{ mb: 4 }}>
+                <Grid size={{ xs: 6, md: 3 }}>
+                    <StatFavo
+                        label="Apiários"
                         value={data?.total_apiarios || 0}
-                        subtitle={`${data?.apiarios_ativos || 0} ativos`}
-                        icon={<PlaceIcon />}
-                        color={theme.palette.secondary.main}
-                        trend
+                        sub={`${data?.apiarios_ativos || 0} ativos`}
                         delay={0}
                     />
                 </Grid>
-                <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                    <StatCard
-                        title="Colmeias"
+                <Grid size={{ xs: 6, md: 3 }}>
+                    <StatFavo
+                        label="Colmeias"
                         value={data?.total_colmeias || 0}
-                        subtitle={`${data?.colmeias_ativas || 0} ativas`}
-                        icon={<HiveIcon />}
-                        color={theme.palette.primary.main}
-                        trend
-                        delay={100}
+                        sub={`${data?.colmeias_ativas || 0} ativas`}
+                        offset
+                        delay={80}
                     />
                 </Grid>
-                <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                    <StatCard
-                        title="Produção Anual"
+                <Grid size={{ xs: 6, md: 3 }}>
+                    <StatFavo
+                        label="Produção anual"
                         value={`${parseFloat(data?.producao_ano_kg || 0).toFixed(1)} kg`}
-                        subtitle={`${parseFloat(data?.producao_mes_kg || 0).toFixed(1)} kg este mês`}
-                        icon={<HoneyIcon />}
-                        color="#FF9800"
-                        trend
-                        delay={200}
+                        sub={`${parseFloat(data?.producao_mes_kg || 0).toFixed(1)} kg este mês`}
+                        delay={160}
                     />
                 </Grid>
-                <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                    <StatCard
-                        title="Atenção"
+                <Grid size={{ xs: 6, md: 3 }}>
+                    <StatFavo
+                        label="Em atenção"
                         value={data?.tratamentos_em_andamento || 0}
-                        subtitle={`${data?.colmeias_em_quarentena || 0} em quarentena`}
-                        icon={<WarningIcon />}
-                        color={theme.palette.error.main}
-                        delay={300}
+                        sub={`${data?.colmeias_em_quarentena || 0} em quarentena`}
+                        tone={data?.tratamentos_em_andamento ? 'alert' : 'amber'}
+                        offset
+                        delay={240}
                     />
                 </Grid>
             </Grid>
 
-            {/* ─── KPI Cards — Pólen e Própolis ────────────────────────────────── */}
-            <Grid container spacing={3} sx={{ mb: 4 }}>
-                <Grid size={{ xs: 12, sm: 6 }}>
-                    <StatCard
-                        title="Produção de Pólen (ano)"
-                        value={`${parseFloat(data?.producao_polen_ano_g || 0).toFixed(1)} g`}
-                        subtitle={`${parseFloat(data?.producao_polen_mes_g || 0).toFixed(1)} g este mês`}
-                        icon={<PolenIcon />}
-                        color="#8D6E63"
-                        trend
-                        delay={350}
-                    />
-                </Grid>
-                <Grid size={{ xs: 12, sm: 6 }}>
-                    <StatCard
-                        title="Produção de Própolis (ano)"
-                        value={`${parseFloat(data?.producao_propolis_ano_g || 0).toFixed(1)} g`}
-                        subtitle={`${parseFloat(data?.producao_propolis_mes_g || 0).toFixed(1)} g este mês`}
-                        icon={<PropolisIcon />}
-                        color="#6D4C41"
-                        trend
-                        delay={400}
-                    />
-                </Grid>
-            </Grid>
+            {/* ─── Pólen e Própolis — painel discreto, sem repetir o favo ──────── */}
+            <Paper variant="outlined" sx={{ p: 2.5, mb: 4, display: 'flex', flexWrap: 'wrap', gap: 3 }}>
+                <Box sx={{ flex: '1 1 220px' }}>
+                    <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
+                        Produção de pólen (ano)
+                    </Typography>
+                    <Typography variant="h4" sx={{ color: 'text.primary' }}>
+                        {parseFloat(data?.producao_polen_ano_g || 0).toFixed(1)} g
+                        <Typography component="span" variant="body2" color="text.secondary" sx={{ ml: 1 }}>
+                            {parseFloat(data?.producao_polen_mes_g || 0).toFixed(1)} g este mês
+                        </Typography>
+                    </Typography>
+                </Box>
+                <Divider orientation="vertical" flexItem sx={{ display: { xs: 'none', sm: 'block' } }} />
+                <Box sx={{ flex: '1 1 220px' }}>
+                    <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
+                        Produção de própolis (ano)
+                    </Typography>
+                    <Typography variant="h4" sx={{ color: 'text.primary' }}>
+                        {parseFloat(data?.producao_propolis_ano_g || 0).toFixed(1)} g
+                        <Typography component="span" variant="body2" color="text.secondary" sx={{ ml: 1 }}>
+                            {parseFloat(data?.producao_propolis_mes_g || 0).toFixed(1)} g este mês
+                        </Typography>
+                    </Typography>
+                </Box>
+            </Paper>
 
             <Card sx={{ mb: 3 }}>
                 <CardContent sx={{ p: { xs: 1.5, sm: 2 } }}>

@@ -11,9 +11,6 @@ import {
     Refresh as RefreshIcon,
     PlayArrow as TestIcon,
     Delete as DeleteIcon,
-    CheckCircle as OkIcon,
-    Error as ErrorIcon,
-    QueryStats as StatsIcon,
     ScatterPlot as ClusterIcon,
     Hub as KnnIcon,
     UploadFile as UploadFileIcon,
@@ -26,6 +23,8 @@ import {
     getClassificacoes, getClassificacaoEstatisticas,
     classificarPolen, deleteClassificacao, getIAStatus, importarCsvPolen,
 } from '../services/api';
+import StatFavo from '../components/StatFavo';
+import StatusBlock from '../components/StatusBlock';
 
 // ── Paleta de cores para classes/clusters ─────────────────────────────────────
 const CLASS_COLORS = [
@@ -39,43 +38,6 @@ const darkTooltipStyle = {
     borderRadius: 8,
     color: '#E8EAED',
 };
-
-// ── Componente de card de estatística ─────────────────────────────────────────
-function StatCard({ title, value, icon, color, delay = 0 }) {
-    const theme = useTheme();
-    return (
-        <Grow in timeout={400 + delay}>
-            <Card sx={{
-                height: '100%',
-                position: 'relative',
-                overflow: 'hidden',
-                '&::before': {
-                    content: '""', position: 'absolute',
-                    top: 0, left: 0, right: 0, height: '2px',
-                    background: color, borderRadius: '12px 12px 0 0',
-                },
-            }}>
-                <CardContent sx={{ p: 2.5 }}>
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 1.5 }}>
-                        <Typography variant="overline" sx={{ color: 'text.secondary', letterSpacing: '0.08em', lineHeight: 1.3 }}>
-                            {title}
-                        </Typography>
-                        <Box sx={{
-                            width: 34, height: 34, borderRadius: '9px',
-                            backgroundColor: alpha(color, 0.15),
-                            display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        }}>
-                            <Box sx={{ color, display: 'flex', fontSize: 18 }}>{icon}</Box>
-                        </Box>
-                    </Box>
-                    <Typography variant="h4" fontWeight={700} sx={{ color }}>
-                        {value ?? '—'}
-                    </Typography>
-                </CardContent>
-            </Card>
-        </Grow>
-    );
-}
 
 // ── Formulário de teste manual ────────────────────────────────────────────────
 const CHANNEL_LABELS = [
@@ -436,14 +398,6 @@ export default function IAPolen() {
                         </Box>
                     </Box>
                     <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
-                        {iaOnline !== null && (
-                            <Chip
-                                icon={iaOnline ? <OkIcon /> : <ErrorIcon />}
-                                label={iaOnline ? 'Modelos prontos' : 'Modelos indisponíveis'}
-                                color={iaOnline ? 'success' : 'error'}
-                                size="small"
-                            />
-                        )}
                         <Tooltip title="Importar CSV de amostras gravadas localmente">
                             <Button
                                 variant="outlined"
@@ -473,33 +427,45 @@ export default function IAPolen() {
                 </Box>
             </Fade>
 
-            {/* ── Cards de resumo ──────────────────────────────────────── */}
-            <Grid container spacing={2} sx={{ mb: 3 }}>
-                <Grid size={{ xs: 12, sm: 4 }}>
-                    <StatCard
-                        title="Total de Classificações"
-                        value={loading ? <Skeleton width={60} /> : stats?.total ?? 0}
-                        icon={<StatsIcon />}
-                        color={theme.palette.primary.main}
+            {/* ── Status do sistema de IA ──────────────────────────────── */}
+            {iaOnline !== null && (
+                <Fade in timeout={400}>
+                    <Box sx={{ mb: 3 }}>
+                        <StatusBlock
+                            status={iaOnline ? 'ok' : 'error'}
+                            title={iaOnline ? 'Modelos prontos' : 'Modelos indisponíveis'}
+                            description={
+                                iaOnline
+                                    ? 'O sistema está pronto para classificar novas amostras de pólen.'
+                                    : 'Não foi possível carregar os modelos de IA. Classificações não vão funcionar até isso ser resolvido.'
+                            }
+                        />
+                    </Box>
+                </Fade>
+            )}
+
+            {/* ── Favo — os números que mais importam nesta tela ────────── */}
+            <Grid container spacing={{ xs: 1.25, sm: 0.75 }} sx={{ mb: 3 }}>
+                <Grid size={{ xs: 4 }}>
+                    <StatFavo
+                        label="Total de classificações"
+                        value={loading ? <Skeleton width={40} sx={{ mx: 'auto' }} /> : stats?.total ?? 0}
                         delay={0}
                     />
                 </Grid>
-                <Grid size={{ xs: 12, sm: 4 }}>
-                    <StatCard
-                        title="Tipo Mais Frequente (KNN)"
-                        value={loading ? <Skeleton width={60} /> : tipoMaisComum?.knn_classe ? `Tipo ${tipoMaisComum.knn_classe}` : '—'}
-                        icon={<KnnIcon />}
-                        color={theme.palette.secondary.main}
-                        delay={100}
+                <Grid size={{ xs: 4 }}>
+                    <StatFavo
+                        label="Tipo mais frequente (KNN)"
+                        value={loading ? <Skeleton width={40} sx={{ mx: 'auto' }} /> : tipoMaisComum?.knn_classe ? `Tipo ${tipoMaisComum.knn_classe}` : '—'}
+                        offset
+                        delay={80}
                     />
                 </Grid>
-                <Grid size={{ xs: 12, sm: 4 }}>
-                    <StatCard
-                        title="Clusters Distintos"
-                        value={loading ? <Skeleton width={60} /> : clusterData.length}
-                        icon={<ClusterIcon />}
-                        color="#F57C00"
-                        delay={200}
+                <Grid size={{ xs: 4 }}>
+                    <StatFavo
+                        label="Clusters distintos"
+                        value={loading ? <Skeleton width={40} sx={{ mx: 'auto' }} /> : clusterData.length}
+                        delay={160}
                     />
                 </Grid>
             </Grid>
