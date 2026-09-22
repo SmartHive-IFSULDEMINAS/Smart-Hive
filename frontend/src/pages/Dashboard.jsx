@@ -70,98 +70,9 @@ import {
     Line,
 } from 'recharts';
 import { getDashboard, getDashboardComparativo, getDashboardPrevisao } from '../services/api';
+import StatBento from '../components/StatBento';
 
 const DASHBOARD_REFRESH_MS = 10000;
-
-// ─── StatCard — Enterprise Dark design ────────────────────────────────────────
-const StatCard = ({ title, value, subtitle, icon, color, trend, delay = 0 }) => {
-    const theme = useTheme();
-
-    return (
-        <Grow in timeout={500 + delay}>
-            <Card
-                sx={{
-                    height: '100%',
-                    position: 'relative',
-                    overflow: 'hidden',
-                    // Accent bar on top
-                    '&::before': {
-                        content: '""',
-                        position: 'absolute',
-                        top: 0, left: 0, right: 0,
-                        height: '2px',
-                        background: color,
-                        borderRadius: '12px 12px 0 0',
-                    },
-                }}
-            >
-                <CardContent sx={{ p: 2.5 }}>
-                    {/* Top row: label + icon badge */}
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
-                        <Typography
-                            variant="overline"
-                            sx={{ color: 'text.secondary', letterSpacing: '0.08em', lineHeight: 1.3 }}
-                        >
-                            {title}
-                        </Typography>
-                        <Box
-                            sx={{
-                                width: 34,
-                                height: 34,
-                                borderRadius: '9px',
-                                backgroundColor: alpha(color, 0.15),
-                                border: `1px solid ${alpha(color, 0.25)}`,
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                flexShrink: 0,
-                            }}
-                        >
-                            {React.cloneElement(icon, { sx: { fontSize: 18, color } })}
-                        </Box>
-                    </Box>
-
-                    {/* Value */}
-                    <Typography
-                        variant="h3"
-                        sx={{
-                            fontWeight: 800,
-                            fontSize: { xs: '1.65rem', sm: '1.9rem' },
-                            color: 'text.primary',
-                            lineHeight: 1.1,
-                            mb: 1.5,
-                            whiteSpace: 'nowrap',
-                            overflow: 'hidden',
-                            textOverflow: 'ellipsis',
-                        }}
-                    >
-                        {value}
-                    </Typography>
-
-                    {/* Bottom row: subtitle + trend */}
-                    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 1 }}>
-                        {subtitle && (
-                            <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.78rem' }}>
-                                {subtitle}
-                            </Typography>
-                        )}
-                        {trend && (
-                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.25, flexShrink: 0 }}>
-                                <TrendingUpIcon sx={{ fontSize: 14, color: theme.palette.success.main }} />
-                                <Typography
-                                    variant="caption"
-                                    sx={{ color: theme.palette.success.main, fontWeight: 600, fontSize: '0.7rem' }}
-                                >
-                                    Atualizado
-                                </Typography>
-                            </Box>
-                        )}
-                    </Box>
-                </CardContent>
-            </Card>
-        </Grow>
-    );
-};
 
 // ─── Section header ───────────────────────────────────────────────────────────
 const SectionHeader = ({ title, icon, badge }) => (
@@ -390,40 +301,37 @@ export default function Dashboard() {
             {/* ─── KPI Cards ────────────────────────────────────────────────── */}
             <Grid container spacing={3} sx={{ mb: 4 }}>
                 <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                    <StatCard
+                    <StatBento
                         title="Apiários"
                         value={data?.total_apiarios || 0}
                         subtitle={`${data?.apiarios_ativos || 0} ativos`}
                         icon={<PlaceIcon />}
                         color={theme.palette.secondary.main}
-                        trend
                         delay={0}
                     />
                 </Grid>
                 <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                    <StatCard
+                    <StatBento
                         title="Colmeias"
                         value={data?.total_colmeias || 0}
                         subtitle={`${data?.colmeias_ativas || 0} ativas`}
                         icon={<HiveIcon />}
                         color={theme.palette.primary.main}
-                        trend
                         delay={100}
                     />
                 </Grid>
                 <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                    <StatCard
+                    <StatBento
                         title="Produção Anual"
                         value={`${parseFloat(data?.producao_ano_kg || 0).toFixed(1)} kg`}
                         subtitle={`${parseFloat(data?.producao_mes_kg || 0).toFixed(1)} kg este mês`}
                         icon={<HoneyIcon />}
                         color="#FF9800"
-                        trend
                         delay={200}
                     />
                 </Grid>
                 <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                    <StatCard
+                    <StatBento
                         title="Atenção"
                         value={data?.tratamentos_em_andamento || 0}
                         subtitle={`${data?.colmeias_em_quarentena || 0} em quarentena`}
@@ -437,24 +345,22 @@ export default function Dashboard() {
             {/* ─── KPI Cards — Pólen e Própolis ────────────────────────────────── */}
             <Grid container spacing={3} sx={{ mb: 4 }}>
                 <Grid size={{ xs: 12, sm: 6 }}>
-                    <StatCard
+                    <StatBento
                         title="Produção de Pólen (ano)"
                         value={`${parseFloat(data?.producao_polen_ano_g || 0).toFixed(1)} g`}
                         subtitle={`${parseFloat(data?.producao_polen_mes_g || 0).toFixed(1)} g este mês`}
                         icon={<PolenIcon />}
                         color="#8D6E63"
-                        trend
                         delay={350}
                     />
                 </Grid>
                 <Grid size={{ xs: 12, sm: 6 }}>
-                    <StatCard
+                    <StatBento
                         title="Produção de Própolis (ano)"
                         value={`${parseFloat(data?.producao_propolis_ano_g || 0).toFixed(1)} g`}
                         subtitle={`${parseFloat(data?.producao_propolis_mes_g || 0).toFixed(1)} g este mês`}
                         icon={<PropolisIcon />}
                         color="#6D4C41"
-                        trend
                         delay={400}
                     />
                 </Grid>
