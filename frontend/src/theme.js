@@ -1,26 +1,28 @@
 import { createTheme, alpha } from '@mui/material/styles';
 
-// Design tokens — Enterprise Dark with honey accent
+// Design tokens — Favo: madeira e cera, com âmbar como único acento de marca.
+// Substitui o antigo "Enterprise Dark" (cinza-azulado + ícone-em-badge) por uma
+// paleta quente ligada à apicultura de verdade — ver design-reference/21st-components.
 const tokens = {
-  // Backgrounds
-  bgDeep:       '#0F1117',
-  bgSurface:    '#141820',
-  bgRaised:     '#1A1D27',
-  bgHover:      '#1F2433',
+  // Backgrounds — madeira/cera escura, não cinza-azulado de dashboard genérico
+  bgDeep:       '#1B140B',
+  bgSurface:    '#241B0F',
+  bgRaised:     '#2D2213',
+  bgHover:      '#352816',
   // Borders
-  borderSubtle: 'rgba(255,255,255,0.06)',
-  borderMedium: 'rgba(255,255,255,0.12)',
-  // Amber / Honey
-  amber:        '#F4A100',
-  amberLight:   '#FFB933',
-  amberDark:    '#C8870A',
-  // Green (refined for dark)
-  green:        '#4CAF50',
-  greenLight:   '#81C784',
-  greenDark:    '#388E3C',
+  borderSubtle: 'rgba(232,197,140,0.10)',
+  borderMedium: 'rgba(232,197,140,0.22)',
+  // Âmbar / Mel — único acento de marca
+  amber:        '#E3A542',
+  amberLight:   '#F0BD6C',
+  amberDark:    '#B9812C',
+  // Verde-oliva de campo — semântico, não decorativo
+  green:        '#8CA05B',
+  greenLight:   '#A6B87A',
+  greenDark:    '#6D7E45',
   // Text
-  textPrimary:  '#E8EAED',
-  textSecondary:'rgba(232,234,237,0.55)',
+  textPrimary:  '#F4EBDA',
+  textSecondary:'rgba(244,235,218,0.58)',
 };
 
 // Shadows for dark mode (deeper blacks instead of light overlay)
@@ -133,19 +135,20 @@ export const createAppTheme = (mode) => createTheme({
   },
 
   typography: {
-    fontFamily: '"Inter", "Roboto", "Helvetica", "Arial", sans-serif',
-    h1: { fontWeight: 700, fontSize: '2.5rem',  letterSpacing: '-0.02em' },
-    h2: { fontWeight: 700, fontSize: '2rem',    letterSpacing: '-0.01em' },
-    h3: { fontWeight: 600, fontSize: '1.75rem', letterSpacing: '-0.01em' },
-    h4: { fontWeight: 600, fontSize: '1.5rem',  letterSpacing: '-0.005em' },
-    h5: { fontWeight: 600, fontSize: '1.25rem' },
+    fontFamily: '"Work Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+    // Fraunces nos títulos e números — dá o ar artesanal que o Work Sans não carrega sozinho.
+    h1: { fontFamily: '"Fraunces", Georgia, serif', fontWeight: 640, fontSize: '2.5rem',  letterSpacing: '-0.01em' },
+    h2: { fontFamily: '"Fraunces", Georgia, serif', fontWeight: 640, fontSize: '2rem',    letterSpacing: '-0.01em' },
+    h3: { fontFamily: '"Fraunces", Georgia, serif', fontWeight: 600, fontSize: '1.75rem', letterSpacing: '-0.005em' },
+    h4: { fontFamily: '"Fraunces", Georgia, serif', fontWeight: 600, fontSize: '1.5rem' },
+    h5: { fontFamily: '"Fraunces", Georgia, serif', fontWeight: 600, fontSize: '1.25rem' },
     h6: { fontWeight: 600, fontSize: '1rem' },
-    overline: { letterSpacing: '0.1em', fontWeight: 600, fontSize: '0.68rem' },
+    overline: { letterSpacing: '0.02em', fontWeight: 500, fontSize: '0.72rem', textTransform: 'none' },
     button: { textTransform: 'none', fontWeight: 600 },
   },
 
   shape: {
-    borderRadius: 10,
+    borderRadius: 4,
   },
 
   shadows: mode === 'dark' ? darkShadows : lightShadows,
@@ -155,7 +158,7 @@ export const createAppTheme = (mode) => createTheme({
     MuiPaper: {
       styleOverrides: {
         root: {
-          borderRadius: 10,
+          borderRadius: 4,
           backgroundImage: 'none', // Remove MUI's dark-mode white overlay
         },
       },
@@ -164,19 +167,16 @@ export const createAppTheme = (mode) => createTheme({
     // ─── Card ─────────────────────────────────────────────────────────────────
     MuiCard: {
       styleOverrides: {
-        root: ({ theme }) => ({
-          borderRadius: 12,
+        root: {
+          borderRadius: 4,
           backgroundImage: 'none',
           border: `1px solid ${mode === 'dark' ? tokens.borderSubtle : 'rgba(0,0,0,0.08)'}`,
           boxShadow: 'none',
-          transition: 'border-color 0.2s ease, box-shadow 0.2s ease',
+          transition: 'border-color 0.2s ease',
           '&:hover': {
             borderColor: mode === 'dark' ? tokens.borderMedium : 'rgba(0,0,0,0.16)',
-            boxShadow: mode === 'dark'
-              ? `0 0 0 1px ${tokens.borderMedium}, 0 8px 32px rgba(0,0,0,0.4)`
-              : '0px 8px 24px rgba(0,0,0,0.1)',
           },
-        }),
+        },
       },
     },
 
@@ -340,11 +340,9 @@ export const createAppTheme = (mode) => createTheme({
         root: {
           '& .MuiTableCell-head': {
             backgroundColor: mode === 'dark' ? tokens.bgRaised : '#F8F9FA',
-            color: mode === 'dark' ? 'rgba(232,234,237,0.7)' : 'rgba(26,26,46,0.7)',
+            color: mode === 'dark' ? 'rgba(244,235,218,0.7)' : 'rgba(26,26,46,0.7)',
             fontWeight: 600,
-            fontSize: '0.72rem',
-            letterSpacing: '0.06em',
-            textTransform: 'uppercase',
+            fontSize: '0.78rem',
             borderBottom: `1px solid ${mode === 'dark' ? tokens.borderSubtle : 'rgba(0,0,0,0.1)'}`,
             padding: '10px 16px',
           },
@@ -388,7 +386,7 @@ export const createAppTheme = (mode) => createTheme({
           backgroundImage: 'none',
           background: mode === 'dark' ? tokens.bgSurface : '#FFFFFF',
           border: mode === 'dark' ? `1px solid ${tokens.borderSubtle}` : 'none',
-          borderRadius: 16,
+          borderRadius: 6,
         },
       },
     },
@@ -413,7 +411,7 @@ export const createAppTheme = (mode) => createTheme({
           boxShadow: mode === 'dark'
             ? '0 8px 32px rgba(0,0,0,0.5)'
             : '0 4px 20px rgba(0,0,0,0.12)',
-          borderRadius: 10,
+          borderRadius: 6,
         },
       },
     },

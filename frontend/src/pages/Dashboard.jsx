@@ -34,9 +34,7 @@ import {
     Place as PlaceIcon,
     LocalFlorist as HoneyIcon,
     Grain as PolenIcon,
-    Opacity as PropolisIcon,
     Healing as TreatmentIcon,
-    Warning as WarningIcon,
     Search as InspectionIcon,
     TrendingUp as TrendingUpIcon,
     TrendingDown as TrendingDownIcon,
@@ -70,7 +68,7 @@ import {
     Line,
 } from 'recharts';
 import { getDashboard, getDashboardComparativo, getDashboardPrevisao } from '../services/api';
-import StatBento from '../components/StatBento';
+import StatFavo from '../components/StatFavo';
 
 const DASHBOARD_REFRESH_MS = 10000;
 
@@ -298,73 +296,71 @@ export default function Dashboard() {
                 </Tooltip>
             </Box>
 
-            {/* ─── KPI Cards ────────────────────────────────────────────────── */}
-            <Grid container spacing={3} sx={{ mb: 4 }}>
-                <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                    <StatBento
-                        title="Apiários"
+            {/* ─── Favo — os 4 números que mais importam ───────────────────────── */}
+            <Grid container spacing={{ xs: 1.25, md: 0.75 }} sx={{ mb: 4 }}>
+                <Grid size={{ xs: 6, md: 3 }}>
+                    <StatFavo
+                        label="Apiários"
                         value={data?.total_apiarios || 0}
-                        subtitle={`${data?.apiarios_ativos || 0} ativos`}
-                        icon={<PlaceIcon />}
-                        color={theme.palette.secondary.main}
+                        sub={`${data?.apiarios_ativos || 0} ativos`}
                         delay={0}
                     />
                 </Grid>
-                <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                    <StatBento
-                        title="Colmeias"
+                <Grid size={{ xs: 6, md: 3 }}>
+                    <StatFavo
+                        label="Colmeias"
                         value={data?.total_colmeias || 0}
-                        subtitle={`${data?.colmeias_ativas || 0} ativas`}
-                        icon={<HiveIcon />}
-                        color={theme.palette.primary.main}
-                        delay={100}
+                        sub={`${data?.colmeias_ativas || 0} ativas`}
+                        offset
+                        delay={80}
                     />
                 </Grid>
-                <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                    <StatBento
-                        title="Produção Anual"
+                <Grid size={{ xs: 6, md: 3 }}>
+                    <StatFavo
+                        label="Produção anual"
                         value={`${parseFloat(data?.producao_ano_kg || 0).toFixed(1)} kg`}
-                        subtitle={`${parseFloat(data?.producao_mes_kg || 0).toFixed(1)} kg este mês`}
-                        icon={<HoneyIcon />}
-                        color="#FF9800"
-                        delay={200}
+                        sub={`${parseFloat(data?.producao_mes_kg || 0).toFixed(1)} kg este mês`}
+                        delay={160}
                     />
                 </Grid>
-                <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                    <StatBento
-                        title="Atenção"
+                <Grid size={{ xs: 6, md: 3 }}>
+                    <StatFavo
+                        label="Em atenção"
                         value={data?.tratamentos_em_andamento || 0}
-                        subtitle={`${data?.colmeias_em_quarentena || 0} em quarentena`}
-                        icon={<WarningIcon />}
-                        color={theme.palette.error.main}
-                        delay={300}
+                        sub={`${data?.colmeias_em_quarentena || 0} em quarentena`}
+                        tone={data?.tratamentos_em_andamento ? 'alert' : 'amber'}
+                        offset
+                        delay={240}
                     />
                 </Grid>
             </Grid>
 
-            {/* ─── KPI Cards — Pólen e Própolis ────────────────────────────────── */}
-            <Grid container spacing={3} sx={{ mb: 4 }}>
-                <Grid size={{ xs: 12, sm: 6 }}>
-                    <StatBento
-                        title="Produção de Pólen (ano)"
-                        value={`${parseFloat(data?.producao_polen_ano_g || 0).toFixed(1)} g`}
-                        subtitle={`${parseFloat(data?.producao_polen_mes_g || 0).toFixed(1)} g este mês`}
-                        icon={<PolenIcon />}
-                        color="#8D6E63"
-                        delay={350}
-                    />
-                </Grid>
-                <Grid size={{ xs: 12, sm: 6 }}>
-                    <StatBento
-                        title="Produção de Própolis (ano)"
-                        value={`${parseFloat(data?.producao_propolis_ano_g || 0).toFixed(1)} g`}
-                        subtitle={`${parseFloat(data?.producao_propolis_mes_g || 0).toFixed(1)} g este mês`}
-                        icon={<PropolisIcon />}
-                        color="#6D4C41"
-                        delay={400}
-                    />
-                </Grid>
-            </Grid>
+            {/* ─── Pólen e Própolis — painel discreto, sem repetir o favo ──────── */}
+            <Paper variant="outlined" sx={{ p: 2.5, mb: 4, display: 'flex', flexWrap: 'wrap', gap: 3 }}>
+                <Box sx={{ flex: '1 1 220px' }}>
+                    <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
+                        Produção de pólen (ano)
+                    </Typography>
+                    <Typography variant="h4" sx={{ color: 'text.primary' }}>
+                        {parseFloat(data?.producao_polen_ano_g || 0).toFixed(1)} g
+                        <Typography component="span" variant="body2" color="text.secondary" sx={{ ml: 1 }}>
+                            {parseFloat(data?.producao_polen_mes_g || 0).toFixed(1)} g este mês
+                        </Typography>
+                    </Typography>
+                </Box>
+                <Divider orientation="vertical" flexItem sx={{ display: { xs: 'none', sm: 'block' } }} />
+                <Box sx={{ flex: '1 1 220px' }}>
+                    <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
+                        Produção de própolis (ano)
+                    </Typography>
+                    <Typography variant="h4" sx={{ color: 'text.primary' }}>
+                        {parseFloat(data?.producao_propolis_ano_g || 0).toFixed(1)} g
+                        <Typography component="span" variant="body2" color="text.secondary" sx={{ ml: 1 }}>
+                            {parseFloat(data?.producao_propolis_mes_g || 0).toFixed(1)} g este mês
+                        </Typography>
+                    </Typography>
+                </Box>
+            </Paper>
 
             <Card sx={{ mb: 3 }}>
                 <CardContent sx={{ p: { xs: 1.5, sm: 2 } }}>

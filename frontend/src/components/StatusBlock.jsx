@@ -1,25 +1,18 @@
 import { Box, Paper, Typography, useTheme, alpha } from '@mui/material';
-import {
-    CheckCircle as OkIcon,
-    Error as ErrorIcon,
-    Warning as WarningIcon,
-    HelpOutline as NeutralIcon,
-} from '@mui/icons-material';
 
-// Bloco de status simples e legível — ícone + cor + frase curta, para que
-// alguém sem conhecimento técnico entenda o estado do sistema de relance.
-const STATUS_CONFIG = {
-    ok: { Icon: OkIcon, colorKey: 'success' },
-    warning: { Icon: WarningIcon, colorKey: 'warning' },
-    error: { Icon: ErrorIcon, colorKey: 'error' },
-    neutral: { Icon: NeutralIcon, colorKey: null },
+// Bloco de status simples — barra + ponto + frase em linguagem simples, sem
+// ícone-em-círculo, pra alguém sem conhecimento técnico entender de relance.
+const STATUS_COLOR_KEY = {
+    ok: 'success',
+    warning: 'warning',
+    error: 'error',
+    neutral: null,
 };
 
-export default function StatusBlock({ status = 'neutral', title, description, icon, extra }) {
+export default function StatusBlock({ status = 'neutral', title, description, extra }) {
     const theme = useTheme();
-    const config = STATUS_CONFIG[status] || STATUS_CONFIG.neutral;
-    const color = config.colorKey ? theme.palette[config.colorKey].main : theme.palette.text.secondary;
-    const IconComponent = icon || config.Icon;
+    const colorKey = STATUS_COLOR_KEY[status] ?? null;
+    const color = colorKey ? theme.palette[colorKey].main : theme.palette.text.secondary;
 
     return (
         <Paper
@@ -28,25 +21,20 @@ export default function StatusBlock({ status = 'neutral', title, description, ic
                 p: 2,
                 display: 'flex',
                 alignItems: 'center',
-                gap: 1.5,
-                borderLeft: `4px solid ${color}`,
-                bgcolor: alpha(color, 0.06),
+                gap: 1.75,
             }}
         >
+            <Box sx={{ alignSelf: 'stretch', width: 3, borderRadius: 2, bgcolor: color, flexShrink: 0 }} />
             <Box
                 sx={{
-                    width: 40,
-                    height: 40,
+                    width: 8,
+                    height: 8,
                     borderRadius: '50%',
-                    bgcolor: alpha(color, 0.15),
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
+                    bgcolor: color,
+                    boxShadow: `0 0 0 4px ${alpha(color, 0.18)}`,
                     flexShrink: 0,
                 }}
-            >
-                <IconComponent sx={{ color, fontSize: 22 }} />
-            </Box>
+            />
             <Box sx={{ flex: 1, minWidth: 0 }}>
                 <Typography variant="subtitle2" fontWeight={700}>
                     {title}

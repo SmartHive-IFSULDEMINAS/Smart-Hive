@@ -11,7 +11,6 @@ import {
     Refresh as RefreshIcon,
     PlayArrow as TestIcon,
     Delete as DeleteIcon,
-    QueryStats as StatsIcon,
     ScatterPlot as ClusterIcon,
     Hub as KnnIcon,
     UploadFile as UploadFileIcon,
@@ -24,7 +23,7 @@ import {
     getClassificacoes, getClassificacaoEstatisticas,
     classificarPolen, deleteClassificacao, getIAStatus, importarCsvPolen,
 } from '../services/api';
-import StatBento from '../components/StatBento';
+import StatFavo from '../components/StatFavo';
 import StatusBlock from '../components/StatusBlock';
 
 // ── Paleta de cores para classes/clusters ─────────────────────────────────────
@@ -445,33 +444,28 @@ export default function IAPolen() {
                 </Fade>
             )}
 
-            {/* ── Cards de resumo ──────────────────────────────────────── */}
-            <Grid container spacing={2} sx={{ mb: 3 }}>
-                <Grid size={{ xs: 12, sm: 4 }}>
-                    <StatBento
-                        title="Total de Classificações"
-                        value={loading ? <Skeleton width={60} /> : stats?.total ?? 0}
-                        icon={<StatsIcon />}
-                        color={theme.palette.primary.main}
+            {/* ── Favo — os números que mais importam nesta tela ────────── */}
+            <Grid container spacing={{ xs: 1.25, sm: 0.75 }} sx={{ mb: 3 }}>
+                <Grid size={{ xs: 4 }}>
+                    <StatFavo
+                        label="Total de classificações"
+                        value={loading ? <Skeleton width={40} sx={{ mx: 'auto' }} /> : stats?.total ?? 0}
                         delay={0}
                     />
                 </Grid>
-                <Grid size={{ xs: 12, sm: 4 }}>
-                    <StatBento
-                        title="Tipo Mais Frequente (KNN)"
-                        value={loading ? <Skeleton width={60} /> : tipoMaisComum?.knn_classe ? `Tipo ${tipoMaisComum.knn_classe}` : '—'}
-                        icon={<KnnIcon />}
-                        color={theme.palette.secondary.main}
-                        delay={100}
+                <Grid size={{ xs: 4 }}>
+                    <StatFavo
+                        label="Tipo mais frequente (KNN)"
+                        value={loading ? <Skeleton width={40} sx={{ mx: 'auto' }} /> : tipoMaisComum?.knn_classe ? `Tipo ${tipoMaisComum.knn_classe}` : '—'}
+                        offset
+                        delay={80}
                     />
                 </Grid>
-                <Grid size={{ xs: 12, sm: 4 }}>
-                    <StatBento
-                        title="Clusters Distintos"
-                        value={loading ? <Skeleton width={60} /> : clusterData.length}
-                        icon={<ClusterIcon />}
-                        color="#F57C00"
-                        delay={200}
+                <Grid size={{ xs: 4 }}>
+                    <StatFavo
+                        label="Clusters distintos"
+                        value={loading ? <Skeleton width={40} sx={{ mx: 'auto' }} /> : clusterData.length}
+                        delay={160}
                     />
                 </Grid>
             </Grid>
