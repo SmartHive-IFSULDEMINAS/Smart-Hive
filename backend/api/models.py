@@ -1264,6 +1264,45 @@ class ClassificacaoPolen(models.Model):
         return f"Pólen TIPO:{self.knn_classe} CLUSTER:{self.kmeans_cluster} — {self.timestamp.strftime('%d/%m/%Y %H:%M')}"
 
 
+class Camera(models.Model):
+    """Câmera ao vivo (Raspberry Pi) ligada sob demanda pela plataforma.
+
+    O Pi fica atrás de NAT, então quem inicia a conexão é sempre ele:
+    consulta /api/camera/pi/estado/ periodicamente e só transmite (RTSP para
+    o MediaMTX) enquanto `ativa_ate` estiver no futuro. A aba do frontend
+    renova `ativa_ate` com heartbeats; sem heartbeat, a sessão expira sozinha.
+    """
+
+    nome = models.CharField(max_length=100, verbose_name='Nome')
+    token = models.CharField(
+        max_length=64, unique=True, blank=True, verbose_name='Token do Pi',
+        help_text='Autentica o Pi na consulta de estado e é a senha do RTSP (usuário "camera")',
+    )
+    caminho_stream = models.SlugField(
+        max_length=50, unique=True, default='camera1', verbose_name='Caminho no MediaMTX',
+    )
+    ativa_ate = models.DateTimeField(null=True, blank=True, verbose_name='Sessão ativa até')
+    ultimo_contato_pi = models.DateTimeField(null=True, blank=True, verbose_name='Último contato do Pi')
+
+    class Meta:
+        verbose_name = 'Câmera'
+        verbose_name_plural = 'Câmeras'
+        ordering = ['id']
+
+    def __str__(self):
+        return self.nome
+
+    def save(self, *args, **kwargs):
+        if not self.token:
+            import secrets
+            self.token = secrets.token_urlsafe(32)
+        super().save(*args, **kwargs)
+
+    @property
+    def ativa(self):
+        return bool(self.ativa_ate and self.ativa_ate > timezone.now())
+
+
 # Registra AuditLog (definido em audit_models.py, usado por audit_middleware.py)
 # no módulo de models "oficial" do app -- sem isso, comandos que não
 # carregam o middleware (makemigrations, tests, shell) não enxergam o

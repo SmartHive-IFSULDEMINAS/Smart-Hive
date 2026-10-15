@@ -166,6 +166,11 @@ export const importarCsvPolen = (formData) => api.post('/ia/polen/upload-csv/', 
 export const getDeteccoesAbelha = (params) => api.get('/deteccoes-abelha/', { params });
 export const getDeteccaoAbelhaEstatisticas = (params) => api.get('/deteccoes-abelha/estatisticas/', { params });
 export const deleteDeteccaoAbelha = (id) => api.delete(`/deteccoes-abelha/${id}/`);
+
+// Câmera ao vivo (Raspberry Pi + MediaMTX)
+export const getCameraStatus = () => api.get('/camera/');
+export const ligarCamera = () => api.post('/camera/ligar/');
+export const desligarCamera = () => api.post('/camera/desligar/');
 export const getClassificacaoEstatisticas = (params) => api.get('/ia/classificacoes/estatisticas/', { params });
 export const deleteClassificacao = (id) => api.delete(`/ia/classificacoes/${id}/`);
 

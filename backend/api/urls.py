@@ -36,6 +36,7 @@ from .export_views import (
     export_financeiro,
 )
 from .ia_views import classificar_polen, status_modelos, importar_csv_polen
+from .camera_views import status_camera, ligar_camera, desligar_camera, estado_pi, mediamtx_auth
 
 router = DefaultRouter()
 router.register(r'especies', EspecieAbelhaViewSet, basename='especies')
@@ -82,6 +83,12 @@ urlpatterns = [
     path('ia/polen/classificar/', classificar_polen, name='ia_classificar_polen'),
     path('ia/polen/upload-csv/', importar_csv_polen, name='ia_importar_csv_polen'),
     path('ia/status/', status_modelos, name='ia_status_modelos'),
+    # Câmera ao vivo (Raspberry Pi + MediaMTX)
+    path('camera/', status_camera, name='camera_status'),
+    path('camera/ligar/', ligar_camera, name='camera_ligar'),
+    path('camera/desligar/', desligar_camera, name='camera_desligar'),
+    path('camera/pi/estado/', estado_pi, name='camera_pi_estado'),
+    path('camera/mediamtx-auth/', mediamtx_auth, name='camera_mediamtx_auth'),
     # Export endpoints
     path('export/apiarios/', export_apiarios, name='export_apiarios'),
     path('export/colmeias/', export_colmeias, name='export_colmeias'),

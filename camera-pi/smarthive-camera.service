@@ -1,0 +1,14 @@
+[Unit]
+Description=Smart-Hive - camera ao vivo sob demanda
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+EnvironmentFile=/etc/smarthive-camera.env
+ExecStart=/usr/bin/python3 /opt/smarthive-camera/camera_pi.py
+Restart=always
+RestartSec=5
+User=pi
+
+[Install]
+WantedBy=multi-user.target

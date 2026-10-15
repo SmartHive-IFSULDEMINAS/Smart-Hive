@@ -46,6 +46,7 @@ import {
     BugReport as BugIcon,
     Biotech as BiotechIcon,
     CameraAlt as CameraIcon,
+    Videocam as VideocamIcon,
     NotificationsActive as AlertsIcon,
     Assessment as AnalyticsIcon,
     Summarize as ReportsIcon,
@@ -83,6 +84,7 @@ const menuSections = [
         items: [
             { text: 'Inspeções',   icon: <SearchIcon />,    path: '/inspecoes' },
             { text: 'Histórico IoT', icon: <NoiseIcon />,   path: '/historico-ruido' },
+            { text: 'Câmera ao Vivo', icon: <VideocamIcon />, path: '/camera' },
             { text: 'Alertas',     icon: <AlertsIcon />,    path: '/alertas' },
             { text: 'Análises',    icon: <AnalyticsIcon />, path: '/analises' },
             { text: 'Produção',    icon: <HoneyIcon />,     path: '/producao' },

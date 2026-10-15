@@ -1,10 +1,13 @@
 import json
 from django.contrib.auth import get_user_model
-from datetime import date
+from datetime import date, timedelta
+from django.test import override_settings
+from django.utils import timezone
+from rest_framework_simplejwt.tokens import RefreshToken
 from django.core.files.uploadedfile import SimpleUploadedFile
 from rest_framework import status
 from rest_framework.test import APITestCase
-from api.models import Apiario, Colmeia, Notificacao, AlertaRuidoConfig, ProducaoMel, LeituraSensor, ColetaProduto, AuditLog, Custo, Receita, ClassificacaoPolen
+from api.models import Apiario, Colmeia, Notificacao, AlertaRuidoConfig, ProducaoMel, LeituraSensor, ColetaProduto, AuditLog, Custo, Receita, ClassificacaoPolen, Camera
 from api.alert_utils import gerar_alerta_producao
 
 
@@ -758,3 +761,114 @@ class ImportarCsvPolenTests(APITestCase):
 		self.assertEqual(resultados_csv[0]['origem'], 'csv')
 		self.assertEqual(len(resultados_ao_vivo), 1)
 		self.assertEqual(resultados_ao_vivo[0]['origem'], 'ao_vivo')
+
+
+@override_settings(MEDIAMTX_AUTH_SECRET='segredo-teste')
+class CameraAoVivoTests(APITestCase):
+	def setUp(self):
+		self.usuario = User.objects.create_user(
+			username='apicultor_cam',
+			email='cam@smarthive.local',
+			password='SenhaForte123!',
+			role='apicultor',
+		)
+		self.camera = Camera.objects.create(nome='Câmera Teste', caminho_stream='camera1')
+
+	def _jwt(self):
+		return str(RefreshToken.for_user(self.usuario).access_token)
+
+	def _estado_pi(self, token=None):
+		return self.client.get(
+			'/api/camera/pi/estado/',
+			HTTP_X_CAMERA_TOKEN=token if token is not None else self.camera.token,
+		)
+
+	def _mediamtx_auth(self, payload, segredo='segredo-teste'):
+		return self.client.post(
+			f'/api/camera/mediamtx-auth/?segredo={segredo}',
+			payload,
+			format='json',
+		)
+
+	def test_token_gerado_automaticamente(self):
+		self.assertTrue(self.camera.token)
+
+	def test_status_exige_login(self):
+		response = self.client.get('/api/camera/')
+		self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+	def test_status_inicial_desligada(self):
+		self.client.force_authenticate(user=self.usuario)
+		response = self.client.get('/api/camera/')
+		self.assertEqual(response.status_code, status.HTTP_200_OK)
+		self.assertFalse(response.data['ativa'])
+		self.assertFalse(response.data['pi_online'])
+		self.assertEqual(response.data['hls_url'], '/camera/camera1/index.m3u8')
+
+	def test_status_sem_camera_cadastrada(self):
+		Camera.objects.all().delete()
+		self.client.force_authenticate(user=self.usuario)
+		response = self.client.get('/api/camera/')
+		self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+	def test_ligar_faz_pi_transmitir_e_desligar_para(self):
+		self.client.force_authenticate(user=self.usuario)
+		self.assertFalse(self._estado_pi().data['transmitir'])
+
+		response = self.client.post('/api/camera/ligar/')
+		self.assertEqual(response.status_code, status.HTTP_200_OK)
+		self.assertTrue(response.data['ativa'])
+		self.assertTrue(self._estado_pi().data['transmitir'])
+
+		self.client.post('/api/camera/desligar/')
+		self.assertFalse(self._estado_pi().data['transmitir'])
+
+	def test_sessao_expira_sem_heartbeat(self):
+		self.camera.ativa_ate = timezone.now() - timedelta(seconds=1)
+		self.camera.save()
+		self.assertFalse(self._estado_pi().data['transmitir'])
+
+	def test_estado_pi_com_token_invalido(self):
+		response = self._estado_pi(token='errado')
+		self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+	def test_estado_pi_marca_pi_online(self):
+		self._estado_pi()
+		self.client.force_authenticate(user=self.usuario)
+		self.assertTrue(self.client.get('/api/camera/').data['pi_online'])
+
+	def test_mediamtx_auth_segredo_errado(self):
+		response = self._mediamtx_auth(
+			{'action': 'publish', 'path': 'camera1', 'user': 'camera', 'password': self.camera.token},
+			segredo='errado',
+		)
+		self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+	def test_mediamtx_auth_publish(self):
+		ok = self._mediamtx_auth({'action': 'publish', 'path': 'camera1', 'user': 'camera', 'password': self.camera.token})
+		self.assertEqual(ok.status_code, status.HTTP_200_OK)
+
+		senha_errada = self._mediamtx_auth({'action': 'publish', 'path': 'camera1', 'user': 'camera', 'password': 'x'})
+		self.assertEqual(senha_errada.status_code, status.HTTP_401_UNAUTHORIZED)
+
+		path_errado = self._mediamtx_auth({'action': 'publish', 'path': 'outra', 'user': 'camera', 'password': self.camera.token})
+		self.assertEqual(path_errado.status_code, status.HTTP_401_UNAUTHORIZED)
+
+	def test_mediamtx_auth_read(self):
+		payload = {'action': 'read', 'path': 'camera1', 'token': self._jwt()}
+
+		# Sem sessão ativa ninguém assiste
+		self.assertEqual(self._mediamtx_auth(payload).status_code, status.HTTP_401_UNAUTHORIZED)
+
+		self.camera.ativa_ate = timezone.now() + timedelta(seconds=60)
+		self.camera.save()
+		self.assertEqual(self._mediamtx_auth(payload).status_code, status.HTTP_200_OK)
+
+		payload_jwt_invalido = {**payload, 'token': 'nao-e-um-jwt'}
+		self.assertEqual(self._mediamtx_auth(payload_jwt_invalido).status_code, status.HTTP_401_UNAUTHORIZED)
+
+	def test_mediamtx_auth_read_com_jwt_na_query(self):
+		self.camera.ativa_ate = timezone.now() + timedelta(seconds=60)
+		self.camera.save()
+		response = self._mediamtx_auth({'action': 'read', 'path': 'camera1', 'query': f'jwt={self._jwt()}'})
+		self.assertEqual(response.status_code, status.HTTP_200_OK)

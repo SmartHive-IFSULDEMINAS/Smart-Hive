@@ -4,7 +4,7 @@ from .models import (
     Usuario, EspecieAbelha, Apiario, Colmeia, Inspecao,
     ProducaoMel, Tratamento, Custo, Receita, Fornecedor,
     Equipamento, Notificacao, LeituraSensor, ClassificacaoPolen,
-    AlertaRuidoConfig, ContagemAbelha,
+    AlertaRuidoConfig, ContagemAbelha, Camera,
 )
 
 
@@ -253,3 +253,9 @@ class ClassificacaoPolenAdmin(admin.ModelAdmin):
     ordering = ['-timestamp']
     date_hierarchy = 'timestamp'
     readonly_fields = ['timestamp']
+
+
+@admin.register(Camera)
+class CameraAdmin(admin.ModelAdmin):
+    list_display = ['nome', 'caminho_stream', 'ativa_ate', 'ultimo_contato_pi']
+    readonly_fields = ['token', 'ativa_ate', 'ultimo_contato_pi']

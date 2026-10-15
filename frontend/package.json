@@ -17,6 +17,7 @@
     "@mui/x-date-pickers": "^8.22.0",
     "axios": "^1.13.2",
     "dayjs": "^1.11.19",
+    "hls.js": "^1.7.3",
     "notistack": "^3.0.2",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",

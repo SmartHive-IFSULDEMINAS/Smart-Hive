@@ -4,6 +4,7 @@ Django settings for smarthive project.
 Smart-Hive - Sistema de Gerenciamento de Apiário
 """
 
+import os
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -176,6 +177,10 @@ SIMPLE_JWT = {
     'SIGNING_KEY': SECRET_KEY,
     'AUTH_HEADER_TYPES': ('Bearer',),
 }
+
+# Segredo compartilhado com o MediaMTX (webhook /api/camera/mediamtx-auth/).
+# Vazio = webhook nega tudo.
+MEDIAMTX_AUTH_SECRET = os.environ.get('MEDIAMTX_AUTH_SECRET', '')
 
 # DRF Spectacular Settings
 SPECTACULAR_SETTINGS = {
