@@ -24,7 +24,8 @@ if ! command -v docker-compose &> /dev/null && ! docker compose version &> /dev/
 fi
 
 echo "[1/6] Parando containers existentes..."
-docker-compose down -v 2>/dev/null || docker compose down -v 2>/dev/null || true
+# Sem -v: os volumes guardam o banco SQLite, static e media de producao
+docker-compose down 2>/dev/null || docker compose down 2>/dev/null || true
 
 echo "[2/6] Limpando cache do Docker..."
 docker system prune -f 2>/dev/null || true
