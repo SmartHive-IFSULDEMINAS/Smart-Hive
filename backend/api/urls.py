@@ -36,7 +36,7 @@ from .export_views import (
     export_financeiro,
 )
 from .ia_views import classificar_polen, status_modelos, importar_csv_polen
-from .camera_views import status_camera, ligar_camera, desligar_camera, estado_pi, mediamtx_auth
+from .camera_views import status_camera, ligar_camera, renovar_camera, desligar_camera, estado_pi, mediamtx_auth
 
 router = DefaultRouter()
 router.register(r'especies', EspecieAbelhaViewSet, basename='especies')
@@ -86,6 +86,7 @@ urlpatterns = [
     # Câmera ao vivo (Raspberry Pi + MediaMTX)
     path('camera/', status_camera, name='camera_status'),
     path('camera/ligar/', ligar_camera, name='camera_ligar'),
+    path('camera/renovar/', renovar_camera, name='camera_renovar'),
     path('camera/desligar/', desligar_camera, name='camera_desligar'),
     path('camera/pi/estado/', estado_pi, name='camera_pi_estado'),
     path('camera/mediamtx-auth/', mediamtx_auth, name='camera_mediamtx_auth'),

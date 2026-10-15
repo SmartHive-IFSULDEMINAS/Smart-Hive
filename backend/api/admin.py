@@ -4,7 +4,7 @@ from .models import (
     Usuario, EspecieAbelha, Apiario, Colmeia, Inspecao,
     ProducaoMel, Tratamento, Custo, Receita, Fornecedor,
     Equipamento, Notificacao, LeituraSensor, ClassificacaoPolen,
-    AlertaRuidoConfig, ContagemAbelha, Camera,
+    AlertaRuidoConfig, ContagemAbelha, Camera, EspectadorCamera,
 )
 
 
@@ -257,5 +257,16 @@ class ClassificacaoPolenAdmin(admin.ModelAdmin):
 
 @admin.register(Camera)
 class CameraAdmin(admin.ModelAdmin):
-    list_display = ['nome', 'caminho_stream', 'ativa_ate', 'ultimo_contato_pi']
-    readonly_fields = ['token', 'ativa_ate', 'ultimo_contato_pi']
+    list_display = ['nome', 'caminho_stream', 'transmitindo', 'ultimo_contato_pi']
+    readonly_fields = ['token', 'ultimo_contato_pi']
+
+    @admin.display(boolean=True, description='Transmitindo')
+    def transmitindo(self, obj):
+        return obj.ativa
+
+
+@admin.register(EspectadorCamera)
+class EspectadorCameraAdmin(admin.ModelAdmin):
+    list_display = ['usuario', 'camera', 'iniciada_em', 'expira_em']
+    list_filter = ['camera']
+    readonly_fields = ['camera', 'usuario', 'sessao', 'iniciada_em', 'expira_em']

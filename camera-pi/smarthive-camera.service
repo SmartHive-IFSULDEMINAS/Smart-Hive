@@ -4,11 +4,18 @@ After=network-online.target
 Wants=network-online.target
 
 [Service]
+# Criado pelo install.sh (usuario de sistema no grupo video, sem login)
+User=smarthive-camera
+Group=smarthive-camera
+SupplementaryGroups=video
 EnvironmentFile=/etc/smarthive-camera.env
-ExecStart=/usr/bin/python3 /opt/smarthive-camera/camera_pi.py
+ExecStart=/usr/bin/python3 -u /opt/smarthive-camera/camera_pi.py
 Restart=always
 RestartSec=5
-User=pi
+# Ao parar o servico, derruba tambem o rpicam-vid/ffmpeg
+KillMode=control-group
+TimeoutStopSec=15
+NoNewPrivileges=true
 
 [Install]
 WantedBy=multi-user.target

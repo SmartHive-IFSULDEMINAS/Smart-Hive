@@ -8,29 +8,54 @@ import {
     Stop as StopIcon,
 } from '@mui/icons-material';
 import Hls from 'hls.js';
-import { getCameraStatus, ligarCamera, desligarCamera } from '../services/api';
+import {
+    getCameraStatus, ligarCamera, renovarCamera, desligarCamera, desligarCameraAoSair,
+} from '../services/api';
 
 // A sessão no backend dura 90s; renovamos a cada 30s enquanto a aba está visível
 const HEARTBEAT_MS = 30000;
-const STATUS_POLL_MS = 5000;
+const STATUS_POLL_MS = 10000;
 // Tempo sem receber vídeo até desistir (inclui o Pi perceber e o ffmpeg subir)
-const TIMEOUT_SEM_VIDEO_MS = 30000;
+const TIMEOUT_SEM_VIDEO_MS = 45000;
 const RETRY_MS = 2000;
+
+// iPhones/iPads antigos não têm MediaSource (hls.js), mas tocam HLS nativo
+const suportaHlsNativo = () => typeof document !== 'undefined'
+    && document.createElement('video').canPlayType('application/vnd.apple.mpegurl') !== '';
+const suportaVideo = () => Hls.isSupported() || suportaHlsNativo();
+
+const formatarHora = (iso) => new Date(iso).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
 
 export default function CameraAoVivo() {
     const [camera, setCamera] = useState(null);
     const [semCamera, setSemCamera] = useState(false);
-    // desligada | ligando | ao_vivo | erro
+    // desligada | ligando | ao_vivo | erro | esgotado
     const [fase, setFase] = useState('desligada');
+    const [terminaEm, setTerminaEm] = useState(null);
 
     const videoRef = useRef(null);
     const hlsRef = useRef(null);
     const retryRef = useRef(null);
     const conectarRef = useRef(null);
+    const falharRef = useRef(null);
     const heartbeatRef = useRef(null);
+    const sessaoRef = useRef(null);
+    const hlsUrlRef = useRef(null);
     const ultimoVideoRef = useRef(0);
+    const recuperouMidiaRef = useRef(false);
     const faseRef = useRef(fase);
     useEffect(() => { faseRef.current = fase; }, [fase]);
+
+    // Desistiu de receber vídeo: encerra a sessão para o Pi não transmitir à toa
+    useEffect(() => {
+        falharRef.current = () => {
+            clearInterval(heartbeatRef.current);
+            const sessao = sessaoRef.current;
+            sessaoRef.current = null;
+            if (sessao) desligarCamera(sessao).catch(() => {});
+            setFase('erro');
+        };
+    }, []);
 
     const atualizarStatus = useCallback(async () => {
         try {
@@ -51,25 +76,78 @@ export default function CameraAoVivo() {
         };
     }, [atualizarStatus]);
 
+    // ── player HLS ───────────────────────────────────────────────────────
     const destruirPlayer = useCallback(() => {
         clearTimeout(retryRef.current);
         if (hlsRef.current) {
             hlsRef.current.destroy();
             hlsRef.current = null;
         }
+        const video = videoRef.current;
+        if (video?.getAttribute('src')) {
+            video.onloadeddata = video.ontimeupdate = video.onerror = null;
+            video.removeAttribute('src');
+            video.load();
+        }
     }, []);
 
-    const conectarPlayer = useCallback((hlsUrl) => {
+    const playerAtivo = useCallback(() => Boolean(hlsRef.current || videoRef.current?.getAttribute('src')), []);
+
+    // Stream ainda não existe (Pi subindo) ou caiu. Com a aba oculta, só
+    // pausa: o Pi para sem heartbeat e reconectamos quando ela voltar.
+    // Visível: tenta de novo até o timeout e então desiste.
+    const tratarFalhaStream = useCallback(() => {
+        destruirPlayer();
+        if (document.visibilityState === 'hidden') {
+            if (faseRef.current === 'ao_vivo') setFase('ligando');
+            return;
+        }
+        if (Date.now() - ultimoVideoRef.current < TIMEOUT_SEM_VIDEO_MS) {
+            if (faseRef.current === 'ao_vivo') setFase('ligando');
+            retryRef.current = setTimeout(() => conectarRef.current(), RETRY_MS);
+        } else {
+            falharRef.current();
+        }
+    }, [destruirPlayer]);
+
+    // Player nativo (Safari antigo): não dá para mandar header, então o JWT vai
+    // na query; o MediaMTX repassa ?jwt= para as playlists e segmentos
+    const conectarNativo = useCallback((video, hlsUrl) => {
+        const token = localStorage.getItem('token') ?? '';
+        video.onloadeddata = () => {
+            ultimoVideoRef.current = Date.now();
+            if (faseRef.current === 'ligando') setFase('ao_vivo');
+        };
+        video.ontimeupdate = () => { ultimoVideoRef.current = Date.now(); };
+        video.onerror = tratarFalhaStream;
+        video.src = `${hlsUrl}?jwt=${encodeURIComponent(token)}`;
+        video.play().catch(() => {});
+    }, [tratarFalhaStream]);
+
+    const conectarPlayer = useCallback(() => {
         destruirPlayer();
         const video = videoRef.current;
-        if (!video || !Hls.isSupported()) return;
+        const hlsUrl = hlsUrlRef.current;
+        if (!video || !hlsUrl) return;
 
-        const token = localStorage.getItem('token');
+        if (!Hls.isSupported()) {
+            conectarNativo(video, hlsUrl);
+            return;
+        }
+
         const hls = new Hls({
             lowLatencyMode: true,
-            xhrSetup: (xhr) => xhr.setRequestHeader('Authorization', `Bearer ${token}`),
+            // Sessões podem durar até 30 min: não acumula vídeo antigo na memória
+            backBufferLength: 10,
+            // Se ficar atrasado em relação ao ao vivo, acelera levemente para alcançar
+            maxLiveSyncPlaybackRate: 1.5,
+            xhrSetup: (xhr) => {
+                const token = localStorage.getItem('token');
+                if (token) xhr.setRequestHeader('Authorization', `Bearer ${token}`);
+            },
         });
         hlsRef.current = hls;
+        recuperouMidiaRef.current = false;
 
         hls.on(Hls.Events.MANIFEST_PARSED, () => {
             video.play().catch(() => {});
@@ -80,74 +158,137 @@ export default function CameraAoVivo() {
         });
         hls.on(Hls.Events.ERROR, (_, data) => {
             if (!data.fatal) return;
-            destruirPlayer();
-            // Stream ainda não existe (Pi subindo) ou caiu: tenta de novo até o timeout
-            if (Date.now() - ultimoVideoRef.current < TIMEOUT_SEM_VIDEO_MS) {
-                if (faseRef.current === 'ao_vivo') setFase('ligando');
-                retryRef.current = setTimeout(() => conectarRef.current(hlsUrl), RETRY_MS);
-            } else {
-                setFase('erro');
+            // Erro de decodificação: o hls.js consegue se recuperar sem reconectar
+            if (data.type === Hls.ErrorTypes.MEDIA_ERROR && !recuperouMidiaRef.current) {
+                recuperouMidiaRef.current = true;
+                hls.recoverMediaError();
+                return;
             }
+            tratarFalhaStream();
         });
 
         hls.loadSource(hlsUrl);
         hls.attachMedia(video);
-    }, [destruirPlayer]);
+    }, [destruirPlayer, conectarNativo, tratarFalhaStream]);
 
     // O retry agendado dentro do player chama a versão atual via ref
     useEffect(() => { conectarRef.current = conectarPlayer; }, [conectarPlayer]);
 
+    // ── sessão ───────────────────────────────────────────────────────────
     const pararHeartbeat = () => clearInterval(heartbeatRef.current);
 
-    const ligar = async () => {
-        try {
-            const res = await ligarCamera();
-            setCamera(res.data);
-            setFase('ligando');
-            ultimoVideoRef.current = Date.now();
-            conectarPlayer(res.data.hls_url);
+    const encerrarLocal = useCallback((novaFase) => {
+        pararHeartbeat();
+        destruirPlayer();
+        sessaoRef.current = null;
+        setTerminaEm(null);
+        setFase(novaFase);
+    }, [destruirPlayer]);
 
-            pararHeartbeat();
-            heartbeatRef.current = setInterval(() => {
-                if (document.visibilityState === 'visible') ligarCamera().catch(() => {});
-            }, HEARTBEAT_MS);
+    const abrirSessao = useCallback(async () => {
+        const res = await ligarCamera();
+        sessaoRef.current = res.data.sessao;
+        hlsUrlRef.current = res.data.hls_url;
+        setCamera(res.data);
+        setTerminaEm(res.data.sessao_termina_em);
+    }, []);
+
+    // Player foi pausado (aba oculta) ou caiu: volta a buscar o vídeo
+    const reconectarSeParado = useCallback(() => {
+        if (!sessaoRef.current || playerAtivo()) return;
+        clearTimeout(retryRef.current);
+        ultimoVideoRef.current = Date.now();
+        conectarRef.current();
+    }, [playerAtivo]);
+
+    const renovar = useCallback(async () => {
+        const sessao = sessaoRef.current;
+        if (!sessao) return;
+        try {
+            const res = await renovarCamera(sessao);
+            setCamera(res.data);
+            reconectarSeParado();
+        } catch (err) {
+            const motivo = err.response?.data?.motivo;
+            if (motivo === 'tempo_esgotado') {
+                encerrarLocal('esgotado');
+            } else if (motivo === 'sessao_inexistente') {
+                // Expirou (ex.: aba ficou oculta por muito tempo): abre outra.
+                // O Pi pode ter parado, então o player volta a "ligando".
+                try {
+                    await abrirSessao();
+                    reconectarSeParado();
+                } catch {
+                    encerrarLocal('erro');
+                }
+            }
+            // Outros erros (rede): tenta de novo no próximo heartbeat
+        }
+    }, [abrirSessao, encerrarLocal, reconectarSeParado]);
+
+    const ligar = async () => {
+        if (!suportaVideo()) {
+            setFase('erro');
+            return;
+        }
+        try {
+            await abrirSessao();
         } catch {
             setFase('erro');
+            return;
         }
+        setFase('ligando');
+        ultimoVideoRef.current = Date.now();
+        conectarPlayer();
+
+        pararHeartbeat();
+        heartbeatRef.current = setInterval(() => {
+            if (document.visibilityState === 'visible') renovar();
+        }, HEARTBEAT_MS);
     };
 
     const parar = async () => {
-        pararHeartbeat();
-        destruirPlayer();
-        setFase('desligada');
-        try {
-            const res = await desligarCamera();
-            setCamera(res.data);
-        } catch {
-            // a sessão expira sozinha de qualquer forma
+        const sessao = sessaoRef.current;
+        encerrarLocal('desligada');
+        if (sessao) {
+            try {
+                await desligarCamera(sessao);
+            } catch {
+                // a sessão expira sozinha de qualquer forma
+            }
         }
+        atualizarStatus();
     };
 
-    // Voltou para a aba depois de um tempo escondida: renova na hora,
-    // já que o heartbeat foi pulado enquanto ela estava oculta
+    // Voltou para a aba depois de um tempo escondida: renova na hora, já que
+    // o heartbeat foi pulado enquanto ela estava oculta
     useEffect(() => {
         const onVisibility = () => {
-            if (document.visibilityState === 'visible' && ['ligando', 'ao_vivo'].includes(faseRef.current)) {
-                ligarCamera().catch(() => {});
-            }
+            if (document.visibilityState === 'visible' && sessaoRef.current) renovar();
         };
         document.addEventListener('visibilitychange', onVisibility);
         return () => document.removeEventListener('visibilitychange', onVisibility);
+    }, [renovar]);
+
+    // Fechou a aba/navegador: avisa o backend na hora (keepalive sobrevive ao
+    // fechamento), em vez de esperar a sessão expirar
+    useEffect(() => {
+        const onPageHide = () => {
+            if (sessaoRef.current) desligarCameraAoSair(sessaoRef.current);
+        };
+        window.addEventListener('pagehide', onPageHide);
+        return () => window.removeEventListener('pagehide', onPageHide);
     }, []);
 
-    // Saiu da página: derruba o player e encerra a sessão
+    // Saiu da página (navegação interna): derruba o player e encerra a sessão
     useEffect(() => () => {
         pararHeartbeat();
         destruirPlayer();
-        if (['ligando', 'ao_vivo'].includes(faseRef.current)) desligarCamera().catch(() => {});
+        if (sessaoRef.current) desligarCamera(sessaoRef.current).catch(() => {});
     }, [destruirPlayer]);
 
     const transmitindo = fase === 'ligando' || fase === 'ao_vivo';
+    const outrosAssistindo = camera ? Math.max(0, camera.espectadores - (transmitindo ? 1 : 0)) : 0;
 
     return (
         <Box sx={{ p: { xs: 2, md: 3 } }}>
@@ -163,12 +304,17 @@ export default function CameraAoVivo() {
                         </Box>
                     </Box>
                     {camera && (
-                        <Chip
-                            size="small"
-                            label={camera.pi_online ? 'Pi online' : 'Pi offline'}
-                            color={camera.pi_online ? 'success' : 'default'}
-                            variant={camera.pi_online ? 'filled' : 'outlined'}
-                        />
+                        <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                            {outrosAssistindo > 0 && (
+                                <Chip size="small" variant="outlined" label={`${outrosAssistindo} assistindo agora`} />
+                            )}
+                            <Chip
+                                size="small"
+                                label={camera.pi_online ? 'Pi online' : 'Pi offline'}
+                                color={camera.pi_online ? 'success' : 'default'}
+                                variant={camera.pi_online ? 'filled' : 'outlined'}
+                            />
+                        </Box>
                     )}
                 </Box>
             </Fade>
@@ -180,6 +326,17 @@ export default function CameraAoVivo() {
             ) : (
                 <Card>
                     <CardContent>
+                        {fase === 'ligando' && camera && !camera.pi_online && (
+                            <Alert severity="warning" sx={{ mb: 2 }}>
+                                O Raspberry Pi não está se comunicando com o servidor. A imagem só aparece quando ele voltar a ficar online.
+                            </Alert>
+                        )}
+                        {fase === 'esgotado' && (
+                            <Alert severity="info" sx={{ mb: 2 }}>
+                                A transmissão foi encerrada após {camera?.sessao_max_minutos ?? 30} minutos para economizar dados. Clique em &quot;Continuar assistindo&quot; se ainda precisar.
+                            </Alert>
+                        )}
+
                         <Box sx={{
                             position: 'relative',
                             width: '100%',
@@ -207,12 +364,14 @@ export default function CameraAoVivo() {
                                     <Typography variant="caption">Pode levar alguns segundos</Typography>
                                 </Box>
                             )}
-                            {fase === 'desligada' && (
+                            {(fase === 'desligada' || fase === 'esgotado') && (
                                 <Typography sx={{ color: 'grey.500' }}>Câmera desligada</Typography>
                             )}
                             {fase === 'erro' && (
                                 <Typography sx={{ color: 'grey.400', px: 2, textAlign: 'center' }}>
-                                    A câmera não respondeu. Verifique se o Pi está online e tente de novo.
+                                    {suportaVideo()
+                                        ? 'A câmera não respondeu. Verifique se o Pi está online e tente de novo.'
+                                        : 'Este navegador não suporta a reprodução do vídeo ao vivo. Use Chrome, Edge, Firefox ou Safari atualizado.'}
                                 </Typography>
                             )}
                             {fase === 'ao_vivo' && (
@@ -225,15 +384,20 @@ export default function CameraAoVivo() {
                             )}
                         </Box>
 
-                        <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2 }}>
+                        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 2, mt: 2, flexWrap: 'wrap' }}>
                             {transmitindo ? (
                                 <Button variant="outlined" color="error" startIcon={<StopIcon />} onClick={parar}>
                                     Parar
                                 </Button>
                             ) : (
                                 <Button variant="contained" startIcon={<PlayIcon />} onClick={ligar}>
-                                    {fase === 'erro' ? 'Tentar de novo' : 'Ligar câmera'}
+                                    {{ erro: 'Tentar de novo', esgotado: 'Continuar assistindo' }[fase] ?? 'Ligar câmera'}
                                 </Button>
+                            )}
+                            {transmitindo && terminaEm && (
+                                <Typography variant="caption" color="text.secondary">
+                                    Desliga automaticamente às {formatarHora(terminaEm)}
+                                </Typography>
                             )}
                         </Box>
                     </CardContent>

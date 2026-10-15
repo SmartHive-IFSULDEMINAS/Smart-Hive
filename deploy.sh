@@ -53,6 +53,9 @@ if [ ! -f .env ]; then
     read -p "Pressione ENTER após revisar o .env..."
 fi
 
+# Câmera ao vivo: segredo MediaMTX <-> Django
+bash scripts/garantir_segredo_camera.sh
+
 echo "📦 Parando containers antigos..."
 docker-compose down 2>/dev/null || true
 echo ""

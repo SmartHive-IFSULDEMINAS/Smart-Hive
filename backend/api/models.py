@@ -1,3 +1,5 @@
+import uuid
+
 from django.db import models
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.contrib.auth.models import AbstractUser
@@ -1269,8 +1271,7 @@ class Camera(models.Model):
 
     O Pi fica atrás de NAT, então quem inicia a conexão é sempre ele:
     consulta /api/camera/pi/estado/ periodicamente e só transmite (RTSP para
-    o MediaMTX) enquanto `ativa_ate` estiver no futuro. A aba do frontend
-    renova `ativa_ate` com heartbeats; sem heartbeat, a sessão expira sozinha.
+    o MediaMTX) enquanto houver algum `EspectadorCamera` não expirado.
     """
 
     nome = models.CharField(max_length=100, verbose_name='Nome')
@@ -1281,7 +1282,6 @@ class Camera(models.Model):
     caminho_stream = models.SlugField(
         max_length=50, unique=True, default='camera1', verbose_name='Caminho no MediaMTX',
     )
-    ativa_ate = models.DateTimeField(null=True, blank=True, verbose_name='Sessão ativa até')
     ultimo_contato_pi = models.DateTimeField(null=True, blank=True, verbose_name='Último contato do Pi')
 
     class Meta:
@@ -1298,9 +1298,34 @@ class Camera(models.Model):
             self.token = secrets.token_urlsafe(32)
         super().save(*args, **kwargs)
 
+    def espectadores_ativos(self):
+        return self.espectadores.filter(expira_em__gt=timezone.now())
+
     @property
     def ativa(self):
-        return bool(self.ativa_ate and self.ativa_ate > timezone.now())
+        return self.espectadores_ativos().exists()
+
+
+class EspectadorCamera(models.Model):
+    """Uma aba assistindo à câmera. Cada aba tem a sua sessão, renovada por
+    heartbeat; a câmera transmite enquanto existir pelo menos uma não expirada.
+    Assim, um espectador saindo não derruba o vídeo dos outros."""
+
+    camera = models.ForeignKey(Camera, on_delete=models.CASCADE, related_name='espectadores')
+    usuario = models.ForeignKey(
+        Usuario, on_delete=models.CASCADE, related_name='sessoes_camera', verbose_name='Usuário',
+    )
+    sessao = models.UUIDField(default=uuid.uuid4, unique=True, editable=False, verbose_name='Sessão')
+    iniciada_em = models.DateTimeField(default=timezone.now, verbose_name='Iniciada em')
+    expira_em = models.DateTimeField(verbose_name='Expira em', db_index=True)
+
+    class Meta:
+        verbose_name = 'Espectador da Câmera'
+        verbose_name_plural = 'Espectadores da Câmera'
+        ordering = ['-iniciada_em']
+
+    def __str__(self):
+        return f'{self.usuario} - {self.camera}'
 
 
 # Registra AuditLog (definido em audit_models.py, usado por audit_middleware.py)

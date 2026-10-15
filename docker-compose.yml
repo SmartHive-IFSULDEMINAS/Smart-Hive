@@ -20,6 +20,7 @@ services:
       - DJANGO_SECRET_KEY=change-this-to-a-random-secret-key-in-production
       - IA_MODELS_DIR=/app/ia_models
       - MEDIAMTX_AUTH_SECRET=${MEDIAMTX_AUTH_SECRET:-}
+      - CAMERA_SESSAO_MAX_MINUTOS=${CAMERA_SESSAO_MAX_MINUTOS:-30}
     networks:
       - smarthive-network
       - smarthive-integration

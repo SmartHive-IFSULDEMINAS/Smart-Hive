@@ -20,6 +20,11 @@ class AuditMiddleware(MiddlewareMixin):
         '/api/auth/',
         '/api/log-navegacao/',
         '/api/iot/',
+        # Heartbeat da câmera ao vivo (a cada 30s por aba) e chamadas de
+        # máquina (Pi / MediaMTX); ligar/desligar continuam auditados
+        '/api/camera/renovar/',
+        '/api/camera/pi/',
+        '/api/camera/mediamtx-auth/',
     ]
 
     def process_response(self, request, response):

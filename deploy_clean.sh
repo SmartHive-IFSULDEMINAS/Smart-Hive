@@ -40,6 +40,9 @@ if [ ! -f "frontend/dist/index.html" ]; then
 fi
 echo "OK: frontend/dist/index.html encontrado"
 
+# Câmera ao vivo: segredo MediaMTX <-> Django
+bash scripts/garantir_segredo_camera.sh
+
 echo "[5/6] Construindo imagens Docker..."
 docker-compose build --no-cache 2>/dev/null || docker compose build --no-cache
 

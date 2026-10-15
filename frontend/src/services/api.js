@@ -170,7 +170,22 @@ export const deleteDeteccaoAbelha = (id) => api.delete(`/deteccoes-abelha/${id}/
 // Câmera ao vivo (Raspberry Pi + MediaMTX)
 export const getCameraStatus = () => api.get('/camera/');
 export const ligarCamera = () => api.post('/camera/ligar/');
-export const desligarCamera = () => api.post('/camera/desligar/');
+export const renovarCamera = (sessao) => api.post('/camera/renovar/', { sessao });
+export const desligarCamera = (sessao) => api.post('/camera/desligar/', { sessao });
+// Usado no fechamento da aba: `keepalive` deixa a requisição terminar mesmo
+// com a página sendo descarregada (axios não suporta isso)
+export const desligarCameraAoSair = (sessao) => {
+    const token = localStorage.getItem('token');
+    fetch(`${API_BASE_URL}/camera/desligar/`, {
+        method: 'POST',
+        keepalive: true,
+        headers: {
+            'Content-Type': 'application/json',
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({ sessao }),
+    }).catch(() => {});
+};
 export const getClassificacaoEstatisticas = (params) => api.get('/ia/classificacoes/estatisticas/', { params });
 export const deleteClassificacao = (id) => api.delete(`/ia/classificacoes/${id}/`);
 

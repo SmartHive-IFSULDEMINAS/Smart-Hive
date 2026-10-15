@@ -181,6 +181,9 @@ SIMPLE_JWT = {
 # Segredo compartilhado com o MediaMTX (webhook /api/camera/mediamtx-auth/).
 # Vazio = webhook nega tudo.
 MEDIAMTX_AUTH_SECRET = os.environ.get('MEDIAMTX_AUTH_SECRET', '')
+# Duração máxima de uma sessão de câmera ao vivo; depois disso o usuário
+# precisa clicar de novo (evita aba esquecida transmitindo o dia todo)
+CAMERA_SESSAO_MAX_MINUTOS = int(os.environ.get('CAMERA_SESSAO_MAX_MINUTOS') or 30)
 
 # DRF Spectacular Settings
 SPECTACULAR_SETTINGS = {
