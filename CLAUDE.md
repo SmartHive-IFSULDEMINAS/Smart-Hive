@@ -78,7 +78,7 @@ Standalone ML project (training scripts in `src/`, Arduino sketch in `arduino/`,
 - `theme.js` — MUI theme, honey palette (Amber `#F4A100` primary, Green `#2E7D32` secondary). Current visual direction is "favo" (honeycomb) — see `StatFavo.jsx` / `StatusBlock.jsx` rather than generic SaaS cards.
 
 ### Infrastructure
-Docker Compose: `backend` (gunicorn), `frontend` (nginx serving `dist`), `mediamtx` (live camera; RTSP ingest on :8554, HLS served under `/camera/`), `nginx` reverse proxy on :8080 routing `/api/` and `/admin/` to backend, `/camera/` to MediaMTX, everything else to frontend. `frontend/dist` is committed (used by `Dockerfile.prebuild`), so rebuild it when shipping frontend changes.
+Docker Compose: `backend` (gunicorn), `frontend` (nginx serving `dist`), `mediamtx` (live camera; RTSP ingest on :8554, HLS served under `/hls/`), `nginx` reverse proxy on :8080 routing `/api/` and `/admin/` to backend, `/hls/` to MediaMTX, everything else to frontend. `frontend/dist` is committed (used by `Dockerfile.prebuild`), so rebuild it when shipping frontend changes.
 
 ## Key Conventions
 

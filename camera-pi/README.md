@@ -7,7 +7,7 @@ aba "Câmera ao Vivo" ──POST /api/camera/ligar/  → sessão própria (uma p
                      ──POST /api/camera/renovar/ a cada 30s (sessão vale 90s, máx. 30 min)
                      ──POST /api/camera/desligar/ ao sair/fechar a aba
 Pi ──GET /api/camera/pi/estado/ (a cada 3s)──▶ Django → {transmitir: há sessão ativa?}
-Pi ──RTSP/TCP :8554 (rpicam-vid | ffmpeg)──▶ MediaMTX ──HLS /camera/──▶ navegador
+Pi ──RTSP/TCP :8554 (rpicam-vid | ffmpeg)──▶ MediaMTX ──HLS /hls/──▶ navegador
 MediaMTX ──"pode publicar/assistir?"──▶ Django /api/camera/mediamtx-auth/ (rede interna)
 ```
 
@@ -121,6 +121,6 @@ SMARTHIVE_URL=http://localhost:8000 RTSP_HOST=localhost CAMERA_TOKEN=<token> CAM
   python camera-pi/camera_pi.py
 ```
 
-Abra `npm run dev` → **Câmera ao Vivo** → **Ligar câmera**. O Vite repassa `/camera/` para o MediaMTX em `:8888`.
+Abra `npm run dev` → **Câmera ao Vivo** → **Ligar câmera**. O Vite repassa `/hls/` para o MediaMTX em `:8888`.
 
 Testes do agente: `python -m unittest camera-pi/test_camera_pi.py`.

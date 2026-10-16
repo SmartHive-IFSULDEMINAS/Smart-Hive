@@ -837,7 +837,7 @@ class CameraAoVivoTests(APITestCase):
 		self.assertFalse(response.data['ativa'])
 		self.assertFalse(response.data['pi_online'])
 		self.assertEqual(response.data['espectadores'], 0)
-		self.assertEqual(response.data['hls_url'], '/camera/camera1/index.m3u8')
+		self.assertEqual(response.data['hls_url'], '/hls/camera1/index.m3u8')
 		self.assertNotIn('token', response.data)
 
 	def test_status_sem_camera_cadastrada(self):

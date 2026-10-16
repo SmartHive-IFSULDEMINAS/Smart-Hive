@@ -43,6 +43,8 @@ export default function CameraAoVivo() {
     const hlsUrlRef = useRef(null);
     const ultimoVideoRef = useRef(0);
     const recuperouMidiaRef = useRef(false);
+    // Player desligado de propósito porque a aba ficou oculta (não é falha)
+    const pausadoRef = useRef(false);
     const faseRef = useRef(fase);
     useEffect(() => { faseRef.current = fase; }, [fase]);
 
@@ -99,6 +101,7 @@ export default function CameraAoVivo() {
     const tratarFalhaStream = useCallback(() => {
         destruirPlayer();
         if (document.visibilityState === 'hidden') {
+            pausadoRef.current = true;
             if (faseRef.current === 'ao_vivo') setFase('ligando');
             return;
         }
@@ -180,6 +183,7 @@ export default function CameraAoVivo() {
     const encerrarLocal = useCallback((novaFase) => {
         pararHeartbeat();
         destruirPlayer();
+        pausadoRef.current = false;
         sessaoRef.current = null;
         setTerminaEm(null);
         setFase(novaFase);
@@ -193,9 +197,13 @@ export default function CameraAoVivo() {
         setTerminaEm(res.data.sessao_termina_em);
     }, []);
 
-    // Player foi pausado (aba oculta) ou caiu: volta a buscar o vídeo
+    // Player foi pausado porque a aba ficou oculta: volta a buscar o vídeo com
+    // o relógio do timeout zerado. Só nesse caso — se o player estiver entre
+    // tentativas de reconexão, quem decide é o próprio ciclo de retry/timeout
+    // (senão cada heartbeat zeraria o timeout e a página nunca desistiria).
     const reconectarSeParado = useCallback(() => {
-        if (!sessaoRef.current || playerAtivo()) return;
+        if (!sessaoRef.current || !pausadoRef.current || playerAtivo()) return;
+        pausadoRef.current = false;
         clearTimeout(retryRef.current);
         ultimoVideoRef.current = Date.now();
         conectarRef.current();
@@ -238,6 +246,7 @@ export default function CameraAoVivo() {
             return;
         }
         setFase('ligando');
+        pausadoRef.current = false;
         ultimoVideoRef.current = Date.now();
         conectarPlayer();
 
@@ -276,9 +285,18 @@ export default function CameraAoVivo() {
         const onPageHide = () => {
             if (sessaoRef.current) desligarCameraAoSair(sessaoRef.current);
         };
+        // Voltou pelo "voltar" do navegador (página restaurada do bfcache): a
+        // sessão já foi encerrada no pagehide, então volta ao estado desligado
+        const onPageShow = (e) => {
+            if (e.persisted && sessaoRef.current) encerrarLocal('desligada');
+        };
         window.addEventListener('pagehide', onPageHide);
-        return () => window.removeEventListener('pagehide', onPageHide);
-    }, []);
+        window.addEventListener('pageshow', onPageShow);
+        return () => {
+            window.removeEventListener('pagehide', onPageHide);
+            window.removeEventListener('pageshow', onPageShow);
+        };
+    }, [encerrarLocal]);
 
     // Saiu da página (navegação interna): derruba o player e encerra a sessão
     useEffect(() => () => {

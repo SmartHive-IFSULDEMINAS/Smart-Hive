@@ -46,7 +46,7 @@ services:
       retries: 3
 
   # Servidor de mídia da câmera ao vivo (Raspberry Pi publica via RTSP,
-  # navegador assiste via HLS em /camera/ pelo nginx)
+  # navegador assiste via HLS em /hls/ pelo nginx)
   mediamtx:
     image: bluenviron/mediamtx:1.12.3
     container_name: smarthive-mediamtx

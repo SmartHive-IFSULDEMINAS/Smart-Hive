@@ -10,11 +10,12 @@ export default defineConfig({
         target: 'http://127.0.0.1:8000',
         changeOrigin: true,
       },
-      // Câmera ao vivo: MediaMTX rodando local (ver camera-pi/README.md)
-      '/camera': {
+      // Vídeo da câmera ao vivo: MediaMTX rodando local (ver camera-pi/README.md).
+      // Prefixo próprio (/hls) para não colidir com a rota /camera da página.
+      '/hls': {
         target: 'http://127.0.0.1:8888',
         changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/camera/, ''),
+        rewrite: (path) => path.replace(/^\/hls/, ''),
       },
       '/media': {
         target: 'http://127.0.0.1:8000',

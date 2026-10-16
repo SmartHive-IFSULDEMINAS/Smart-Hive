@@ -74,7 +74,7 @@ def _serializar(camera, espectador=None):
             camera.ultimo_contato_pi and agora - camera.ultimo_contato_pi < PI_ONLINE_JANELA
         ),
         'ultimo_contato_pi': camera.ultimo_contato_pi,
-        'hls_url': f'/camera/{camera.caminho_stream}/index.m3u8',
+        'hls_url': f'/hls/{camera.caminho_stream}/index.m3u8',
         'sessao_max_minutos': int(_sessao_max().total_seconds() // 60),
     }
     if espectador:

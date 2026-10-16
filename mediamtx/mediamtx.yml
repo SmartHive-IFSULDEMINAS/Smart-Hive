@@ -1,6 +1,6 @@
 # MediaMTX — câmera ao vivo do Raspberry Pi.
 # O Pi publica via RTSP/TCP (:8554, exposta) e o navegador assiste via
-# LL-HLS (:8888, só interna, acessada por /camera/ no nginx).
+# LL-HLS (:8888, só interna, acessada por /hls/ no nginx).
 # Quem pode publicar/assistir é decidido pelo Django; o endereço do webhook
 # (com o segredo) vem da env MTX_AUTHHTTPADDRESS no docker-compose.
 
