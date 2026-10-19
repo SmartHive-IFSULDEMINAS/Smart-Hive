@@ -47,6 +47,7 @@ import {
     Biotech as BiotechIcon,
     CameraAlt as CameraIcon,
     Videocam as VideocamIcon,
+    Schedule as ScheduleIcon,
     NotificationsActive as AlertsIcon,
     Assessment as AnalyticsIcon,
     Summarize as ReportsIcon,
@@ -117,6 +118,7 @@ const menuSections = [
         label: 'SISTEMA',
         items: [
             { text: 'Configurações de Alerta', icon: <ConfigAlertaIcon />, path: '/configuracoes-alerta' },
+            { text: 'Agendamento do Monitoramento', icon: <ScheduleIcon />, path: '/monitoramento-agendamento' },
             { text: 'Usuários', icon: <UsuariosIcon />, path: '/usuarios', requiresManageUsers: true },
             { text: 'Logs de Atividade', icon: <LogsIcon />, path: '/logs-atividade', requiresManageUsers: true },
         ],
@@ -134,6 +136,7 @@ const pageTitles = {
     '/analises':   'Análises',
     '/relatorios': 'Relatórios',
     '/configuracoes-alerta': 'Configurações de Alerta',
+    '/monitoramento-agendamento': 'Agendamento do Monitoramento',
     '/usuarios': 'Usuários',
     '/logs-atividade': 'Logs de Atividade',
     '/producao':   'Produção',

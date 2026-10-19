@@ -8,7 +8,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from django.core.files.uploadedfile import SimpleUploadedFile
 from rest_framework import status
 from rest_framework.test import APITestCase
-from api.models import Apiario, Colmeia, Notificacao, AlertaRuidoConfig, ProducaoMel, LeituraSensor, ColetaProduto, AuditLog, Custo, Receita, ClassificacaoPolen, Camera, EspectadorCamera
+from api.models import Apiario, Colmeia, Notificacao, AlertaRuidoConfig, ProducaoMel, LeituraSensor, ColetaProduto, AuditLog, Custo, Receita, ClassificacaoPolen, Camera, EspectadorCamera, AgendamentoMonitoramento
 from api.alert_utils import gerar_alerta_producao
 
 
@@ -1024,3 +1024,171 @@ class CameraAoVivoTests(APITestCase):
 		self._desligar(sessao)
 		# Com a câmera desligada, nega mesmo com a liberação ainda em cache
 		self.assertEqual(self._ler().status_code, status.HTTP_401_UNAUTHORIZED)
+
+
+class AgendamentoMonitoramentoTests(APITestCase):
+	def setUp(self):
+		self.gestor = User.objects.create_user(
+			username='gestor_agenda', email='agenda@smarthive.local',
+			password='SenhaForte123!', role='gestor',
+		)
+		self.apicultor = User.objects.create_user(
+			username='apicultor_agenda', email='agenda2@smarthive.local',
+			password='SenhaForte123!', role='apicultor',
+		)
+		self.camera = Camera.objects.create(nome='Pi Teste', caminho_stream='camera1')
+
+	def _get(self, usuario=None):
+		self.client.force_authenticate(user=usuario or self.gestor)
+		return self.client.get('/api/monitoramento/agendamento/')
+
+	def _put(self, dados, usuario=None):
+		self.client.force_authenticate(user=usuario or self.gestor)
+		return self.client.put('/api/monitoramento/agendamento/', dados, format='json')
+
+	def _pi(self, relato=None, token=None):
+		self.client.force_authenticate(user=None)
+		return self.client.post(
+			'/api/monitoramento/pi/', relato or {}, format='json',
+			HTTP_X_CAMERA_TOKEN=self.camera.token if token is None else token,
+		)
+
+	# ── regra do horário ─────────────────────────────────────────────────
+	def test_calcular_agenda_inicio_inclusivo_fim_exclusivo(self):
+		from datetime import datetime as dt, time as hora
+		from zoneinfo import ZoneInfo
+		from api.monitoramento_views import calcular_agenda
+		sp = ZoneInfo('America/Sao_Paulo')
+
+		def agenda(h, m):
+			return calcular_agenda(True, hora(7, 0), hora(15, 0), dt(2026, 10, 19, h, m, tzinfo=sp))
+
+		self.assertEqual(agenda(6, 59)[0], 'aguardando_inicio')
+		self.assertEqual(agenda(7, 0)[0], 'em_periodo')
+		self.assertEqual(agenda(14, 59)[0], 'em_periodo')
+		self.assertEqual(agenda(15, 0)[0], 'encerrado_hoje')
+		self.assertEqual(agenda(16, 0)[1], {'tipo': 'inicio', 'em': dt(2026, 10, 20, 7, 0, tzinfo=sp)})
+		self.assertEqual(agenda(10, 0)[1], {'tipo': 'encerramento', 'em': dt(2026, 10, 19, 15, 0, tzinfo=sp)})
+		self.assertEqual(
+			calcular_agenda(False, hora(7, 0), hora(15, 0), dt(2026, 10, 19, 10, 0, tzinfo=sp)),
+			('desativado', None),
+		)
+
+	def test_calcular_agenda_converte_utc_para_sao_paulo(self):
+		from datetime import datetime as dt, time as hora, timezone as tz
+		from api.monitoramento_views import calcular_agenda
+		# 09:30 UTC = 06:30 em São Paulo: ainda antes do início
+		self.assertEqual(
+			calcular_agenda(True, hora(7, 0), hora(15, 0), dt(2026, 10, 19, 9, 30, tzinfo=tz.utc))[0],
+			'aguardando_inicio',
+		)
+
+	# ── configuração pela interface ──────────────────────────────────────
+	def test_get_cria_configuracao_padrao_desabilitada(self):
+		response = self._get()
+		self.assertEqual(response.status_code, status.HTTP_200_OK)
+		self.assertFalse(response.data['habilitado'])
+		self.assertEqual(response.data['hora_inicio'], '07:00')
+		self.assertEqual(response.data['hora_fim'], '15:00')
+		self.assertEqual(response.data['agenda'], 'desativado')
+		self.assertEqual(response.data['situacao'], 'pi_sem_relato')
+		self.assertEqual(response.data['fuso_horario'], 'America/Sao_Paulo')
+
+	def test_exige_login(self):
+		response = self.client.get('/api/monitoramento/agendamento/')
+		self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+	def test_sem_camera_cadastrada(self):
+		Camera.objects.all().delete()
+		self.assertEqual(self._get().status_code, status.HTTP_404_NOT_FOUND)
+
+	def test_salvar_persiste_e_incrementa_versao(self):
+		versao = self._get().data['versao']
+		dados = {'habilitado': True, 'hora_inicio': '08:30', 'hora_fim': '16:00'}
+		response = self._put(dados)
+		self.assertEqual(response.status_code, status.HTTP_200_OK)
+		self.assertEqual(response.data['versao'], versao + 1)
+		self.assertEqual(response.data['configurado_por'], 'gestor_agenda')
+		self.assertFalse(response.data['pi']['configuracao_aplicada'])
+
+		agendamento = AgendamentoMonitoramento.objects.get(camera=self.camera)
+		self.assertTrue(agendamento.habilitado)
+		self.assertEqual(agendamento.hora_inicio.strftime('%H:%M'), '08:30')
+
+		# Salvar de novo sem mudança não gera nova versão para o Pi aplicar
+		self.assertEqual(self._put(dados).data['versao'], versao + 1)
+
+	def test_validacoes(self):
+		casos = [
+			{'habilitado': True, 'hora_inicio': '10:00', 'hora_fim': '10:00'},
+			{'habilitado': True, 'hora_inicio': '22:00', 'hora_fim': '06:00'},
+			{'habilitado': True, 'hora_inicio': '25:00', 'hora_fim': '26:00'},
+			{'habilitado': True, 'hora_inicio': '', 'hora_fim': '15:00'},
+			{'habilitado': True, 'hora_fim': '15:00'},
+			{'hora_inicio': '07:00', 'hora_fim': '15:00'},
+		]
+		for dados in casos:
+			with self.subTest(dados=dados):
+				self.assertEqual(self._put(dados).status_code, status.HTTP_400_BAD_REQUEST)
+		self.assertFalse(AgendamentoMonitoramento.objects.get(camera=self.camera).habilitado)
+
+	def test_apicultor_so_visualiza(self):
+		response = self._put({'habilitado': True, 'hora_inicio': '07:00', 'hora_fim': '15:00'}, usuario=self.apicultor)
+		self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+		self.assertEqual(self._get(self.apicultor).status_code, status.HTTP_200_OK)
+
+	# ── Pi ───────────────────────────────────────────────────────────────
+	def test_pi_token_invalido(self):
+		self.assertEqual(self._pi(token='errado').status_code, status.HTTP_401_UNAUTHORIZED)
+		self.assertEqual(self._pi(token='').status_code, status.HTTP_401_UNAUTHORIZED)
+
+	def test_pi_recebe_configuracao_e_relata_estado(self):
+		self._put({'habilitado': True, 'hora_inicio': '07:00', 'hora_fim': '15:00'})
+		response = self._pi({
+			'estado': 'executando', 'deve_executar': True, 'versao_aplicada': 2,
+			'ultimo_inicio': '2026-10-19T07:00:02-03:00',
+		})
+		self.assertEqual(response.status_code, status.HTTP_200_OK)
+		self.assertEqual(response.data, {
+			'habilitado': True, 'hora_inicio': '07:00', 'hora_fim': '15:00',
+			'versao': 2, 'fuso_horario': 'America/Sao_Paulo',
+		})
+
+		dados = self._get().data
+		self.assertTrue(dados['pi']['online'])
+		self.assertTrue(dados['pi']['configuracao_aplicada'])
+		self.assertEqual(dados['situacao'], 'executando')
+		self.assertIsNotNone(dados['pi']['ultimo_inicio'])
+
+	def test_relato_sem_horarios_nao_apaga_os_anteriores(self):
+		self._pi({'estado': 'executando', 'ultimo_inicio': '2026-10-19T07:00:00-03:00'})
+		self._pi({'estado': 'parado'})
+		self.assertIsNotNone(AgendamentoMonitoramento.objects.get(camera=self.camera).ultimo_inicio)
+
+	def test_pi_offline_depois_de_um_tempo_sem_relato(self):
+		self._pi({'estado': 'executando'})
+		AgendamentoMonitoramento.objects.filter(camera=self.camera).update(
+			ultimo_relato=timezone.now() - timedelta(minutes=5),
+		)
+		dados = self._get().data
+		self.assertFalse(dados['pi']['online'])
+		self.assertEqual(dados['situacao'], 'pi_offline')
+
+	def test_falha_ao_iniciar_mostra_motivo_e_notifica_uma_vez(self):
+		relato = {'estado': 'falha_inicio', 'deve_executar': True, 'mensagem': 'comando não encontrado'}
+		self._pi(relato)
+		self._pi(relato)
+		# Nova tentativa do Pi que falha de novo: não repete a notificação
+		self._pi({'estado': 'executando'})
+		self._pi(relato)
+
+		dados = self._get().data
+		self.assertEqual(dados['situacao'], 'falha_inicio')
+		self.assertEqual(dados['pi']['mensagem'], 'comando não encontrado')
+		self.assertEqual(Notificacao.objects.filter(usuario=self.gestor, tipo='manutencao').count(), 1)
+		self.assertEqual(Notificacao.objects.filter(usuario=self.apicultor).count(), 0)
+
+	def test_pi_nao_e_auditado(self):
+		antes = AuditLog.objects.count()
+		self._pi({'estado': 'parado'})
+		self.assertEqual(AuditLog.objects.count(), antes)

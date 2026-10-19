@@ -1,4 +1,4 @@
-# Câmera ao vivo (Raspberry Pi 5)
+# Raspberry Pi: câmera ao vivo e agendamento do monitoramento
 
 A câmera só transmite enquanto alguém está com a aba **Câmera ao Vivo** aberta na plataforma.
 
@@ -128,3 +128,55 @@ SMARTHIVE_URL=http://localhost:8000 RTSP_HOST=localhost CAMERA_TOKEN=<token> CAM
 Abra `npm run dev` → **Câmera ao Vivo** → **Ligar câmera**. O Vite repassa `/hls/` para o MediaMTX em `:8888`.
 
 Testes do agente: `python -m unittest camera-pi/test_camera_pi.py`.
+
+## 5. Agendamento do monitoramento
+
+O mesmo `install.sh` instala um segundo serviço, **`smarthive-monitoramento`**, que mantém o código de monitoramento das abelhas rodando só no horário configurado na plataforma (**Sistema → Agendamento do Monitoramento**), todos os dias. Fora do horário só o processo de monitoramento para; o Pi, a câmera ao vivo e os outros serviços continuam funcionando.
+
+```
+tela "Agendamento do Monitoramento" ──PUT /api/monitoramento/agendamento/──▶ Django (SQLite)
+Pi (smarthive-monitoramento) ──POST /api/monitoramento/pi/ (a cada 10s, X-Camera-Token)──▶ Django
+     relata o estado real do processo ◀── recebe horário + versão da configuração
+     grava a configuração em /var/lib/smarthive-monitoramento/agendamento.json
+     decide pelo relógio do Pi (fuso America/Sao_Paulo) e inicia/encerra MONITORAMENTO_CMD
+```
+
+### Configurar o comando
+
+O agendador não sabe o que é o monitoramento: ele executa o comando definido em `MONITORAMENTO_CMD` no `/etc/smarthive-camera.env`.
+
+```bash
+sudo MONITORAMENTO_CMD="/usr/bin/python3 /opt/abelhas/captura.py" bash install.sh   # ou edite o .env
+sudo systemctl restart smarthive-monitoramento
+journalctl -u smarthive-monitoramento -f      # logs do agendador E do monitoramento
+```
+
+| Variável | Padrão | Uso |
+|---|---|---|
+| `MONITORAMENTO_CMD` | — | comando do monitoramento. Sem ele, a tela mostra "Monitoramento não configurado no Raspberry Pi" |
+| `MONITORAMENTO_DIR_TRABALHO` | — | diretório em que o comando roda |
+| `MONITORAMENTO_TIMEOUT_PARADA` | 60 | segundos que o monitoramento tem para terminar o trabalho em andamento depois do SIGTERM |
+| `MONITORAMENTO_INTERVALO` | 10 | segundos entre verificações (também é o tempo máximo para uma alteração na tela valer) |
+
+O monitoramento roda como o usuário `smarthive-camera` (grupo `video`). Se precisar de outros acessos (GPIO, I2C, pastas), use `sudo systemctl edit smarthive-monitoramento` (ex.: `SupplementaryGroups=video gpio i2c`).
+
+**O que o código de monitoramento precisa fazer:** tratar o **SIGTERM** terminando a operação em andamento (captura, inferência, gravação, envio) e saindo. Se não sair dentro de `MONITORAMENTO_TIMEOUT_PARADA`, o agendador manda SIGKILL para ele e seus subprocessos e registra isso no log e na tela. Toda a saída do processo vai para o `journalctl`.
+
+> A câmera do Pi atende um processo por vez. Se o monitoramento usar a câmera, a **Câmera ao Vivo** não consegue transmitir enquanto ele estiver rodando (e vice-versa).
+
+### Comportamento
+
+| Situação | O que acontece |
+|---|---|
+| Agendamento desativado (padrão) | Monitoramento roda continuamente, como antes do agendamento existir |
+| Ativo, 07:00–15:00 | Roda de 07:00 (inclusive) até 15:00 (exclusive), todos os dias |
+| Horário alterado na tela | Vale em até 10s: inicia ou encerra na hora, sem esperar o dia seguinte |
+| Pi reinicia às 10:00 | O serviço sobe no boot, lê a configuração salva e inicia o monitoramento |
+| Pi reinicia às 16:00 | Fica parado até as 07:00 do dia seguinte |
+| Servidor/internet fora do ar | Segue a última configuração salva em disco (sem nenhuma salva: contínuo) |
+| Monitoramento cai sozinho | Reinicia; se cair em menos de 30s, tenta de novo com espera crescente (5s, 10s, ... até 5 min) e a tela mostra "Falha ao iniciar" com o motivo |
+| `systemctl stop smarthive-monitoramento` | Encerra o monitoramento de forma gradual antes de sair |
+
+Intervalos que passam da meia-noite (ex.: 22:00–06:00) não são suportados nesta versão. O horário vem do relógio do Pi (sincronizado por NTP) convertido para `America/Sao_Paulo`, então o fuso configurado no sistema do Pi não importa.
+
+Testes do agendador: `python -m unittest camera-pi/test_agendador_monitoramento.py` (os testes com processos reais só rodam em Linux).

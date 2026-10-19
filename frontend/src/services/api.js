@@ -186,6 +186,10 @@ export const desligarCameraAoSair = (sessao) => {
         body: JSON.stringify({ sessao }),
     }).catch(() => {});
 };
+
+// Agendamento do monitoramento no Raspberry Pi
+export const getAgendamentoMonitoramento = () => api.get('/monitoramento/agendamento/');
+export const updateAgendamentoMonitoramento = (data) => api.put('/monitoramento/agendamento/', data);
 export const getClassificacaoEstatisticas = (params) => api.get('/ia/classificacoes/estatisticas/', { params });
 export const deleteClassificacao = (id) => api.delete(`/ia/classificacoes/${id}/`);
 

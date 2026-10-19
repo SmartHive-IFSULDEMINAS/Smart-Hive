@@ -1,0 +1,26 @@
+[Unit]
+Description=Smart-Hive - agendador do monitoramento das abelhas
+After=network-online.target time-sync.target
+Wants=network-online.target
+
+[Service]
+# Mesmo usuario/config do agente da camera (criados pelo install.sh)
+User=smarthive-camera
+Group=smarthive-camera
+SupplementaryGroups=video
+EnvironmentFile=/etc/smarthive-camera.env
+# /var/lib/smarthive-monitoramento: configuracao salva (vale sem servidor e apos reiniciar)
+StateDirectory=smarthive-monitoramento
+Environment=MONITORAMENTO_DIR_ESTADO=/var/lib/smarthive-monitoramento
+ExecStart=/usr/bin/python3 -u /opt/smarthive-camera/agendador_monitoramento.py
+Restart=always
+RestartSec=5
+# Ao parar o servico, o SIGTERM vai so para o agendador, que encerra o
+# monitoramento de forma gradual (MONITORAMENTO_TIMEOUT_PARADA, padrao 60s).
+# Se ainda sobrar algo depois de TimeoutStopSec, o systemd mata o grupo todo.
+KillMode=mixed
+TimeoutStopSec=90
+NoNewPrivileges=true
+
+[Install]
+WantedBy=multi-user.target

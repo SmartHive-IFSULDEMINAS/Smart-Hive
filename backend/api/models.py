@@ -1,4 +1,5 @@
 import uuid
+from datetime import time as datetime_time
 
 from django.db import models
 from django.core.validators import MinValueValidator, MaxValueValidator
@@ -1326,6 +1327,69 @@ class EspectadorCamera(models.Model):
 
     def __str__(self):
         return f'{self.usuario} - {self.camera}'
+
+
+def _hora_padrao_inicio():
+    return datetime_time(7, 0)
+
+
+def _hora_padrao_fim():
+    return datetime_time(15, 0)
+
+
+class AgendamentoMonitoramento(models.Model):
+    """Horário diário em que o Pi deve rodar o código de monitoramento.
+
+    O agendador do Pi (camera-pi/agendador_monitoramento.py) consulta esta
+    configuração periodicamente, decide sozinho pelo relógio local se o
+    monitoramento deve estar rodando e relata o estado real do processo, que
+    fica gravado nos campos de "relato" abaixo. O intervalo é [início, fim)
+    no mesmo dia; com o agendamento desabilitado o monitoramento roda direto.
+    """
+
+    ESTADO_CHOICES = [
+        ('desconhecido', 'Sem relato do Pi'),
+        ('executando', 'Em execução'),
+        ('parado', 'Parado'),
+        ('encerrando', 'Encerrando'),
+        ('falha_inicio', 'Falha ao iniciar'),
+        ('falha_encerramento', 'Falha ao encerrar'),
+        ('sem_comando', 'Comando de monitoramento não configurado no Pi'),
+    ]
+
+    camera = models.OneToOneField(
+        Camera, on_delete=models.CASCADE, related_name='agendamento', verbose_name='Raspberry Pi (câmera)',
+    )
+    habilitado = models.BooleanField(default=False, verbose_name='Agendamento habilitado')
+    hora_inicio = models.TimeField(default=_hora_padrao_inicio, verbose_name='Início')
+    hora_fim = models.TimeField(default=_hora_padrao_fim, verbose_name='Encerramento')
+    # Incrementada a cada alteração; o Pi devolve a que aplicou
+    versao = models.PositiveIntegerField(default=1, verbose_name='Versão da configuração')
+    configurado_em = models.DateTimeField(null=True, blank=True, verbose_name='Configurado em')
+    configurado_por = models.ForeignKey(
+        Usuario, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='agendamentos_monitoramento', verbose_name='Configurado por',
+    )
+
+    # Relato do Pi (estado real do processo)
+    estado_processo = models.CharField(
+        max_length=20, choices=ESTADO_CHOICES, default='desconhecido', verbose_name='Estado do processo',
+    )
+    deve_executar_pi = models.BooleanField(null=True, blank=True, verbose_name='Pi entende que deve executar')
+    mensagem_pi = models.TextField(blank=True, verbose_name='Mensagem do Pi')
+    versao_aplicada = models.PositiveIntegerField(null=True, blank=True, verbose_name='Versão aplicada pelo Pi')
+    ultimo_inicio = models.DateTimeField(null=True, blank=True, verbose_name='Último início')
+    ultimo_encerramento = models.DateTimeField(null=True, blank=True, verbose_name='Último encerramento')
+    ultimo_relato = models.DateTimeField(null=True, blank=True, verbose_name='Último relato do Pi')
+
+    class Meta:
+        verbose_name = 'Agendamento do Monitoramento'
+        verbose_name_plural = 'Agendamentos do Monitoramento'
+
+    def __str__(self):
+        if not self.habilitado:
+            return f'{self.camera} - contínuo'
+        return f'{self.camera} - {self.hora_inicio:%H:%M} às {self.hora_fim:%H:%M}'
 
 
 # Registra AuditLog (definido em audit_models.py, usado por audit_middleware.py)
