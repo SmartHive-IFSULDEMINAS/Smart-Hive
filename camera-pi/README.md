@@ -33,7 +33,9 @@ Opcional no `.env`: `CAMERA_SESSAO_MAX_MINUTOS` (padrão 30).
 
 ## 2. Raspberry Pi
 
-> **Atalho com Claude Code:** com o Pi preparado (2.1) e acessível por SSH com chave, peça ao Claude Code neste repositório algo como *"configura o raspberry: IP 192.168.0.50, usuário pi, token XXXX"*. O subagente `configurar-raspberry` (`.claude/agents/`) faz os passos 2.2 a 2.4 sozinho e relata o resultado.
+> **Atalho com Claude Code** — dois subagentes em `.claude/agents/` fazem os passos 2.2 a 2.4 sozinhos e relatam o resultado:
+> - **Rodando no próprio Pi** (`configurar-camera-no-pi`): com o Pi preparado (2.1), instale o Claude Code nele, clone o repositório e, dentro da pasta, peça *"configura a câmera, token XXXX"*.
+> - **A partir do seu PC via SSH** (`configurar-raspberry`): com acesso SSH por chave ao Pi, peça *"configura o raspberry: IP 192.168.0.50, usuário pi, token XXXX"*.
 
 ### 2.1 Preparar o Pi
 
