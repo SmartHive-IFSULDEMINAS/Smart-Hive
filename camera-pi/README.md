@@ -33,6 +33,8 @@ Opcional no `.env`: `CAMERA_SESSAO_MAX_MINUTOS` (padrão 30).
 
 ## 2. Raspberry Pi
 
+> **Atalho com Claude Code:** com o Pi preparado (2.1) e acessível por SSH com chave, peça ao Claude Code neste repositório algo como *"configura o raspberry: IP 192.168.0.50, usuário pi, token XXXX"*. O subagente `configurar-raspberry` (`.claude/agents/`) faz os passos 2.2 a 2.4 sozinho e relata o resultado.
+
 ### 2.1 Preparar o Pi
 
 1. Grave o **Raspberry Pi OS (Bookworm, 64-bit)** no cartão com o [Raspberry Pi Imager](https://www.raspberrypi.com/software/). Nas opções do Imager, configure Wi-Fi, usuário/senha e **ative o SSH**.
