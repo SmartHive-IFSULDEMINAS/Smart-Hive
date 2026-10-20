@@ -63,6 +63,15 @@ def _camera():
     return Camera.objects.first()
 
 
+def _url_video_exemplo(camera):
+    """URL absoluta (a partir da raiz) do vídeo exibido quando o Pi não entrega imagem."""
+    if not camera.video_exemplo:
+        return None
+    url = camera.video_exemplo.url
+    # MEDIA_URL é relativa ('media/'); sem a barra, o navegador resolveria a partir da página
+    return url if url.startswith(('/', 'http://', 'https://')) else '/' + url
+
+
 def _serializar(camera, espectador=None):
     agora = timezone.now()
     dados = {
@@ -76,6 +85,7 @@ def _serializar(camera, espectador=None):
         'ultimo_contato_pi': camera.ultimo_contato_pi,
         'hls_url': f'/hls/{camera.caminho_stream}/index.m3u8',
         'sessao_max_minutos': int(_sessao_max().total_seconds() // 60),
+        'video_exemplo_url': _url_video_exemplo(camera),
     }
     if espectador:
         dados['sessao'] = str(espectador.sessao)

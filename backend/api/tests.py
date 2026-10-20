@@ -1192,3 +1192,66 @@ class AgendamentoMonitoramentoTests(APITestCase):
 		antes = AuditLog.objects.count()
 		self._pi({'estado': 'parado'})
 		self.assertEqual(AuditLog.objects.count(), antes)
+
+
+class CameraVideoExemploTests(APITestCase):
+	def setUp(self):
+		import tempfile
+		self.media = tempfile.mkdtemp()
+		self.override = override_settings(MEDIA_ROOT=self.media)
+		self.override.enable()
+		self.usuario = User.objects.create_user(
+			username='video_cam', email='video@smarthive.local',
+			password='SenhaForte123!', role='apicultor',
+		)
+		self.camera = Camera.objects.create(nome='Câmera Teste', caminho_stream='camera1')
+
+	def tearDown(self):
+		import shutil
+		self.override.disable()
+		shutil.rmtree(self.media, ignore_errors=True)
+
+	def _video(self, nome='exemplo.mp4', tamanho=1024):
+		return SimpleUploadedFile(nome, b'\0' * tamanho, content_type='video/mp4')
+
+	def _status(self):
+		self.client.force_authenticate(user=self.usuario)
+		return self.client.get('/api/camera/').data
+
+	def test_sem_video_cadastrado(self):
+		self.assertIsNone(self._status()['video_exemplo_url'])
+
+	def test_status_traz_url_absoluta_do_video(self):
+		self.camera.video_exemplo = self._video()
+		self.camera.save()
+		url = self._status()['video_exemplo_url']
+		self.assertTrue(url.startswith('/media/camera/'), url)
+		self.assertTrue(url.endswith('.mp4'), url)
+
+	def test_valida_formato_e_tamanho(self):
+		from django.core.exceptions import ValidationError
+		from api.models import VIDEO_EXEMPLO_MAX_MB
+		for video in (self._video('exemplo.avi'), self._video(tamanho=VIDEO_EXEMPLO_MAX_MB * 1024 * 1024 + 1)):
+			with self.subTest(nome=video.name, tamanho=video.size):
+				self.camera.video_exemplo = video
+				with self.assertRaises(ValidationError):
+					self.camera.full_clean()
+		self.camera.video_exemplo = self._video('exemplo.webm')
+		self.camera.full_clean()
+
+	def test_trocar_ou_remover_video_apaga_o_arquivo_antigo(self):
+		import os
+		self.camera.video_exemplo = self._video('primeiro.mp4')
+		self.camera.save()
+		primeiro = self.camera.video_exemplo.path
+
+		self.camera.video_exemplo = self._video('segundo.mp4')
+		self.camera.save()
+		segundo = self.camera.video_exemplo.path
+		self.assertFalse(os.path.exists(primeiro))
+		self.assertTrue(os.path.exists(segundo))
+
+		self.camera.video_exemplo = None
+		self.camera.save()
+		self.assertFalse(os.path.exists(segundo))
+		self.assertIsNone(self._status()['video_exemplo_url'])

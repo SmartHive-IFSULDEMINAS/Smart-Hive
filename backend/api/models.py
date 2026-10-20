@@ -2,7 +2,8 @@ import uuid
 from datetime import time as datetime_time
 
 from django.db import models
-from django.core.validators import MinValueValidator, MaxValueValidator
+from django.core.exceptions import ValidationError
+from django.core.validators import MinValueValidator, MaxValueValidator, FileExtensionValidator
 from django.contrib.auth.models import AbstractUser
 from django.utils.translation import gettext_lazy as _
 from django.utils import timezone
@@ -1267,6 +1268,14 @@ class ClassificacaoPolen(models.Model):
         return f"Pólen TIPO:{self.knn_classe} CLUSTER:{self.kmeans_cluster} — {self.timestamp.strftime('%d/%m/%Y %H:%M')}"
 
 
+VIDEO_EXEMPLO_MAX_MB = 100
+
+
+def validar_tamanho_video(arquivo):
+    if arquivo.size > VIDEO_EXEMPLO_MAX_MB * 1024 * 1024:
+        raise ValidationError(f'O vídeo deve ter no máximo {VIDEO_EXEMPLO_MAX_MB} MB.')
+
+
 class Camera(models.Model):
     """Câmera ao vivo (Raspberry Pi) ligada sob demanda pela plataforma.
 
@@ -1284,6 +1293,14 @@ class Camera(models.Model):
         max_length=50, unique=True, default='camera1', verbose_name='Caminho no MediaMTX',
     )
     ultimo_contato_pi = models.DateTimeField(null=True, blank=True, verbose_name='Último contato do Pi')
+    video_exemplo = models.FileField(
+        upload_to='camera/', blank=True, verbose_name='Vídeo de exemplo',
+        validators=[FileExtensionValidator(['mp4', 'webm']), validar_tamanho_video],
+        help_text=(
+            f'Exibido na tela Câmera ao Vivo quando a imagem do Pi não está disponível. '
+            f'MP4 (H.264) ou WebM, até {VIDEO_EXEMPLO_MAX_MB} MB; toca sem som e em loop.'
+        ),
+    )
 
     class Meta:
         verbose_name = 'Câmera'
@@ -1297,7 +1314,11 @@ class Camera(models.Model):
         if not self.token:
             import secrets
             self.token = secrets.token_urlsafe(32)
+        # Vídeo de exemplo trocado ou removido: apaga o arquivo antigo do disco
+        anterior = Camera.objects.filter(pk=self.pk).values_list('video_exemplo', flat=True).first() if self.pk else None
         super().save(*args, **kwargs)
+        if anterior and anterior != self.video_exemplo.name:
+            self.video_exemplo.storage.delete(anterior)
 
     def espectadores_ativos(self):
         return self.espectadores.filter(expira_em__gt=timezone.now())
