@@ -5,6 +5,7 @@ from .models import (
     ProducaoMel, Tratamento, Custo, Receita, Fornecedor,
     Equipamento, Notificacao, LeituraSensor, ClassificacaoPolen,
     AlertaRuidoConfig, ContagemAbelha, Camera, EspectadorCamera,
+    AgendamentoMonitoramento,
 )
 
 
@@ -270,3 +271,12 @@ class EspectadorCameraAdmin(admin.ModelAdmin):
     list_display = ['usuario', 'camera', 'iniciada_em', 'expira_em']
     list_filter = ['camera']
     readonly_fields = ['camera', 'usuario', 'sessao', 'iniciada_em', 'expira_em']
+
+
+@admin.register(AgendamentoMonitoramento)
+class AgendamentoMonitoramentoAdmin(admin.ModelAdmin):
+    list_display = ['camera', 'habilitado', 'hora_inicio', 'hora_fim', 'estado_processo', 'ultimo_relato']
+    readonly_fields = [
+        'versao', 'configurado_em', 'configurado_por', 'estado_processo', 'deve_executar_pi',
+        'mensagem_pi', 'versao_aplicada', 'ultimo_inicio', 'ultimo_encerramento', 'ultimo_relato',
+    ]

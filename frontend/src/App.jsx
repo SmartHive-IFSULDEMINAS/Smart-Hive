@@ -28,6 +28,7 @@ import IAPolen from './pages/IAPolen';
 import DeteccaoAbelhas from './pages/DeteccaoAbelhas';
 import HistoricoRuido from './pages/HistoricoRuido';
 import CameraAoVivo from './pages/CameraAoVivo';
+import AgendamentoMonitoramento from './pages/AgendamentoMonitoramento';
 import Alertas from './pages/Alertas';
 import Analises from './pages/Analises';
 import Relatorios from './pages/Relatorios';
@@ -78,6 +79,7 @@ function AppContent() {
                             <Route path="/deteccao-abelhas" element={<DeteccaoAbelhas />} />
                             <Route path="/historico-ruido" element={<HistoricoRuido />} />
                             <Route path="/camera" element={<CameraAoVivo />} />
+                            <Route path="/monitoramento-agendamento" element={<AgendamentoMonitoramento />} />
                             <Route path="/alertas" element={<Alertas />} />
                             <Route path="/analises" element={<Analises />} />
                             <Route path="/relatorios" element={<Relatorios />} />

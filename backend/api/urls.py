@@ -37,6 +37,7 @@ from .export_views import (
 )
 from .ia_views import classificar_polen, status_modelos, importar_csv_polen
 from .camera_views import status_camera, ligar_camera, renovar_camera, desligar_camera, estado_pi, mediamtx_auth
+from .monitoramento_views import agendamento_monitoramento, sincronizar_pi
 
 router = DefaultRouter()
 router.register(r'especies', EspecieAbelhaViewSet, basename='especies')
@@ -90,6 +91,9 @@ urlpatterns = [
     path('camera/desligar/', desligar_camera, name='camera_desligar'),
     path('camera/pi/estado/', estado_pi, name='camera_pi_estado'),
     path('camera/mediamtx-auth/', mediamtx_auth, name='camera_mediamtx_auth'),
+    # Agendamento do monitoramento no Pi
+    path('monitoramento/agendamento/', agendamento_monitoramento, name='monitoramento_agendamento'),
+    path('monitoramento/pi/', sincronizar_pi, name='monitoramento_pi'),
     # Export endpoints
     path('export/apiarios/', export_apiarios, name='export_apiarios'),
     path('export/colmeias/', export_colmeias, name='export_colmeias'),

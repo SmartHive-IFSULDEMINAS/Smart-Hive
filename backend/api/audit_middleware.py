@@ -25,6 +25,7 @@ class AuditMiddleware(MiddlewareMixin):
         '/api/camera/renovar/',
         '/api/camera/pi/',
         '/api/camera/mediamtx-auth/',
+        '/api/monitoramento/pi/',
     ]
 
     def process_response(self, request, response):
