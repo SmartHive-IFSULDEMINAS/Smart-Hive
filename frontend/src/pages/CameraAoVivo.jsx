@@ -29,7 +29,8 @@ const formatarHora = (iso) => new Date(iso).toLocaleTimeString('pt-BR', { hour: 
 export default function CameraAoVivo() {
     const [camera, setCamera] = useState(null);
     const [semCamera, setSemCamera] = useState(false);
-    // desligada | ligando | ao_vivo | erro | esgotado
+    // desligada | ligando | ao_vivo | erro | esgotado | exemplo (vídeo cadastrado no
+    // admin, exibido quando o Pi está offline ou não entrega imagem)
     const [fase, setFase] = useState('desligada');
     const [terminaEm, setTerminaEm] = useState(null);
 
@@ -47,6 +48,11 @@ export default function CameraAoVivo() {
     const pausadoRef = useRef(false);
     const faseRef = useRef(fase);
     useEffect(() => { faseRef.current = fase; }, [fase]);
+    const cameraRef = useRef(camera);
+    useEffect(() => { cameraRef.current = camera; }, [camera]);
+
+    // Sem imagem do Pi: mostra o vídeo de exemplo, se houver um cadastrado
+    const faseDeFalha = () => (cameraRef.current?.video_exemplo_url ? 'exemplo' : 'erro');
 
     // Desistiu de receber vídeo: encerra a sessão para o Pi não transmitir à toa
     useEffect(() => {
@@ -55,7 +61,7 @@ export default function CameraAoVivo() {
             const sessao = sessaoRef.current;
             sessaoRef.current = null;
             if (sessao) desligarCamera(sessao).catch(() => {});
-            setFase('erro');
+            setFase(faseDeFalha());
         };
     }, []);
 
@@ -227,7 +233,7 @@ export default function CameraAoVivo() {
                     await abrirSessao();
                     reconectarSeParado();
                 } catch {
-                    encerrarLocal('erro');
+                    encerrarLocal(faseDeFalha());
                 }
             }
             // Outros erros (rede): tenta de novo no próximo heartbeat
@@ -235,6 +241,11 @@ export default function CameraAoVivo() {
     }, [abrirSessao, encerrarLocal, reconectarSeParado]);
 
     const ligar = async () => {
+        // Pi offline: nem pede a transmissão, vai direto para o vídeo de exemplo
+        if (camera && !camera.pi_online && camera.video_exemplo_url) {
+            setFase('exemplo');
+            return;
+        }
         if (!suportaVideo()) {
             setFase('erro');
             return;
@@ -242,7 +253,7 @@ export default function CameraAoVivo() {
         try {
             await abrirSessao();
         } catch {
-            setFase('erro');
+            setFase(faseDeFalha());
             return;
         }
         setFase('ligando');
@@ -375,6 +386,17 @@ export default function CameraAoVivo() {
                                     display: fase === 'ao_vivo' ? 'block' : 'none',
                                 }}
                             />
+                            {fase === 'exemplo' && (
+                                <video
+                                    key={camera.video_exemplo_url}
+                                    src={camera.video_exemplo_url}
+                                    autoPlay
+                                    loop
+                                    muted
+                                    playsInline
+                                    style={{ width: '100%', height: '100%', objectFit: 'contain' }}
+                                />
+                            )}
                             {fase === 'ligando' && (
                                 <Box sx={{ textAlign: 'center', color: 'grey.300' }}>
                                     <CircularProgress color="inherit" sx={{ mb: 2 }} />
@@ -403,7 +425,18 @@ export default function CameraAoVivo() {
                         </Box>
 
                         <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 2, mt: 2, flexWrap: 'wrap' }}>
-                            {transmitindo ? (
+                            {fase === 'exemplo' ? (
+                                <>
+                                    <Button variant="outlined" startIcon={<StopIcon />} onClick={() => setFase('desligada')}>
+                                        Parar
+                                    </Button>
+                                    {camera?.pi_online && (
+                                        <Button variant="contained" startIcon={<PlayIcon />} onClick={ligar}>
+                                            Tentar ao vivo
+                                        </Button>
+                                    )}
+                                </>
+                            ) : transmitindo ? (
                                 <Button variant="outlined" color="error" startIcon={<StopIcon />} onClick={parar}>
                                     Parar
                                 </Button>
@@ -411,6 +444,11 @@ export default function CameraAoVivo() {
                                 <Button variant="contained" startIcon={<PlayIcon />} onClick={ligar}>
                                     {{ erro: 'Tentar de novo', esgotado: 'Continuar assistindo' }[fase] ?? 'Ligar câmera'}
                                 </Button>
+                            )}
+                            {fase === 'exemplo' && (
+                                <Typography variant="caption" color="text.secondary" sx={{ width: '100%', textAlign: 'center' }}>
+                                    Câmera indisponível no momento — exibindo vídeo de exemplo.
+                                </Typography>
                             )}
                             {transmitindo && terminaEm && (
                                 <Typography variant="caption" color="text.secondary">
