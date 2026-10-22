@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useMemo, useEffect } from 'react';
 
 const ThemeModeContext = createContext({
-  mode: 'dark',
+  mode: 'light',
   toggleTheme: () => {},
 });
 
@@ -13,18 +13,22 @@ export const useThemeMode = () => {
   return context;
 };
 
+const STORAGE_KEY = 'themeModeErp';
+
 export const ThemeModeProvider = ({ children }) => {
   const [mode, setMode] = useState(() => {
-    const savedMode = localStorage.getItem('themeMode');
+    // Chave nova: com o visual claro (ERP) todos começam no claro uma vez,
+    // mesmo quem tinha escolhido o escuro antigo
+    const savedMode = localStorage.getItem(STORAGE_KEY);
     if (savedMode === 'light' || savedMode === 'dark') {
       return savedMode;
     }
-    return 'dark';
+    return 'light';
   });
 
   useEffect(() => {
     // Salvar preferência no localStorage
-    localStorage.setItem('themeMode', mode);
+    localStorage.setItem(STORAGE_KEY, mode);
   }, [mode]);
 
   const toggleTheme = () => {

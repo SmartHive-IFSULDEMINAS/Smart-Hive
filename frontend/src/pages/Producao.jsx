@@ -30,7 +30,6 @@ import {
     Select,
     Card,
     CardContent,
-    alpha,
     Collapse,
     Tooltip,
     Menu as MuiMenu,
@@ -68,12 +67,13 @@ import {
     Cell,
     Legend,
 } from 'recharts';
+import { tint } from '../theme';
 
 const qualidadeOptions = [
-    { value: 'extra', label: 'Extra', color: '#81C784' },
-    { value: 'primeira', label: 'Primeira', color: '#64B5F6' },
-    { value: 'segunda', label: 'Segunda', color: '#FFB74D' },
-    { value: 'industrial', label: 'Industrial', color: '#90A4AE' },
+    { value: 'extra', label: 'Extra', color: 'var(--chart-green)' },
+    { value: 'primeira', label: 'Primeira', color: 'var(--chart-blue)' },
+    { value: 'segunda', label: 'Segunda', color: 'var(--chart-orange)' },
+    { value: 'industrial', label: 'Industrial', color: 'var(--chart-gray)' },
 ];
 
 const tipoMelOptions = [
@@ -86,11 +86,11 @@ const tipoMelOptions = [
     { value: 'outro', label: 'Outro' },
 ];
 
-const COLORS = ['#81C784', '#64B5F6', '#FFB74D', '#90A4AE', '#EF9A9A', '#CE93D8'];
+const COLORS = ['var(--chart-green)', 'var(--chart-blue)', 'var(--chart-orange)', 'var(--chart-gray)', 'var(--chart-red)', 'var(--chart-purple)'];
 
 const darkTooltipStyle = {
-    background: '#1A1D27',
-    border: '1px solid rgba(255,255,255,0.12)',
+    background: 'var(--chart-tooltip-bg)',
+    border: '1px solid var(--chart-tooltip-border)',
     borderRadius: 10,
     fontSize: 13,
 };
@@ -230,7 +230,7 @@ export default function Producao() {
     const getQualidadeChip = (qualidade) => {
         const option = qualidadeOptions.find(o => o.value === qualidade);
         return option ? (
-            <Chip label={option.label} size="small" sx={{ bgcolor: alpha(option.color, 0.15), color: option.color }} />
+            <Chip label={option.label} size="small" sx={{ bgcolor: tint(option.color, 0.15), color: option.color }} />
         ) : qualidade;
     };
 
@@ -287,8 +287,8 @@ export default function Producao() {
             <Grid container spacing={2} sx={{ mb: 3 }}>
                 {[
                     { label: 'Produção Total', value: loading ? null : `${totalKg.toFixed(1)} kg`, icon: <HoneyIcon />, color: theme.palette.primary.main },
-                    { label: 'Total de Colheitas', value: loading ? null : totalRegistros, icon: <TrendingIcon />, color: '#64B5F6' },
-                    { label: 'Média por Colheita', value: loading ? null : `${mediaKg} kg`, icon: <HoneyIcon />, color: '#81C784' },
+                    { label: 'Total de Colheitas', value: loading ? null : totalRegistros, icon: <TrendingIcon />, color: 'var(--chart-blue)' },
+                    { label: 'Média por Colheita', value: loading ? null : `${mediaKg} kg`, icon: <HoneyIcon />, color: 'var(--chart-green)' },
                 ].map((stat, i) => (
                     <Grid size={{ xs: 12, sm: 4 }} key={i}>
                         <Card sx={{ position: 'relative', overflow: 'hidden', '&::before': { content: '""', position: 'absolute', top: 0, left: 0, right: 0, height: '2px', background: stat.color } }}>
@@ -301,7 +301,7 @@ export default function Producao() {
                                             : <Typography variant="h4" fontWeight={700} color="text.primary">{stat.value}</Typography>
                                         }
                                     </Box>
-                                    <Box sx={{ width: 34, height: 34, borderRadius: 1.5, bgcolor: alpha(stat.color, 0.12), display: 'flex', alignItems: 'center', justifyContent: 'center', color: stat.color }}>
+                                    <Box sx={{ width: 34, height: 34, borderRadius: 1.5, bgcolor: tint(stat.color, 0.12), display: 'flex', alignItems: 'center', justifyContent: 'center', color: stat.color }}>
                                         {stat.icon}
                                     </Box>
                                 </Box>
@@ -323,14 +323,14 @@ export default function Producao() {
                                 ) : porTipoData.length > 0 ? (
                                     <ResponsiveContainer width="100%" height="100%">
                                         <BarChart data={porTipoData} layout="vertical">
-                                            <CartesianGrid stroke="rgba(255,255,255,0.05)" strokeDasharray="0" horizontal={false} />
-                                            <XAxis type="number" unit=" kg" tick={{ fill: 'rgba(232,234,237,0.55)', fontSize: 11 }} axisLine={false} tickLine={false} />
-                                            <YAxis type="category" dataKey="name" width={110} tick={{ fill: 'rgba(232,234,237,0.55)', fontSize: 11 }} axisLine={false} tickLine={false} />
+                                            <CartesianGrid stroke="var(--chart-grid)" strokeDasharray="0" horizontal={false} />
+                                            <XAxis type="number" unit=" kg" tick={{ fill: 'var(--chart-text-secondary)', fontSize: 11 }} axisLine={false} tickLine={false} />
+                                            <YAxis type="category" dataKey="name" width={110} tick={{ fill: 'var(--chart-text-secondary)', fontSize: 11 }} axisLine={false} tickLine={false} />
                                             <RechartsTooltip
                                                 formatter={(v) => [`${v} kg`, 'Produção']}
                                                 contentStyle={darkTooltipStyle}
-                                                labelStyle={{ color: '#E8EAED', fontWeight: 600 }}
-                                                itemStyle={{ color: 'rgba(232,234,237,0.75)' }}
+                                                labelStyle={{ color: 'var(--chart-text)', fontWeight: 600 }}
+                                                itemStyle={{ color: 'var(--chart-text-secondary)' }}
                                             />
                                             <Bar dataKey="value" fill={theme.palette.primary.main} radius={[0, 4, 4, 0]} />
                                         </BarChart>
@@ -362,10 +362,10 @@ export default function Producao() {
                                             <RechartsTooltip
                                                 formatter={(v) => [`${v} kg`, 'Produção']}
                                                 contentStyle={darkTooltipStyle}
-                                                labelStyle={{ color: '#E8EAED', fontWeight: 600 }}
-                                                itemStyle={{ color: 'rgba(232,234,237,0.75)' }}
+                                                labelStyle={{ color: 'var(--chart-text)', fontWeight: 600 }}
+                                                itemStyle={{ color: 'var(--chart-text-secondary)' }}
                                             />
-                                            <Legend wrapperStyle={{ fontSize: 12, color: 'rgba(232,234,237,0.55)' }} />
+                                            <Legend wrapperStyle={{ fontSize: 12, color: 'var(--chart-text-secondary)' }} />
                                         </PieChart>
                                     </ResponsiveContainer>
                                 ) : (
@@ -469,7 +469,7 @@ export default function Producao() {
             {/* Empty state */}
             {filteredProducoes.length === 0 && !loading && (
                 <Box sx={{ textAlign: 'center', py: 10, mt: 1, borderRadius: 2, border: '1px dashed', borderColor: 'divider' }}>
-                    <HoneyIcon sx={{ fontSize: 52, color: alpha(theme.palette.primary.main, 0.25), mb: 2 }} />
+                    <HoneyIcon sx={{ fontSize: 52, color: tint(theme.palette.primary.main, 0.25), mb: 2 }} />
                     <Typography variant="h6" fontWeight={600} gutterBottom>
                         {(searchTerm || filterQualidade) ? 'Nenhum registro encontrado para os filtros aplicados' : 'Nenhum registro de produção'}
                     </Typography>

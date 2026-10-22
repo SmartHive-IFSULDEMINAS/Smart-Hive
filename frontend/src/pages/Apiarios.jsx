@@ -21,7 +21,6 @@ import {
     Snackbar,
     InputAdornment,
     useTheme,
-    alpha,
 } from '@mui/material';
 import {
     Add as AddIcon,
@@ -38,6 +37,7 @@ import {
     AccessTime as AccessTimeIcon,
 } from '@mui/icons-material';
 import { getApiarios, createApiario, updateApiario, deleteApiario } from '../services/api';
+import { tint } from '../theme';
 
 const initialFormData = {
     nome: '',
@@ -211,16 +211,16 @@ export default function Apiarios() {
                                 display: 'flex',
                                 flexDirection: 'column',
                                 border: '1px solid',
-                                borderColor: apiario.ativo ? 'divider' : alpha(theme.palette.error.main, 0.3),
+                                borderColor: apiario.ativo ? 'divider' : tint(theme.palette.error.main, 0.3),
                                 transition: 'border-color 0.2s',
-                                '&:hover': { borderColor: apiario.ativo ? 'primary.main' : alpha(theme.palette.error.main, 0.5) },
+                                '&:hover': { borderColor: apiario.ativo ? 'primary.main' : tint(theme.palette.error.main, 0.5) },
                             }}>
                                 <CardContent sx={{ flex: 1 }}>
                                     <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
                                         <Box sx={{ display: 'flex', alignItems: 'center' }}>
                                             <Box sx={{
                                                 width: 44, height: 44, borderRadius: 2,
-                                                bgcolor: alpha(theme.palette.primary.main, 0.1),
+                                                bgcolor: tint(theme.palette.primary.main, 0.1),
                                                 display: 'flex', alignItems: 'center', justifyContent: 'center', mr: 1.5,
                                             }}>
                                                 <PlaceIcon sx={{ color: 'primary.main', fontSize: 22 }} />
@@ -244,17 +244,17 @@ export default function Apiarios() {
                                     {apiario.sensor_iot_ativo && (
                                         <Box sx={{ mt: 1.5, pt: 1.5, borderTop: '1px solid', borderColor: 'divider' }}>
                                             <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                                                <SensorsIcon sx={{ fontSize: 14, color: '#64B5F6', mr: 0.5 }} />
+                                                <SensorsIcon sx={{ fontSize: 14, color: 'var(--chart-blue)', mr: 0.5 }} />
                                                 <Typography variant="caption" color="text.secondary" fontWeight={600}>Sensores IoT</Typography>
                                             </Box>
                                             {apiario.temperatura_atual && (
                                                 <Chip icon={<ThermostatIcon />} label={`${parseFloat(apiario.temperatura_atual).toFixed(1)}°C`}
-                                                    size="small" sx={{ height: 22, fontSize: '0.7rem', bgcolor: alpha('#EF9A9A', 0.15), color: '#EF9A9A', mr: 0.5, mb: 0.5 }} />
+                                                    size="small" sx={{ height: 22, fontSize: '0.7rem', bgcolor: tint('var(--chart-red)', 0.15), color: 'var(--chart-red)', mr: 0.5, mb: 0.5 }} />
                                             )}
                                             {apiario.latitude && apiario.longitude && (
                                                 <Chip icon={<LocationOnIcon />}
                                                     label={`${parseFloat(apiario.latitude).toFixed(4)}, ${parseFloat(apiario.longitude).toFixed(4)}`}
-                                                    size="small" sx={{ height: 22, fontSize: '0.7rem', bgcolor: alpha('#81C784', 0.15), color: '#81C784', mr: 0.5, mb: 0.5 }} />
+                                                    size="small" sx={{ height: 22, fontSize: '0.7rem', bgcolor: tint('var(--chart-green)', 0.15), color: 'var(--chart-green)', mr: 0.5, mb: 0.5 }} />
                                             )}
                                             {apiario.data_ultima_leitura_sensor && (
                                                 <Typography variant="caption" color="text.disabled" sx={{ display: 'block', mt: 0.5 }}>
@@ -300,7 +300,7 @@ export default function Apiarios() {
             {/* Empty state */}
             {filteredApiarios.length === 0 && !loading && (
                 <Box sx={{ textAlign: 'center', py: 10, borderRadius: 2, border: '1px dashed', borderColor: 'divider' }}>
-                    <PlaceIcon sx={{ fontSize: 52, color: alpha(theme.palette.primary.main, 0.25), mb: 2 }} />
+                    <PlaceIcon sx={{ fontSize: 52, color: tint(theme.palette.primary.main, 0.25), mb: 2 }} />
                     <Typography variant="h6" fontWeight={600} gutterBottom>
                         {searchTerm ? 'Nenhum apiário encontrado' : 'Nenhum apiário cadastrado'}
                     </Typography>

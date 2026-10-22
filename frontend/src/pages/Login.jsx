@@ -11,7 +11,6 @@ import {
     Link,
     Container,
     useTheme,
-    alpha,
 } from '@mui/material';
 import { useAuth } from '../contexts/AuthContext';
 import smartHiveLogo from '../../imagens/logo_smart_hive.png';
@@ -48,7 +47,7 @@ export default function Login() {
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                background: `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.1)} 0%, ${alpha(theme.palette.secondary.main, 0.1)} 100%)`,
+                background: theme.palette.background.default,
                 p: 2,
             }}
         >

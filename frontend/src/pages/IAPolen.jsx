@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import {
     Box, Grid, Card, CardContent, Typography, Chip, Table, TableBody,
     TableCell, TableContainer, TableHead, TableRow, Paper, Skeleton, Alert,
-    useTheme, alpha, Fade, Grow, IconButton, Tooltip, Button, Dialog,
+    useTheme, Fade, Grow, IconButton, Tooltip, Button, Dialog,
     DialogTitle, DialogContent, DialogActions, TextField, Divider,
     CircularProgress, Tabs, Tab,
 } from '@mui/material';
@@ -25,18 +25,19 @@ import {
 } from '../services/api';
 import StatFavo from '../components/StatFavo';
 import StatusBlock from '../components/StatusBlock';
+import { tint } from '../theme';
 
 // ── Paleta de cores para classes/clusters ─────────────────────────────────────
 const CLASS_COLORS = [
-    '#F4A100', '#2E7D32', '#1565C0', '#AD1457',
+    'var(--chart-amber)', '#2E7D32', '#1565C0', '#AD1457',
     '#6A1B9A', '#00838F', '#EF6C00', '#37474F',
 ];
 
 const darkTooltipStyle = {
-    backgroundColor: 'rgba(30,30,30,0.95)',
-    border: '1px solid rgba(255,255,255,0.1)',
+    backgroundColor: 'var(--chart-tooltip-bg)',
+    border: '1px solid var(--chart-tooltip-border)',
     borderRadius: 8,
-    color: '#E8EAED',
+    color: 'var(--chart-text)',
 };
 
 // ── Formulário de teste manual ────────────────────────────────────────────────
@@ -445,18 +446,18 @@ export default function IAPolen() {
             )}
 
             {/* ── Favo — os números que mais importam nesta tela ────────── */}
-            <Grid container spacing={{ xs: 1.25, sm: 0.75 }} sx={{ mb: 3 }}>
+            <Grid container spacing={2} sx={{ mb: 3 }}>
                 <Grid size={{ xs: 4 }}>
                     <StatFavo
                         label="Total de classificações"
-                        value={loading ? <Skeleton width={40} sx={{ mx: 'auto' }} /> : stats?.total ?? 0}
+                        value={loading ? <Skeleton width={40} /> : stats?.total ?? 0}
                         delay={0}
                     />
                 </Grid>
                 <Grid size={{ xs: 4 }}>
                     <StatFavo
                         label="Tipo mais frequente (KNN)"
-                        value={loading ? <Skeleton width={40} sx={{ mx: 'auto' }} /> : tipoMaisComum?.knn_classe ? `Tipo ${tipoMaisComum.knn_classe}` : '—'}
+                        value={loading ? <Skeleton width={40} /> : tipoMaisComum?.knn_classe ? `Tipo ${tipoMaisComum.knn_classe}` : '—'}
                         offset
                         delay={80}
                     />
@@ -464,7 +465,7 @@ export default function IAPolen() {
                 <Grid size={{ xs: 4 }}>
                     <StatFavo
                         label="Clusters distintos"
-                        value={loading ? <Skeleton width={40} sx={{ mx: 'auto' }} /> : clusterData.length}
+                        value={loading ? <Skeleton width={40} /> : clusterData.length}
                         delay={160}
                     />
                 </Grid>
@@ -490,7 +491,7 @@ export default function IAPolen() {
                                 ) : (
                                     <ResponsiveContainer width="100%" height={280}>
                                         <BarChart data={knnData} margin={{ top: 5, right: 10, left: -10, bottom: 5 }}>
-                                            <CartesianGrid strokeDasharray="3 3" stroke={alpha(theme.palette.divider, 0.3)} />
+                                            <CartesianGrid strokeDasharray="3 3" stroke={tint(theme.palette.divider, 0.3)} />
                                             <XAxis dataKey="name" tick={{ fontSize: 12, fill: theme.palette.text.secondary }} />
                                             <YAxis tick={{ fontSize: 12, fill: theme.palette.text.secondary }} allowDecimals={false} />
                                             <RechartsTooltip
@@ -516,7 +517,7 @@ export default function IAPolen() {
                         <Card sx={{ height: '100%' }}>
                             <CardContent sx={{ p: 3 }}>
                                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
-                                    <ClusterIcon sx={{ color: '#F57C00' }} />
+                                    <ClusterIcon sx={{ color: 'var(--chart-orange)' }} />
                                     <Typography variant="h6" fontWeight={600}>Clusters KMeans</Typography>
                                 </Box>
                                 {loading ? (
@@ -607,10 +608,10 @@ export default function IAPolen() {
                                                         label={`TIPO ${c.knn_classe}`}
                                                         size="small"
                                                         sx={{
-                                                            bgcolor: alpha(CLASS_COLORS[(c.knn_classe - 1) % CLASS_COLORS.length], 0.15),
+                                                            bgcolor: tint(CLASS_COLORS[(c.knn_classe - 1) % CLASS_COLORS.length], 0.15),
                                                             color: CLASS_COLORS[(c.knn_classe - 1) % CLASS_COLORS.length],
                                                             fontWeight: 700,
-                                                            border: `1px solid ${alpha(CLASS_COLORS[(c.knn_classe - 1) % CLASS_COLORS.length], 0.4)}`,
+                                                            border: `1px solid ${tint(CLASS_COLORS[(c.knn_classe - 1) % CLASS_COLORS.length], 0.4)}`,
                                                         }}
                                                     />
                                                 </TableCell>

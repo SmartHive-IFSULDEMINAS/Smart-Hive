@@ -16,7 +16,6 @@ import {
     Skeleton,
     Alert,
     useTheme,
-    alpha,
     Fade,
     Grow,
     IconButton,
@@ -69,6 +68,7 @@ import {
 } from 'recharts';
 import { getDashboard, getDashboardComparativo, getDashboardPrevisao } from '../services/api';
 import StatFavo from '../components/StatFavo';
+import { tint } from '../theme';
 
 const DASHBOARD_REFRESH_MS = 10000;
 
@@ -93,15 +93,15 @@ const SectionHeader = ({ title, icon, badge }) => (
 
 // ─── Dark tooltip style for Recharts ─────────────────────────────────────────
 const darkTooltipStyle = {
-    background: '#1A1D27',
-    border: '1px solid rgba(255,255,255,0.12)',
+    background: 'var(--chart-tooltip-bg)',
+    border: '1px solid var(--chart-tooltip-border)',
     borderRadius: 10,
-    boxShadow: '0 8px 32px rgba(0,0,0,0.5)',
-    color: '#E8EAED',
+    boxShadow: 'var(--chart-tooltip-shadow)',
+    color: 'var(--chart-text)',
     fontSize: 12,
 };
 
-const COLORS = ['#4CAF50', '#F4A100', '#F44336', '#9E9E9E', '#2196F3'];
+const COLORS = ['var(--chart-green)', 'var(--chart-amber)', 'var(--chart-red)', 'var(--chart-gray)', 'var(--chart-blue)'];
 
 // ─── Dashboard skeleton ───────────────────────────────────────────────────────
 const DashboardSkeleton = () => (
@@ -239,17 +239,17 @@ export default function Dashboard() {
             item.status === 'inativa' ? 'Inativas' :
                 item.status === 'quarentena' ? 'Quarentena' : 'Mortas',
         value: item.total,
-        color: item.status === 'ativa' ? '#4CAF50' :
-            item.status === 'inativa' ? '#9E9E9E' :
-                item.status === 'quarentena' ? '#F4A100' : '#F44336',
+        color: item.status === 'ativa' ? 'var(--chart-green)' :
+            item.status === 'inativa' ? 'var(--chart-gray)' :
+                item.status === 'quarentena' ? 'var(--chart-amber)' : 'var(--chart-red)',
     })) || [];
 
     const hasSensorValue = (value) => value !== null && value !== undefined && value !== '';
 
     const getTemperatureColor = (value) => {
-        if (value > 35) return '#EF9A9A';
-        if (value < 20) return '#64B5F6';
-        return '#81C784';
+        if (value > 35) return 'var(--chart-red)';
+        if (value < 20) return 'var(--chart-blue)';
+        return 'var(--chart-green)';
     };
 
     return (
@@ -276,9 +276,9 @@ export default function Dashboard() {
                         disabled={refreshing}
                         size="small"
                         sx={{
-                            bgcolor: alpha(theme.palette.primary.main, 0.1),
-                            border: `1px solid ${alpha(theme.palette.primary.main, 0.2)}`,
-                            '&:hover': { bgcolor: alpha(theme.palette.primary.main, 0.18) },
+                            bgcolor: tint(theme.palette.primary.main, 0.1),
+                            border: `1px solid ${tint(theme.palette.primary.main, 0.2)}`,
+                            '&:hover': { bgcolor: tint(theme.palette.primary.main, 0.18) },
                         }}
                     >
                         <RefreshIcon
@@ -297,7 +297,7 @@ export default function Dashboard() {
             </Box>
 
             {/* ─── Favo — os 4 números que mais importam ───────────────────────── */}
-            <Grid container spacing={{ xs: 1.25, md: 0.75 }} sx={{ mb: 4 }}>
+            <Grid container spacing={2} sx={{ mb: 4 }}>
                 <Grid size={{ xs: 6, md: 3 }}>
                     <StatFavo
                         label="Apiários"
@@ -399,24 +399,24 @@ export default function Dashboard() {
                                                 </linearGradient>
                                             </defs>
                                             <CartesianGrid
-                                                stroke="rgba(255,255,255,0.05)"
+                                                stroke="var(--chart-grid)"
                                                 strokeDasharray="0"
                                                 vertical={false}
                                             />
                                             <XAxis
                                                 dataKey="mes"
                                                 tick={{ fontSize: 11, fill: theme.palette.text.secondary }}
-                                                stroke="rgba(255,255,255,0.08)"
+                                                stroke="var(--chart-axis)"
                                             />
                                             <YAxis
                                                 tick={{ fontSize: 11, fill: theme.palette.text.secondary }}
-                                                stroke="rgba(255,255,255,0.08)"
+                                                stroke="var(--chart-axis)"
                                                 unit=" kg"
                                             />
                                             <RechartsTooltip
                                                 contentStyle={darkTooltipStyle}
-                                                labelStyle={{ color: '#E8EAED', fontWeight: 600 }}
-                                                itemStyle={{ color: 'rgba(232,234,237,0.75)' }}
+                                                labelStyle={{ color: 'var(--chart-text)', fontWeight: 600 }}
+                                                itemStyle={{ color: 'var(--chart-text-secondary)' }}
                                                 formatter={(value) => [`${parseFloat(value).toFixed(1)} kg`, 'Produção']}
                                             />
                                             <Area
@@ -464,8 +464,8 @@ export default function Dashboard() {
                                                 </Pie>
                                                 <RechartsTooltip
                                                     contentStyle={darkTooltipStyle}
-                                                    labelStyle={{ color: '#E8EAED', fontWeight: 600 }}
-                                                    itemStyle={{ color: 'rgba(232,234,237,0.75)' }}
+                                                    labelStyle={{ color: 'var(--chart-text)', fontWeight: 600 }}
+                                                    itemStyle={{ color: 'var(--chart-text-secondary)' }}
                                                     formatter={(value) => [value, 'Colmeias']}
                                                 />
                                                 <Legend
@@ -501,22 +501,22 @@ export default function Dashboard() {
                                 <Box sx={{ height: 320 }}>
                                     <ResponsiveContainer width="100%" height="100%">
                                         <LineChart data={data?.producao_por_mes || []}>
-                                            <CartesianGrid stroke="rgba(255,255,255,0.05)" strokeDasharray="0" vertical={false} />
-                                            <XAxis dataKey="mes" tick={{ fontSize: 11, fill: theme.palette.text.secondary }} stroke="rgba(255,255,255,0.08)" />
-                                            <YAxis tick={{ fontSize: 11, fill: theme.palette.text.secondary }} stroke="rgba(255,255,255,0.08)" unit=" g" />
+                                            <CartesianGrid stroke="var(--chart-grid)" strokeDasharray="0" vertical={false} />
+                                            <XAxis dataKey="mes" tick={{ fontSize: 11, fill: theme.palette.text.secondary }} stroke="var(--chart-axis)" />
+                                            <YAxis tick={{ fontSize: 11, fill: theme.palette.text.secondary }} stroke="var(--chart-axis)" unit=" g" />
                                             <RechartsTooltip
                                                 contentStyle={darkTooltipStyle}
-                                                labelStyle={{ color: '#E8EAED', fontWeight: 600 }}
-                                                itemStyle={{ color: 'rgba(232,234,237,0.75)' }}
+                                                labelStyle={{ color: 'var(--chart-text)', fontWeight: 600 }}
+                                                itemStyle={{ color: 'var(--chart-text-secondary)' }}
                                                 formatter={(value, name) => [`${parseFloat(value).toFixed(1)} g`, name]}
                                             />
                                             <Legend
                                                 formatter={(value) => (
-                                                    <span style={{ color: 'rgba(232,234,237,0.75)', fontSize: 12 }}>{value}</span>
+                                                    <span style={{ color: 'var(--chart-text-secondary)', fontSize: 12 }}>{value}</span>
                                                 )}
                                             />
-                                            <Line type="monotone" dataKey="polen_g" name="Pólen" stroke="#8D6E63" strokeWidth={2} dot={{ r: 3, strokeWidth: 0 }} activeDot={{ r: 5 }} />
-                                            <Line type="monotone" dataKey="propolis_g" name="Própolis" stroke="#6D4C41" strokeWidth={2} dot={{ r: 3, strokeWidth: 0 }} activeDot={{ r: 5 }} />
+                                            <Line type="monotone" dataKey="polen_g" name="Pólen" stroke="var(--chart-amber)" strokeWidth={2} dot={{ r: 3, strokeWidth: 0 }} activeDot={{ r: 5 }} />
+                                            <Line type="monotone" dataKey="propolis_g" name="Própolis" stroke="var(--chart-teal)" strokeWidth={2} dot={{ r: 3, strokeWidth: 0 }} activeDot={{ r: 5 }} />
                                         </LineChart>
                                     </ResponsiveContainer>
                                 </Box>
@@ -655,26 +655,26 @@ export default function Dashboard() {
                                         <ResponsiveContainer width="100%" height="100%">
                                             <BarChart data={data.colmeias_por_apiario} layout="vertical">
                                                 <CartesianGrid
-                                                    stroke="rgba(255,255,255,0.05)"
+                                                    stroke="var(--chart-grid)"
                                                     strokeDasharray="0"
                                                     horizontal={false}
                                                 />
                                                 <XAxis
                                                     type="number"
                                                     tick={{ fontSize: 11, fill: theme.palette.text.secondary }}
-                                                    stroke="rgba(255,255,255,0.08)"
+                                                    stroke="var(--chart-axis)"
                                                 />
                                                 <YAxis
                                                     type="category"
                                                     dataKey="apiario__nome"
                                                     width={160}
                                                     tick={{ fontSize: 11, fill: theme.palette.text.secondary }}
-                                                    stroke="rgba(255,255,255,0.08)"
+                                                    stroke="var(--chart-axis)"
                                                 />
                                                 <RechartsTooltip
                                                     contentStyle={darkTooltipStyle}
-                                                    labelStyle={{ color: '#E8EAED', fontWeight: 600 }}
-                                                    itemStyle={{ color: 'rgba(232,234,237,0.75)' }}
+                                                    labelStyle={{ color: 'var(--chart-text)', fontWeight: 600 }}
+                                                    itemStyle={{ color: 'var(--chart-text-secondary)' }}
                                                     formatter={(value) => [value, 'Colmeias']}
                                                 />
                                                 <Bar
@@ -721,10 +721,10 @@ export default function Dashboard() {
                                             sx={{
                                                 p: { xs: 1.5, sm: 2 },
                                                 border: '1px solid',
-                                                borderColor: alpha('#2196F3', 0.2),
+                                                borderColor: tint('var(--chart-blue)', 0.2),
                                                 borderRadius: 2,
                                                 '&:hover': {
-                                                    borderColor: alpha('#2196F3', 0.4),
+                                                    borderColor: tint('var(--chart-blue)', 0.4),
                                                     transform: 'translateY(-1px)',
                                                 },
                                                 transition: 'border-color 0.2s ease, transform 0.2s ease',
@@ -741,11 +741,11 @@ export default function Dashboard() {
                                                 </Box>
                                                 <Box sx={{
                                                     width: 28, height: 28, borderRadius: '7px',
-                                                    bgcolor: alpha('#2196F3', 0.12),
-                                                    border: `1px solid ${alpha('#2196F3', 0.25)}`,
+                                                    bgcolor: tint('var(--chart-blue)', 0.12),
+                                                    border: `1px solid ${tint('var(--chart-blue)', 0.25)}`,
                                                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                                                 }}>
-                                                    <SensorsIcon sx={{ fontSize: 16, color: '#64B5F6' }} />
+                                                    <SensorsIcon sx={{ fontSize: 16, color: 'var(--chart-blue)' }} />
                                                 </Box>
                                             </Box>
 
@@ -761,35 +761,35 @@ export default function Dashboard() {
                                                     key: 'nivel_ruido',
                                                     label: 'Ruído',
                                                     icon: <VolumeUpIcon />,
-                                                    color: '#FFB74D',
+                                                    color: 'var(--chart-orange)',
                                                     format: (value) => `${Number(value).toFixed(1)} dB`,
                                                 },
                                                 {
                                                     key: 'luminosidade',
                                                     label: 'Luminosidade',
                                                     icon: <LightModeIcon />,
-                                                    color: '#FFC107',
+                                                    color: 'var(--chart-amber)',
                                                     format: (value) => `${Number(value).toFixed(0)} lux`,
                                                 },
                                                 {
                                                     key: 'umidade',
                                                     label: 'Umidade',
                                                     icon: <WaterDropIcon />,
-                                                    color: '#64B5F6',
+                                                    color: 'var(--chart-blue)',
                                                     format: (value) => `${Number(value).toFixed(1)}%`,
                                                 },
                                                 {
                                                     key: 'pressao',
                                                     label: 'Pressão',
                                                     icon: <CompressIcon />,
-                                                    color: '#CE93D8',
+                                                    color: 'var(--chart-purple)',
                                                     format: (value) => `${Number(value).toFixed(1)} hPa`,
                                                 },
                                                 {
                                                     key: 'peso',
                                                     label: 'Peso',
                                                     icon: <ScaleIcon />,
-                                                    color: '#90A4AE',
+                                                    color: 'var(--chart-gray)',
                                                     format: (value) => `${Number(value).toFixed(1)} kg`,
                                                 },
                                             ].some((metric) => hasSensorValue(colmeia[metric.key])) ? (
@@ -806,35 +806,35 @@ export default function Dashboard() {
                                                             key: 'nivel_ruido',
                                                             label: 'Ruído',
                                                             icon: <VolumeUpIcon />,
-                                                            color: '#FFB74D',
+                                                            color: 'var(--chart-orange)',
                                                             format: (value) => `${Number(value).toFixed(1)} dB`,
                                                         },
                                                         {
                                                             key: 'luminosidade',
                                                             label: 'Luminosidade',
                                                             icon: <LightModeIcon />,
-                                                            color: '#FFC107',
+                                                            color: 'var(--chart-amber)',
                                                             format: (value) => `${Number(value).toFixed(0)} lux`,
                                                         },
                                                         {
                                                             key: 'umidade',
                                                             label: 'Umidade',
                                                             icon: <WaterDropIcon />,
-                                                            color: '#64B5F6',
+                                                            color: 'var(--chart-blue)',
                                                             format: (value) => `${Number(value).toFixed(1)}%`,
                                                         },
                                                         {
                                                             key: 'pressao',
                                                             label: 'Pressão',
                                                             icon: <CompressIcon />,
-                                                            color: '#CE93D8',
+                                                            color: 'var(--chart-purple)',
                                                             format: (value) => `${Number(value).toFixed(1)} hPa`,
                                                         },
                                                         {
                                                             key: 'peso',
                                                             label: 'Peso',
                                                             icon: <ScaleIcon />,
-                                                            color: '#90A4AE',
+                                                            color: 'var(--chart-gray)',
                                                             format: (value) => `${Number(value).toFixed(1)} kg`,
                                                         },
                                                     ]
@@ -846,8 +846,8 @@ export default function Dashboard() {
                                                                         p: 1,
                                                                         borderRadius: 1.5,
                                                                         textAlign: 'center',
-                                                                        bgcolor: alpha(metric.color, 0.08),
-                                                                        border: `1px solid ${alpha(metric.color, 0.24)}`,
+                                                                        bgcolor: tint(metric.color, 0.08),
+                                                                        border: `1px solid ${tint(metric.color, 0.24)}`,
                                                                         minHeight: 72,
                                                                     }}
                                                                 >
@@ -880,12 +880,12 @@ export default function Dashboard() {
                                             {colmeia.sparklines && (
                                                 <Box sx={{ mt: 1.25 }}>
                                                     {[
-                                                        { key: 'temperatura', label: 'Temp.', color: '#81C784' },
-                                                        { key: 'nivel_ruido', label: 'Ruído', color: '#FFB74D' },
-                                                        { key: 'luminosidade', label: 'Luz', color: '#FFC107' },
-                                                        { key: 'umidade', label: 'Umidade', color: '#64B5F6' },
-                                                        { key: 'pressao', label: 'Pressão', color: '#CE93D8' },
-                                                        { key: 'peso', label: 'Peso', color: '#90A4AE' },
+                                                        { key: 'temperatura', label: 'Temp.', color: 'var(--chart-green)' },
+                                                        { key: 'nivel_ruido', label: 'Ruído', color: 'var(--chart-orange)' },
+                                                        { key: 'luminosidade', label: 'Luz', color: 'var(--chart-amber)' },
+                                                        { key: 'umidade', label: 'Umidade', color: 'var(--chart-blue)' },
+                                                        { key: 'pressao', label: 'Pressão', color: 'var(--chart-purple)' },
+                                                        { key: 'peso', label: 'Peso', color: 'var(--chart-gray)' },
                                                     ]
                                                         .filter((sensor) => (colmeia.sparklines[sensor.key] || []).length > 1)
                                                         .slice(0, 3)
