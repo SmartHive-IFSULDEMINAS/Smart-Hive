@@ -23,12 +23,16 @@ if ! command -v docker-compose &> /dev/null && ! docker compose version &> /dev/
     exit 1
 fi
 
-echo "[1/6] Parando containers existentes..."
-# Sem -v: os volumes guardam o banco SQLite, static e media de producao
-docker-compose down 2>/dev/null || docker compose down 2>/dev/null || true
+echo "[1/6] Backup do banco e dos uploads..."
+# Backup antes de mexer em qualquer coisa (só se o banco já estiver no ar)
+if docker ps --format '{{.Names}}' | grep -qx smarthive-postgres; then
+    bash scripts/backup_smarthive.sh
+fi
 
-echo "[2/6] Limpando cache do Docker..."
-docker system prune -f 2>/dev/null || true
+# Sem `docker compose down` (o nginx atende outros sites da VPS e o `up -d`
+# abaixo já recria o que mudou) e NUNCA `down -v`: apagaria os volumes.
+echo "[2/6] Limpando imagens orfas do Docker..."
+docker image prune -f 2>/dev/null || true
 
 echo "[3/6] Atualizando codigo do Git..."
 git pull
@@ -66,7 +70,6 @@ VPS_IP=$(hostname -I | awk '{print $1}')
 echo ""
 echo "Acesse: http://$VPS_IP:8080"
 echo "Admin:  http://$VPS_IP:8080/admin/"
-echo "        Usuario: admin / Senha: admin123"
 echo ""
 echo "Comandos uteis:"
 echo "  Ver logs:    docker-compose logs -f"

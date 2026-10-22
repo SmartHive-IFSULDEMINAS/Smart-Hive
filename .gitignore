@@ -54,3 +54,7 @@ login.png
 
 # Superpowers subagent-driven-development scratch workspace
 .superpowers/
+
+# Dados de produção (Postgres + uploads) montados do host, e ajustes locais da VPS
+/dados/
+/docker-compose.override.yml

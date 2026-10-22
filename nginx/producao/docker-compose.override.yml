@@ -1,0 +1,16 @@
+# Ajustes do docker-compose para a VPS de produção (portas 80/443 compartilhadas
+# com outros sites e certificados do Let's Encrypt). O Docker Compose lê
+# automaticamente um docker-compose.override.yml ao lado do docker-compose.yml.
+# Para aplicar na VPS (uma vez):
+#   cp nginx/producao/docker-compose.override.yml docker-compose.override.yml
+# O arquivo copiado é ignorado pelo git, então `git pull` não conflita mais.
+services:
+  nginx:
+    # !override: substitui a lista do docker-compose.yml (porta 8080) em vez de somar
+    ports: !override
+      - "80:80"
+      - "443:443"
+    volumes:
+      # Gravável: os outros sites da VPS também têm config em nginx/conf.d
+      - ./nginx/conf.d:/etc/nginx/conf.d
+      - /etc/letsencrypt:/etc/letsencrypt:ro
