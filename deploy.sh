@@ -56,8 +56,11 @@ fi
 # Câmera ao vivo: segredo MediaMTX <-> Django
 bash scripts/garantir_segredo_camera.sh
 
-echo "📦 Parando containers antigos..."
-docker-compose down 2>/dev/null || true
+echo "💾 Backup do banco e dos uploads..."
+# Backup antes de mexer em qualquer coisa (só se o banco já estiver no ar)
+if docker ps --format '{{.Names}}' | grep -qx smarthive-postgres; then
+    bash scripts/backup_smarthive.sh
+fi
 echo ""
 
 echo "🔨 Construindo imagens Docker..."
@@ -105,15 +108,13 @@ echo "📍 Aplicação disponível em:"
 echo "   🌐 http://$VPS_IP:8080"
 echo "   🔐 Admin: http://$VPS_IP:8080/admin/"
 echo ""
-echo "👤 Credenciais padrão do admin:"
-echo "   Usuário: admin"
-echo "   Senha: admin123"
-echo "   ⚠️  ALTERE A SENHA IMEDIATAMENTE!"
+echo "👤 Admin: crie com DJANGO_SUPERUSER_PASSWORD no .env (primeiro deploy)"
+echo "   ou: docker exec -it smarthive-backend python manage.py createsuperuser"
 echo ""
 echo "📝 Comandos úteis:"
 echo "   Ver logs:      docker-compose logs -f"
 echo "   Reiniciar:     docker-compose restart"
-echo "   Parar:         docker-compose down"
+echo "   Parar:         docker-compose stop   (nunca use down -v: apaga dados)"
 echo "   Status:        docker-compose ps"
 echo ""
 echo "🐝 Smart-Hive rodando com sucesso! 🎉"

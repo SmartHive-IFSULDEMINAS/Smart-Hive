@@ -1,6 +1,30 @@
 version: '3.8'
 
+# Dados persistentes (banco e uploads) ficam numa pasta do host, não em volumes
+# do Docker: `docker compose down -v` apaga volumes, mas não pastas montadas.
+# Na VPS, SMARTHIVE_DADOS=/root/smarthive-dados (no .env). Backup diário:
+# scripts/backup_smarthive.sh.
+
 services:
+  # Banco de dados
+  postgres:
+    image: postgres:16-alpine
+    container_name: smarthive-postgres
+    restart: unless-stopped
+    environment:
+      - POSTGRES_DB=smarthive
+      - POSTGRES_USER=smarthive
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:?defina POSTGRES_PASSWORD no .env}
+    volumes:
+      - ${SMARTHIVE_DADOS:-./dados}/postgres:/var/lib/postgresql/data
+    networks:
+      - smarthive-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U smarthive -d smarthive"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
   # Backend Django
   backend:
     build:
@@ -9,9 +33,8 @@ services:
     container_name: smarthive-backend
     restart: unless-stopped
     volumes:
-      - sqlite_data:/app/data
       - static_volume:/app/staticfiles
-      - media_volume:/app/media
+      - ${SMARTHIVE_DADOS:-./dados}/media:/app/media
       - ./IA-smart_hive/models:/app/ia_models:ro
     environment:
       - DJANGO_SETTINGS_MODULE=smarthive.settings
@@ -21,11 +44,20 @@ services:
       - IA_MODELS_DIR=/app/ia_models
       - MEDIAMTX_AUTH_SECRET=${MEDIAMTX_AUTH_SECRET:-}
       - CAMERA_SESSAO_MAX_MINUTOS=${CAMERA_SESSAO_MAX_MINUTOS:-30}
+      - POSTGRES_DB=smarthive
+      - POSTGRES_USER=smarthive
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:?defina POSTGRES_PASSWORD no .env}
+      - POSTGRES_HOST=postgres
+      - DJANGO_SUPERUSER_PASSWORD=${DJANGO_SUPERUSER_PASSWORD:-}
+    depends_on:
+      postgres:
+        condition: service_healthy
     networks:
       - smarthive-network
       - smarthive-integration
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/api/dashboard/"]
+      # A imagem não tem curl; /admin/login/ responde 200 sem precisar de login
+      test: ["CMD", "python", "-c", "import urllib.request as u; u.urlopen('http://127.0.0.1:8000/admin/login/', timeout=5)"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -40,7 +72,8 @@ services:
     networks:
       - smarthive-network
     healthcheck:
-      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:80"]
+      # 127.0.0.1: "localhost" resolve para IPv6, onde o nginx do container não escuta
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://127.0.0.1:80"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -68,12 +101,12 @@ services:
     container_name: smarthive-nginx
     restart: unless-stopped
     ports:
-      - "8080:80"
+      - "${SMARTHIVE_HTTP_PORT:-8080}:80"
     volumes:
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
       - ./nginx/conf.d:/etc/nginx/conf.d:ro
       - static_volume:/static:ro
-      - media_volume:/media:ro
+      - ${SMARTHIVE_DADOS:-./dados}/media:/media:ro
     depends_on:
       - backend
       - frontend
@@ -82,9 +115,8 @@ services:
       - smarthive-network
 
 volumes:
-  sqlite_data:
+  # Só arquivos regeneráveis (collectstatic); dados de verdade ficam em SMARTHIVE_DADOS
   static_volume:
-  media_volume:
 
 networks:
   smarthive-network:

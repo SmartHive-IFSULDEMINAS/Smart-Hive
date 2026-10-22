@@ -3,9 +3,7 @@ set -e
 
 echo "🐝 Smart-Hive Backend Starting..."
 
-# Aguardar banco de dados estar pronto (se usar PostgreSQL no futuro)
-echo "⏳ Waiting for database..."
-sleep 2
+# O docker-compose só sobe o backend depois do healthcheck do Postgres
 
 # Executar migrações
 echo "🔄 Running migrations..."
@@ -15,17 +13,23 @@ python manage.py migrate --noinput
 echo "📦 Collecting static files..."
 python manage.py collectstatic --noinput
 
-# Criar superusuário se não existir (opcional)
-echo "👤 Ensuring superuser exists..."
-python manage.py shell << EOF
+# Superusuário inicial só se a senha for informada (DJANGO_SUPERUSER_PASSWORD no
+# .env). Antes era sempre admin/admin123: depois de uma perda de dados, qualquer
+# um que conhecesse a senha padrão virava administrador.
+if [ -n "${DJANGO_SUPERUSER_PASSWORD:-}" ]; then
+    echo "👤 Ensuring superuser exists..."
+    python manage.py shell << EOF
 from django.contrib.auth import get_user_model
+import os
 User = get_user_model()
-if not User.objects.filter(username='admin').exists():
-    User.objects.create_superuser('admin', 'admin@smarthive.com', 'admin123')
-    print('✅ Superuser created: admin/admin123')
+nome = os.environ.get('DJANGO_SUPERUSER_USERNAME', 'admin')
+if not User.objects.filter(username=nome).exists():
+    User.objects.create_superuser(nome, os.environ.get('DJANGO_SUPERUSER_EMAIL', ''), os.environ['DJANGO_SUPERUSER_PASSWORD'])
+    print(f'✅ Superuser created: {nome}')
 else:
     print('ℹ️  Superuser already exists')
 EOF
+fi
 
 echo "🚀 Starting Gunicorn..."
 exec gunicorn smarthive.wsgi:application \
