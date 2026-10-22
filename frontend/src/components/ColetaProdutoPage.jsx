@@ -30,7 +30,6 @@ import {
     Select,
     Card,
     CardContent,
-    alpha,
     Tooltip,
     Menu as MuiMenu,
     Divider,
@@ -61,10 +60,11 @@ import {
     exportColetasProduto,
     getColmeias,
 } from '../services/api';
+import { tint } from '../theme';
 
 const darkTooltipStyle = {
-    background: '#1A1D27',
-    border: '1px solid rgba(255,255,255,0.12)',
+    background: 'var(--chart-tooltip-bg)',
+    border: '1px solid var(--chart-tooltip-border)',
     borderRadius: 10,
     fontSize: 13,
 };
@@ -271,8 +271,8 @@ export default function ColetaProdutoPage({ tipoProduto, titulo, icone }) {
             <Grid container spacing={2} sx={{ mb: 3 }}>
                 {[
                     { label: 'Total Coletado', value: loading ? null : `${totalG.toFixed(1)} g`, icon: icone, color: theme.palette.primary.main },
-                    { label: 'Total de Coletas', value: loading ? null : totalRegistros, icon: <TrendingIcon />, color: '#64B5F6' },
-                    { label: 'Média por Coleta', value: loading ? null : `${mediaG} g`, icon: icone, color: '#81C784' },
+                    { label: 'Total de Coletas', value: loading ? null : totalRegistros, icon: <TrendingIcon />, color: 'var(--chart-blue)' },
+                    { label: 'Média por Coleta', value: loading ? null : `${mediaG} g`, icon: icone, color: 'var(--chart-green)' },
                 ].map((stat, i) => (
                     <Grid size={{ xs: 12, sm: 4 }} key={i}>
                         <Card sx={{ position: 'relative', overflow: 'hidden', '&::before': { content: '""', position: 'absolute', top: 0, left: 0, right: 0, height: '2px', background: stat.color } }}>
@@ -285,7 +285,7 @@ export default function ColetaProdutoPage({ tipoProduto, titulo, icone }) {
                                             : <Typography variant="h4" fontWeight={700} color="text.primary">{stat.value}</Typography>
                                         }
                                     </Box>
-                                    <Box sx={{ width: 34, height: 34, borderRadius: 1.5, bgcolor: alpha(stat.color, 0.12), display: 'flex', alignItems: 'center', justifyContent: 'center', color: stat.color }}>
+                                    <Box sx={{ width: 34, height: 34, borderRadius: 1.5, bgcolor: tint(stat.color, 0.12), display: 'flex', alignItems: 'center', justifyContent: 'center', color: stat.color }}>
                                         {stat.icon}
                                     </Box>
                                 </Box>
@@ -305,14 +305,14 @@ export default function ColetaProdutoPage({ tipoProduto, titulo, icone }) {
                         ) : porMesData.length > 0 ? (
                             <ResponsiveContainer width="100%" height="100%">
                                 <BarChart data={porMesData}>
-                                    <CartesianGrid stroke="rgba(255,255,255,0.05)" strokeDasharray="0" vertical={false} />
-                                    <XAxis dataKey="mes" tick={{ fill: 'rgba(232,234,237,0.55)', fontSize: 11 }} axisLine={false} tickLine={false} />
-                                    <YAxis unit=" g" tick={{ fill: 'rgba(232,234,237,0.55)', fontSize: 11 }} axisLine={false} tickLine={false} />
+                                    <CartesianGrid stroke="var(--chart-grid)" strokeDasharray="0" vertical={false} />
+                                    <XAxis dataKey="mes" tick={{ fill: 'var(--chart-text-secondary)', fontSize: 11 }} axisLine={false} tickLine={false} />
+                                    <YAxis unit=" g" tick={{ fill: 'var(--chart-text-secondary)', fontSize: 11 }} axisLine={false} tickLine={false} />
                                     <RechartsTooltip
                                         formatter={(v) => [`${v.toFixed(1)} g`, 'Quantidade']}
                                         contentStyle={darkTooltipStyle}
-                                        labelStyle={{ color: '#E8EAED', fontWeight: 600 }}
-                                        itemStyle={{ color: 'rgba(232,234,237,0.75)' }}
+                                        labelStyle={{ color: 'var(--chart-text)', fontWeight: 600 }}
+                                        itemStyle={{ color: 'var(--chart-text-secondary)' }}
                                     />
                                     <Bar dataKey="quantidade" fill={theme.palette.primary.main} radius={[4, 4, 0, 0]} />
                                 </BarChart>
@@ -395,7 +395,7 @@ export default function ColetaProdutoPage({ tipoProduto, titulo, icone }) {
             {/* Empty state */}
             {filteredColetas.length === 0 && !loading && (
                 <Box sx={{ textAlign: 'center', py: 10, mt: 1, borderRadius: 2, border: '1px dashed', borderColor: 'divider' }}>
-                    <Box sx={{ fontSize: 52, color: alpha(theme.palette.primary.main, 0.25), mb: 2, display: 'flex', justifyContent: 'center', '& svg': { fontSize: 52 } }}>
+                    <Box sx={{ fontSize: 52, color: tint(theme.palette.primary.main, 0.25), mb: 2, display: 'flex', justifyContent: 'center', '& svg': { fontSize: 52 } }}>
                         {icone}
                     </Box>
                     <Typography variant="h6" fontWeight={600} gutterBottom>

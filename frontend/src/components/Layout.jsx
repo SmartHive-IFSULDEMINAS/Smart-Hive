@@ -268,7 +268,7 @@ export default function Layout({ children }) {
                         justifyContent: 'center',
                         flexShrink: 0,
                         overflow: 'hidden',
-                        boxShadow: `0 0 12px ${alpha(theme.palette.primary.main, 0.28)}`,
+                        border: `1px solid ${theme.palette.divider}`,
                     }}
                 >
                     <Box
@@ -351,7 +351,7 @@ export default function Layout({ children }) {
                                                     minWidth: sidebarExpanded ? 40 : 'auto',
                                                     justifyContent: 'center',
                                                     color: isSelected
-                                                        ? theme.palette.primary.main
+                                                        ? theme.palette.accentText
                                                         : theme.palette.text.secondary,
                                                     transition: 'min-width 0.2s ease',
                                                     '& .MuiSvgIcon-root': { fontSize: 20 },
@@ -394,7 +394,7 @@ export default function Layout({ children }) {
                         onClick={() => setSidebarExpanded((v) => !v)}
                         sx={{
                             color: 'text.disabled',
-                            '&:hover': { color: 'text.secondary', bgcolor: alpha('#fff', 0.05) },
+                            '&:hover': { color: 'text.secondary', bgcolor: 'action.hover' },
                         }}
                     >
                         {sidebarExpanded ? <ChevronLeftIcon fontSize="small" /> : <ChevronRightIcon fontSize="small" />}
@@ -480,7 +480,7 @@ export default function Layout({ children }) {
                             px: { xs: 0.5, sm: 1 },
                             py: 0.5,
                             borderRadius: 2,
-                            '&:hover': { bgcolor: alpha('#fff', 0.06) },
+                            '&:hover': { bgcolor: 'action.hover' },
                             transition: 'background-color 0.15s ease',
                         }}
                     >
@@ -489,7 +489,7 @@ export default function Layout({ children }) {
                                 width: 30,
                                 height: 30,
                                 bgcolor: theme.palette.primary.main,
-                                color: '#000',
+                                color: theme.palette.primary.contrastText,
                                 fontSize: '0.7rem',
                                 fontWeight: 700,
                             }}

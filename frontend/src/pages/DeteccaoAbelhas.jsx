@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import {
     Box, Grid, Card, CardContent, Typography, Table, TableBody,
     TableCell, TableContainer, TableHead, TableRow, Paper, Skeleton, Alert,
-    useTheme, alpha, Fade, Grow, IconButton, Tooltip,
+    useTheme, Fade, Grow, IconButton, Tooltip,
 } from '@mui/material';
 import {
     CameraAlt as CameraIcon,
@@ -19,12 +19,13 @@ import {
 import {
     getDeteccoesAbelha, getDeteccaoAbelhaEstatisticas, deleteDeteccaoAbelha,
 } from '../services/api';
+import { tint } from '../theme';
 
 const darkTooltipStyle = {
-    backgroundColor: 'rgba(30,30,30,0.95)',
-    border: '1px solid rgba(255,255,255,0.1)',
+    backgroundColor: 'var(--chart-tooltip-bg)',
+    border: '1px solid var(--chart-tooltip-border)',
     borderRadius: 8,
-    color: '#E8EAED',
+    color: 'var(--chart-text)',
 };
 
 function StatCard({ title, value, icon, color, delay = 0 }) {
@@ -47,7 +48,7 @@ function StatCard({ title, value, icon, color, delay = 0 }) {
                         </Typography>
                         <Box sx={{
                             width: 34, height: 34, borderRadius: '9px',
-                            backgroundColor: alpha(color, 0.15),
+                            backgroundColor: tint(color, 0.15),
                             display: 'flex', alignItems: 'center', justifyContent: 'center',
                         }}>
                             <Box sx={{ color, display: 'flex', fontSize: 18 }}>{icon}</Box>
@@ -157,7 +158,7 @@ export default function DeteccaoAbelhas() {
                         title="Abelhas com Pólen"
                         value={loading ? <Skeleton width={60} /> : stats?.total_polen ?? 0}
                         icon={<PollenIcon />}
-                        color="#F57C00"
+                        color="var(--chart-orange)"
                         delay={200}
                     />
                 </Grid>
@@ -182,13 +183,13 @@ export default function DeteccaoAbelhas() {
                                 ) : (
                                     <ResponsiveContainer width="100%" height={280}>
                                         <BarChart data={porColmeiaData} margin={{ top: 5, right: 10, left: -10, bottom: 5 }}>
-                                            <CartesianGrid strokeDasharray="3 3" stroke={alpha(theme.palette.divider, 0.3)} />
+                                            <CartesianGrid strokeDasharray="3 3" stroke={tint(theme.palette.divider, 0.3)} />
                                             <XAxis dataKey="name" tick={{ fontSize: 12, fill: theme.palette.text.secondary }} />
                                             <YAxis tick={{ fontSize: 12, fill: theme.palette.text.secondary }} allowDecimals={false} />
                                             <RechartsTooltip contentStyle={darkTooltipStyle} />
                                             <Legend />
                                             <Bar dataKey="abelhas" name="Abelhas" fill={theme.palette.primary.main} radius={[4, 4, 0, 0]} />
-                                            <Bar dataKey="polen" name="Com Pólen" fill="#F57C00" radius={[4, 4, 0, 0]} />
+                                            <Bar dataKey="polen" name="Com Pólen" fill="var(--chart-orange)" radius={[4, 4, 0, 0]} />
                                         </BarChart>
                                     </ResponsiveContainer>
                                 )}
@@ -202,7 +203,7 @@ export default function DeteccaoAbelhas() {
                         <Card sx={{ height: '100%' }}>
                             <CardContent sx={{ p: 3 }}>
                                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
-                                    <StatsIcon sx={{ color: '#F57C00' }} />
+                                    <StatsIcon sx={{ color: 'var(--chart-orange)' }} />
                                     <Typography variant="h6" fontWeight={600}>Histórico Recente</Typography>
                                 </Box>
                                 {loading ? (
@@ -214,13 +215,13 @@ export default function DeteccaoAbelhas() {
                                 ) : (
                                     <ResponsiveContainer width="100%" height={280}>
                                         <LineChart data={historicoData} margin={{ top: 5, right: 10, left: -10, bottom: 5 }}>
-                                            <CartesianGrid strokeDasharray="3 3" stroke={alpha(theme.palette.divider, 0.3)} />
+                                            <CartesianGrid strokeDasharray="3 3" stroke={tint(theme.palette.divider, 0.3)} />
                                             <XAxis dataKey="horario" tick={{ fontSize: 11, fill: theme.palette.text.secondary }} />
                                             <YAxis tick={{ fontSize: 12, fill: theme.palette.text.secondary }} allowDecimals={false} />
                                             <RechartsTooltip contentStyle={darkTooltipStyle} />
                                             <Legend />
                                             <Line type="monotone" dataKey="abelhas" name="Abelhas" stroke={theme.palette.primary.main} strokeWidth={2} dot={false} />
-                                            <Line type="monotone" dataKey="polen" name="Com Pólen" stroke="#F57C00" strokeWidth={2} dot={false} />
+                                            <Line type="monotone" dataKey="polen" name="Com Pólen" stroke="var(--chart-orange)" strokeWidth={2} dot={false} />
                                         </LineChart>
                                     </ResponsiveContainer>
                                 )}

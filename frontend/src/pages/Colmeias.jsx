@@ -25,7 +25,6 @@ import {
     Snackbar,
     InputAdornment,
     useTheme,
-    alpha,
     Grid,
     FormControl,
     InputLabel,
@@ -70,6 +69,7 @@ import {
     getColmeiaHistoricoIoT,
 } from '../services/api';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Tooltip as RechartsTooltip } from 'recharts';
+import { tint } from '../theme';
 
 const statusOptions = [
     { value: 'ativa',      label: 'Ativa',             color: 'success' },
@@ -330,9 +330,9 @@ export default function Colmeias() {
     const hasSensorValue = (value) => value !== null && value !== undefined && value !== '';
 
     const getTemperatureColor = (value) => {
-        if (value > 35) return '#EF9A9A';
-        if (value < 20) return '#64B5F6';
-        return '#81C784';
+        if (value > 35) return 'var(--chart-red)';
+        if (value < 20) return 'var(--chart-blue)';
+        return 'var(--chart-green)';
     };
 
     const getSensorMetricConfig = (colmeia) => [
@@ -341,47 +341,47 @@ export default function Colmeias() {
             label: 'Temperatura',
             icon: <ThermostatIcon />,
             color: getTemperatureColor(Number(colmeia.temperatura_atual)),
-            background: alpha(getTemperatureColor(Number(colmeia.temperatura_atual)), 0.15),
+            background: tint(getTemperatureColor(Number(colmeia.temperatura_atual)), 0.15),
             format: (value) => `${Number(value).toFixed(1)}°C`,
         },
         {
             key: 'nivel_ruido',
             label: 'Ruído',
             icon: <VolumeUpIcon />,
-            color: '#FFB74D',
-            background: alpha('#FF9800', 0.15),
+            color: 'var(--chart-orange)',
+            background: tint('var(--chart-orange)', 0.15),
             format: (value) => `${Number(value).toFixed(1)} dB`,
         },
         {
             key: 'luminosidade',
             label: 'Luminosidade',
             icon: <LightModeIcon />,
-            color: '#FFC107',
-            background: alpha('#FFC107', 0.15),
+            color: 'var(--chart-amber)',
+            background: tint('var(--chart-amber)', 0.15),
             format: (value) => `${Number(value).toFixed(0)} lux`,
         },
         {
             key: 'umidade',
             label: 'Umidade',
             icon: <WaterDropIcon />,
-            color: '#64B5F6',
-            background: alpha('#2196F3', 0.15),
+            color: 'var(--chart-blue)',
+            background: tint('var(--chart-blue)', 0.15),
             format: (value) => `${Number(value).toFixed(1)}%`,
         },
         {
             key: 'pressao',
             label: 'Pressão',
             icon: <CompressIcon />,
-            color: '#CE93D8',
-            background: alpha('#9C27B0', 0.15),
+            color: 'var(--chart-purple)',
+            background: tint('var(--chart-purple)', 0.15),
             format: (value) => `${Number(value).toFixed(1)} hPa`,
         },
         {
             key: 'peso',
             label: 'Peso',
             icon: <ScaleIcon />,
-            color: '#90A4AE',
-            background: alpha('#607D8B', 0.15),
+            color: 'var(--chart-gray)',
+            background: tint('var(--chart-gray)', 0.15),
             format: (value) => `${Number(value).toFixed(1)} kg`,
         },
     ];
@@ -679,7 +679,7 @@ export default function Colmeias() {
                     border: '1px dashed',
                     borderColor: 'divider',
                 }}>
-                    <HiveIcon sx={{ fontSize: 52, color: alpha(theme.palette.primary.main, 0.25), mb: 2 }} />
+                    <HiveIcon sx={{ fontSize: 52, color: tint(theme.palette.primary.main, 0.25), mb: 2 }} />
                     <Typography variant="h6" fontWeight={600} gutterBottom>
                         {hasActiveFilters ? 'Nenhuma colmeia encontrada para os filtros aplicados' : 'Nenhuma colmeia cadastrada'}
                     </Typography>
@@ -965,7 +965,7 @@ export default function Colmeias() {
                                                     .filter((metric) => hasSensorValue(detailDialog.colmeia[metric.key]))
                                                     .map((metric) => (
                                                         <Grid size={{ xs: 12, sm: 6, md: 4 }} key={`detail-${metric.key}`}>
-                                                            <Paper sx={{ p: 1.5, border: '1px solid', borderColor: alpha(metric.color, 0.32), backgroundColor: alpha(metric.color, 0.06) }}>
+                                                            <Paper sx={{ p: 1.5, border: '1px solid', borderColor: tint(metric.color, 0.32), backgroundColor: tint(metric.color, 0.06) }}>
                                                                 <Box sx={{ display: 'flex', alignItems: 'center', mb: 0.5 }}>
                                                                     {metric.icon && (
                                                                         <Box sx={{ color: metric.color, mr: 0.5, display: 'flex', alignItems: 'center' }}>
@@ -1007,7 +1007,7 @@ export default function Colmeias() {
                                             <Box sx={{ height: 240 }}>
                                                 <ResponsiveContainer width="100%" height="100%">
                                                     <LineChart data={selectedIotHistory}>
-                                                        <CartesianGrid strokeDasharray="3 3" stroke={alpha(theme.palette.text.secondary, 0.2)} />
+                                                        <CartesianGrid strokeDasharray="3 3" stroke={tint(theme.palette.text.secondary, 0.2)} />
                                                         <XAxis dataKey="timestampLabel" tick={{ fontSize: 11 }} />
                                                         <YAxis tick={{ fontSize: 11 }} />
                                                         <RechartsTooltip

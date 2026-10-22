@@ -292,8 +292,8 @@ export default function Financeiro() {
             <Grid container spacing={2} sx={{ mb: 2.5 }}>
                 {[
                     { label: `Total ${isCustos ? 'Custos' : 'Receitas'}`, value: loading ? null : `R$ ${totalValor.toFixed(2)}`, color: isCustos ? theme.palette.error.main : theme.palette.success.main },
-                    { label: 'Total de Registros', value: loading ? null : totalRegistros, color: '#64B5F6' },
-                    { label: 'Média por Registro', value: loading ? null : `R$ ${mediaValor}`, color: '#81C784' },
+                    { label: 'Total de Registros', value: loading ? null : totalRegistros, color: 'var(--chart-blue)' },
+                    { label: 'Média por Registro', value: loading ? null : `R$ ${mediaValor}`, color: 'var(--chart-green)' },
                 ].map((stat, i) => (
                     <Grid size={{ xs: 12, sm: 4 }} key={i}>
                         <Card sx={{ position: 'relative', overflow: 'hidden', '&::before': { content: '""', position: 'absolute', top: 0, left: 0, right: 0, height: '2px', background: stat.color } }}>

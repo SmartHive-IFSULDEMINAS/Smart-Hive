@@ -65,13 +65,13 @@ import {
 } from '../services/api';
 
 const darkTooltipStyle = {
-    background: '#1A1D27',
-    border: '1px solid rgba(255,255,255,0.12)',
+    background: 'var(--chart-tooltip-bg)',
+    border: '1px solid var(--chart-tooltip-border)',
     borderRadius: 10,
     fontSize: 13,
 };
 
-const COLORS = ['#81C784', '#64B5F6', '#FFB74D', '#90A4AE', '#EF9A9A', '#CE93D8'];
+const COLORS = ['var(--chart-green)', 'var(--chart-blue)', 'var(--chart-orange)', 'var(--chart-gray)', 'var(--chart-red)', 'var(--chart-purple)'];
 
 const STATUS_COLMEIA = [
     { value: 'ativa', label: 'Ativa' },
@@ -237,8 +237,8 @@ export default function Relatorios() {
         const ativos = linhas.filter((a) => a.ativo).length;
         const inativos = linhas.length - ativos;
         return [
-            { name: 'Ativos', value: ativos, color: '#81C784' },
-            { name: 'Inativos', value: inativos, color: '#90A4AE' },
+            { name: 'Ativos', value: ativos, color: 'var(--chart-green)' },
+            { name: 'Inativos', value: inativos, color: 'var(--chart-gray)' },
         ].filter((d) => d.value > 0);
     }, [linhas]);
 
@@ -547,7 +547,7 @@ export default function Relatorios() {
                                     ) : <Box />
                                 ) : aba === 'mel' ? (
                                     <BarChart data={melPorTipoData} layout="vertical">
-                                        <CartesianGrid stroke="rgba(255,255,255,0.05)" horizontal={false} />
+                                        <CartesianGrid stroke="var(--chart-grid)" horizontal={false} />
                                         <XAxis type="number" unit=" kg" tick={{ fontSize: 11, fill: theme.palette.text.secondary }} />
                                         <YAxis type="category" dataKey="name" width={120} tick={{ fontSize: 11, fill: theme.palette.text.secondary }} />
                                         <RechartsTooltip contentStyle={darkTooltipStyle} formatter={(v) => [`${v.toFixed(1)} kg`, 'Produção']} />
@@ -555,21 +555,21 @@ export default function Relatorios() {
                                     </BarChart>
                                 ) : aba === 'financeiro' ? (
                                     <BarChart data={financeiroPorMesData}>
-                                        <CartesianGrid stroke="rgba(255,255,255,0.05)" vertical={false} />
+                                        <CartesianGrid stroke="var(--chart-grid)" vertical={false} />
                                         <XAxis dataKey="mes" tick={{ fontSize: 11, fill: theme.palette.text.secondary }} />
                                         <YAxis unit=" R$" tick={{ fontSize: 11, fill: theme.palette.text.secondary }} />
                                         <RechartsTooltip contentStyle={darkTooltipStyle} formatter={(v, name) => [`R$ ${v.toFixed(2)}`, name]} />
                                         <Legend />
-                                        <Bar dataKey="receitas" name="Receitas" fill="#81C784" radius={[4, 4, 0, 0]} />
-                                        <Bar dataKey="custos" name="Custos" fill="#EF9A9A" radius={[4, 4, 0, 0]} />
+                                        <Bar dataKey="receitas" name="Receitas" fill="var(--chart-green)" radius={[4, 4, 0, 0]} />
+                                        <Bar dataKey="custos" name="Custos" fill="var(--chart-red)" radius={[4, 4, 0, 0]} />
                                     </BarChart>
                                 ) : (
                                     <BarChart data={producaoPorMesData}>
-                                        <CartesianGrid stroke="rgba(255,255,255,0.05)" vertical={false} />
+                                        <CartesianGrid stroke="var(--chart-grid)" vertical={false} />
                                         <XAxis dataKey="mes" tick={{ fontSize: 11, fill: theme.palette.text.secondary }} />
                                         <YAxis unit=" g" tick={{ fontSize: 11, fill: theme.palette.text.secondary }} />
                                         <RechartsTooltip contentStyle={darkTooltipStyle} formatter={(v) => [`${v.toFixed(1)} g`, 'Quantidade']} />
-                                        <Bar dataKey="valor" fill={aba === 'polen' ? '#8D6E63' : '#6D4C41'} radius={[4, 4, 0, 0]} />
+                                        <Bar dataKey="valor" fill={aba === 'polen' ? 'var(--chart-amber)' : 'var(--chart-teal)'} radius={[4, 4, 0, 0]} />
                                     </BarChart>
                                 )}
                             </ResponsiveContainer>
